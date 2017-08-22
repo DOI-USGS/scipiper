@@ -1,0 +1,9 @@
+Package: scipiper
+Title: Support functions for ushering data through a scientific workflow
+Version: 0.0.1
+Authors@R: person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre"))
+Description: Functions to organize a data analysis repository and ensure that data flows smoothly
+Depends: R (>= 3.4.1)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
