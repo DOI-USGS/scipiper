@@ -16,7 +16,7 @@ are c=cfg, d=doc, j=job, o=out, and s=src}
 
 \item{default}{string identifying the default set of
 character_codes_for_dirs. one letter per subdirectory. Permitted letters
-are c=cfg, d=doc, j=job, o=out, and s=src}
+are c=cfg, d=doc, j=job, l=log, o=out, and s=src}
 
 \item{.list}{as an alternative to ..., use .list to specify directories in a
 single list argument}

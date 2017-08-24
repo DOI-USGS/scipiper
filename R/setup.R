@@ -7,7 +7,7 @@
 #'   are c=cfg, d=doc, j=job, o=out, and s=src
 #' @param default string identifying the default set of
 #'   character_codes_for_dirs. one letter per subdirectory. Permitted letters 
-#'   are c=cfg, d=doc, j=job, o=out, and s=src
+#'   are c=cfg, d=doc, j=job, l=log, o=out, and s=src
 #' @param .list as an alternative to ..., use .list to specify directories in a 
 #'   single list argument
 #' @import tidyr
@@ -46,12 +46,17 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
     }
   })
   # convert names and 1-letter subdirectory codes to full dir and subdir names
+  codekey <- c(c='cfg', d='doc', j='job', l='log', o='out', s='src', '0'='')
   alldirs <- data_frame(dir=names(dircodes), code=unname(dircodes)) %>%
     mutate(code=ifelse(code=='', '0', code),
            codes=strsplit(code, '')) %>%
     unnest() %>%
-    mutate(subdir=c(c='cfg', d='doc', j='job', o='out', s='src', '0'='')[codes]) %>%
-    mutate(fulldir = file.path(dir, subdir)) %>%
+    mutate(
+      allgood=if(!all(codes %in% names(codekey))) {
+        stop(paste("unexpected code; characters must be among", paste(names(codekey), collapse=',')))
+      } else TRUE) %>%
+    mutate(subdir=codekey[codes],
+           fulldir = file.path(dir, subdir)) %>%
     pull(fulldir)
   
   # create the directories
