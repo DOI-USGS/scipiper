@@ -23,8 +23,7 @@ A.txt.st :
 	@$(if $(wildcard $(subst .stfromcache,.cache,$@)),\
 	echo "made $(subst .stfromcache,.st,$@) because found $(subst .stfromcache,,$@) in cache";\
 		DT="$(shell date -u '+%Y-%m-%d %H:%M:%S %z' -r $(subst .stfromcache,.cache,$@))";\
-		echo $$DT > $(subst .stfromcache,.st,$@);\
-		touch -d "$$DT" $(subst .stfromcache,.st,$@);,\
+		echo $$DT > $(subst .stfromcache,.st,$@);,\
 	$(error $(subst .stfromcache,,$@) is not in cache);)
 
 # make an .st file based on confidence that a corresponding cache file exists and was created at a similar time. This is reasonable if our cache is local or if checking remotely is more onerous than the likelihood*consequence of occasionally being wrong
@@ -45,97 +44,82 @@ B.rds.st : A.txt.st
 	
 # [ x -ot y ] tests whether x is older than y to within ~1 second
 % : %.st
-	@$(if $(wildcard $@.cache),\
 	@if [ $@ -ot $@.st -o ! -e $@ ]; then\
+		if [ -e $(subst .st,,$@).cache ]; then\
 			echo "downloading $@";\
 			cp $@.cache $@;\
-			touch -d "$(shell cat $@.st)" $@;\
 		else\
-			echo "$@ is available locally";\
-		fi;,\
-	$(error $(subst .stfromcache,,$@) is promised but not in cache);)
-
+			echo "Error: $@ is promised but not in cache";\
+			exit 1;\
+		fi;\
+	else\
+		echo "$@ is available locally";\
+	fi;
 
 # scenarios
 
+# @"2017-08-25 08:00:00 -0700" > A.txt.st
+
 a1 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
 	@echo "make B.rds should pull A.txt, make B.rds/.st/.cache, not re-pull B.rds"
 a2 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
 	touch -d "2017-08-25 10:00:00 -0700" B.rds
 	@echo "make B.rds should pull A.txt, make B.rds/.st/.cache, not re-pull B.rds"
 a3 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	@echo "make B.rds should pull B.rds"
 a4 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
 	touch -d "2017-08-25 11:00:00 -0700" A.txt
 	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
 	@make -s B.rds.stfromcache
 	@echo "make B.rds should pull B.rds from cache"
 a5 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	touch -d "2017-08-25 07:00:00 -0700" B.rds
 	@echo "make B.rds should pull B.rds from cache"
 a6 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	touch -d "2017-08-25 10:00:00 -0700" B.rds
 	@echo "make B.rds should do nothing"
 a7 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 08:00:00 -0700" A.txt.cache A.txt.st
 	touch -d "2017-08-25 08:00:00 -0700" A.txt
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	touch -d "2017-08-25 10:00:00 -0700" B.rds
 	@echo "make B.rds should do nothing"
 b1 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache A.txt.st
 	touch -d "2017-08-25 10:00:00 -0700" B.rds
 	@echo "make B.rds should pull A.txt, make B.rds/.st/.cache, not re-pull B.rds"
 b2 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	@echo "make B.rds should pull A.txt, make B.rds/.st/.cache, not re-pull B.rds"
 b3 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
+	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache A.txt.st
 	touch -d "2017-08-25 11:00:00 -0700" A.txt
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	@echo "make B.rds should make B.rds/.st/.cache, not re-pull B.rds"
 b4 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	touch -d "2017-08-25 12:00:00 -0700" B.rds
 	@echo "make B.rds should pull A.txt, make B.rds/.st/.cache, not re-pull B.rds"
 c1 :
@@ -144,22 +128,17 @@ c1 :
 	@echo "make B.rds should give error about missing A.txt.cache"
 c2 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	@echo "make B.rds should give error about missing A.txt.cache"
 c3 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	touch -d "2017-08-25 11:00:00 -0700" B.rds
 	@echo "make B.rds should give error about missing A.txt.cache"
 c4 :
 	rm -f A.txt* B.rds*
-	touch -d "2017-08-25 11:00:00 -0700" A.txt.cache
-	@make -s A.txt.st
-	rm A.txt.cache
-	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache
-	@make -s B.rds.stfromcache
+	touch -d "2017-08-25 11:00:00 -0700" A.txt.st
+	touch -d "2017-08-25 09:00:00 -0700" B.rds.cache B.rds.st
 	@echo "make B.rds should give error about missing A.txt.cache"
 
 clean:
