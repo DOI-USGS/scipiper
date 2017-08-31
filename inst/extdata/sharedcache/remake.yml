@@ -1,0 +1,75 @@
+# Sharing a data cache within remake
+
+# Basic approach:
+# Every data file is represented by an indicator file. Indicator files get
+# created once we believe a cached version exists (we just posted it, we checked
+# for it, or both). Downstream files depend on the indicator files rather than
+# the data files themselves. Before running any data processing scripts, the
+# individual targets are pulled from the cache as need. Multiple files can be
+# pulled in a single make call within the recipe, e.g., `make B.rds A.txt` The
+# official targets of data analysis recipes are indicator files, not data files.
+# Those recipes are responsible for ensuring that output data files do exist on
+# the cache (and optionally also locally).
+
+# include:
+
+# packages:
+
+sources:
+  - demo_helpers.R
+
+file_extensions: ["st","cache"]
+
+target_default: a1
+
+targets:
+
+  # project
+
+  A.txt.st :
+    command: make_cache_indicator(target_name)
+    
+  A.txt :
+    depends: A.txt.st
+    command: get_cached_file(target_name)
+    
+  B.rds.st :
+    command: pretend_process('A.txt', target_name)
+    
+  B.rds :
+    depends: B.rds.st
+    command: get_cached_file(target_name)
+    
+  # scenarios
+
+  a1 :
+    command: scenario(I('a1'))
+  a2 :
+    command: scenario(I('a2'))
+  a3 :
+    command: scenario(I('a3'))
+  a4 :
+    command: scenario(I('a4'))
+  a5 :
+    command: scenario(I('a5'))
+  a6 :
+    command: scenario(I('a6'))
+  a7 :
+    command: scenario(I('a7'))
+  b1 :
+    command: scenario(I('b1'))
+  b2 :
+    command: scenario(I('b2'))
+  b3 :
+    command: scenario(I('b3'))
+  b4 :
+    command: scenario(I('b4'))
+  c1 :
+    command: scenario(I('c1'))
+  c2 :
+    command: scenario(I('c2'))
+  c3 :
+    command: scenario(I('c3'))
+  c4 :
+    command: scenario(I('c4'))
+
