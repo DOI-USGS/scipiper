@@ -32,9 +32,16 @@ targets:
   A.txt :
     command: get_cached_file('A.txt.st')
     
-  # target_name has to be first argument? see https://github.com/richfitz/remake/issues/173
+  # objects need to depend on I() of data inputs (files or objects) and need to be depended
+  # on as I() as well (and then retrieved within the calling function using remake::fetch);
+  # if we tried to share objects as well as files, we'd need two sharing systems, both of
+  # which would probably boil down to file sharing systems, which would be silly
+  A : 
+    command: readLines(I('A.txt'))
+    
+  # target_name has to be first argument. see https://github.com/richfitz/remake/issues/173
   B.rds.st :
-    command: pretend_process(out_st=target_name, in_st='A.txt.st')
+    command: pretend_process(out_st=target_name, in_st='A.txt.st', obj=I('A'))
     
   B.rds :
     command: get_cached_file('B.rds.st')

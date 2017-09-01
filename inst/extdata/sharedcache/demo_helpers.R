@@ -68,7 +68,7 @@ cache_file <- function(datafile) {
   file.copy(fnames$data, fnames$cache)
 }
 
-pretend_process <- function(in_st, out_st) {
+pretend_process <- function(in_st, out_st, obj) {
   # we'll need a get_cached_file call in any function that [remake]depends on an
   # indicator file (nearly all functions)
   get_cached_file(stfile=in_st)
@@ -77,7 +77,7 @@ pretend_process <- function(in_st, out_st) {
   fnames <- expand_names(out_st)
   
   # create the actual data file
-  message(sprintf("creating %s from %s", fnames$data, in_st))
+  message(sprintf("creating %s from %s and obj", fnames$data, in_st))
   indat <- c(readLines(in_st), "and did some processing")
   saveRDS(indat, fnames$data)
   

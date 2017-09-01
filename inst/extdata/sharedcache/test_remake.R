@@ -2,7 +2,7 @@ library(remake)
 # options('remake.verbose'=FALSE) would be great but seems to have no effect
 
 run_scenario <- function(scen) {
-  make('clean')
+  make('clean', verbose=FALSE)
   gc()
   make(scen, verbose=FALSE)
   print(get_status())
