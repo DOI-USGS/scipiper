@@ -20,7 +20,7 @@ sources:
 
 file_extensions: ["st","cache"]
 
-target_default: a1
+target_default: B.rds
 
 targets:
 
@@ -30,15 +30,14 @@ targets:
     command: make_cache_indicator(target_name)
     
   A.txt :
-    depends: A.txt.st
-    command: get_cached_file(target_name)
+    command: get_cached_file('A.txt.st')
     
+  # target_name has to be first argument? see https://github.com/richfitz/remake/issues/173
   B.rds.st :
-    command: pretend_process('A.txt', target_name)
+    command: pretend_process(out_st=target_name, in_st='A.txt.st')
     
   B.rds :
-    depends: B.rds.st
-    command: get_cached_file(target_name)
+    command: get_cached_file('B.rds.st')
     
   # scenarios
 
