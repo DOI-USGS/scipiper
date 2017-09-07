@@ -8,6 +8,7 @@ get_status <- function(target='B.rds') {
   status <- as.data.frame(remake:::remake_status(remake_object, target, graph))
   
   status$target <- rownames(status)
+  rownames(status) <- NULL
   
   status$is_current <- status$hash <- status$time <- status$fixed <- NA
   for(i in seq_len(nrow(status))) {

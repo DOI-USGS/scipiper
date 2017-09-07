@@ -22,8 +22,9 @@ setup_demo <- function(Ac=1, Ai=1, Ad=NA, R=1, Bc=1, Bi=1, Bd=NA) {
   # pretend-create data, cache, and indicator files
   source('demo.R')
   make_cache_indicator("A.txt.st")
-  get_cached_file("A.txt.st")
-  pretend_process(in_st="A.txt.st", out_st="B.rds.st", R_R="R.R")
+  remake::make("B.rds")
+  # get_cached_file("A.txt.st")
+  # pretend_process(in_st="A.txt.st", out_st="B.rds.st", R_R="R.R")
   
   # revise files as requested
   # make_file("A.txt.cache", sprintf("A%d", Ac))
@@ -31,12 +32,12 @@ setup_demo <- function(Ac=1, Ai=1, Ad=NA, R=1, Bc=1, Bi=1, Bd=NA) {
   
   # revise files as requested
   if(is.na(Ac)) file.remove("A.txt.cache")
-  if(is.na(Ai)) file.remove("A.txt.st")
-  if(is.na(Ad)) file.remove("A.txt")
-  if(is.na(R)) file.remove("R.R")
+  if(is.na(Ai)) remake::delete("A.txt.st")
+  if(is.na(Ad)) remake::delete("A.txt")
+  if(is.na(R))  file.remove("R.R")
   if(is.na(Bc)) file.remove("B.rds.cache")
-  if(is.na(Bi)) file.remove("B.rds.st")
-  if(is.na(Bd)) file.remove("B.rds")
+  if(is.na(Bi)) remake::delete("B.rds.st")
+  if(is.na(Bd)) remake::delete("B.rds")
   
   return(dirinfo)
 }
