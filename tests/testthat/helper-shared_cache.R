@@ -1,15 +1,3 @@
-library(remake)
-# options('remake.verbose'=FALSE) would be great but seems to have no effect
-
-run_scenario <- function(scen) {
-  make('clean', verbose=FALSE)
-  gc()
-  make(scen, verbose=FALSE)
-  print(get_status())
-  make('B.rds', verbose=FALSE)
-  print(get_status())
-}
-
 get_status <- function(target='B.rds') {
   remake_object <- remake:::remake(load_sources=FALSE)
   graph <- remake:::remake_dependency_graph(remake_object)
@@ -59,22 +47,3 @@ remetadata <- function(target_name) {
   remake_object <- remake:::remake()
   remake_object$store$db$get(target_name) 
 }
-
-
-run_scenario('a1') # success
-run_scenario('a2')
-run_scenario('a3')
-run_scenario('a4')
-run_scenario('a5')
-run_scenario('a6')
-run_scenario('a7') # should make nothing. makes everything. how can we tell remake to look at a fresh git pull as possibly being built already?
-
-run_scenario('b1')
-run_scenario('b2')
-run_scenario('b3')
-run_scenario('b4')
-
-run_scenario('c1')
-run_scenario('c2')
-run_scenario('c3')
-run_scenario('c4')

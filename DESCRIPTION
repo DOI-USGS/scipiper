@@ -7,6 +7,7 @@ Depends:
     R (>= 3.4.1)
 Imports:
   dplyr,
+  remake,
   tidyr
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials

@@ -1,12 +1,17 @@
-#' formats a POSIXct timestamp with UTC into a character string
+#' Formats a POSIXct timestamp with UTC into a character string
+#' @export
 POSIX2char <- function(ptime) {
   format(ptime, tz='UTC', format="%Y-%m-%d %H:%M:%S", usetz=TRUE)
 }
+#' Formats a character string into POSIXct timestamp with UTC
+#' @export
 char2POSIX <- function(stime) {
   as.POSIXct(strptime(stime, format="%Y-%m-%d %H:%M:%S", tz="UTC"))
 }
 
-# export from .remake folder (binary form) to status folder (versionable text)
+#' Export status files from .remake folder (binary form) to status folder
+#' (versionable text)
+#' @export
 export_remake_status <- function() {
   # ensure there's a directory to receive the export
   dir.create('status', showWarnings=FALSE)
@@ -76,3 +81,4 @@ import_remake_status <- function() {
   extra_rfiles <- setdiff(rfiles, storekeys)
   if(length(extra_rfiles) > 0) warning(paste("these status files may be obsolete:", paste(extra_rfiles, collapse=", ")))
 }
+

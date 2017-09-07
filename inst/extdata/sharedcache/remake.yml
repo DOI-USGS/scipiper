@@ -13,10 +13,12 @@
 
 # include:
 
-# packages:
+packages:
+  - scipiper
 
 sources:
-  - demo_helpers.R
+  - demo.R
+  - R.R
 
 file_extensions: ["st","cache"]
 
@@ -32,50 +34,20 @@ targets:
   A.txt :
     command: get_cached_file('A.txt.st')
     
-  # objects need to depend on I() of data inputs (files or objects) and need to be depended
-  # on as I() as well (and then retrieved within the calling function using remake::fetch);
-  # if we tried to share objects as well as files, we'd need two sharing systems, both of
-  # which would probably boil down to file sharing systems, which would be silly
-  A : 
-    command: readLines(I('A.txt'))
-    
   # target_name has to be first argument. see https://github.com/richfitz/remake/issues/173
   B.rds.st :
-    command: pretend_process(out_st=target_name, in_st='A.txt.st', obj=I('A'))
+    command: pretend_process(out_st=target_name, in_st='A.txt.st', R_R='R.R')
     
   B.rds :
     command: get_cached_file('B.rds.st')
     
-  # scenarios
-
-  a1 :
-    command: scenario(I('a1'))
-  a2 :
-    command: scenario(I('a2'))
-  a3 :
-    command: scenario(I('a3'))
-  a4 :
-    command: scenario(I('a4'))
-  a5 :
-    command: scenario(I('a5'))
-  a6 :
-    command: scenario(I('a6'))
-  a7 :
-    command: scenario(I('a7'))
-  b1 :
-    command: scenario(I('b1'))
-  b2 :
-    command: scenario(I('b2'))
-  b3 :
-    command: scenario(I('b3'))
-  b4 :
-    command: scenario(I('b4'))
-  c1 :
-    command: scenario(I('c1'))
-  c2 :
-    command: scenario(I('c2'))
-  c3 :
-    command: scenario(I('c3'))
-  c4 :
-    command: scenario(I('c4'))
-
+  # objects need to depend on I() of data inputs (files or objects) and need to be depended
+  # on as I() as well (and then retrieved within the calling function using remake::fetch);
+  # if we tried to share objects as well as files, we'd need two sharing systems, both of
+  # which would probably boil down to file sharing systems, which would be silly
+  m : 
+    command: list(p=7, d=I(-3), q=I('9'), b=I('A.txt'))
+  n : 
+    command: readLines(I('A.txt'))
+  O.txt :
+    command: do_something(obj=I('n'))
