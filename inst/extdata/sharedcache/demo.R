@@ -68,7 +68,7 @@ get_cached_file <- function(stfile) {
   # could look at a timestamp in stfile as an indicator of the cache status
   if(!file.exists(fnames$data) || get_hash(fnames$data) != hash_cache) {
     message("get ", fnames$var)
-    file.copy(fnames$cache, fnames$data)
+    file.copy(fnames$cache, fnames$data, overwrite=TRUE)
   } else {
     message("noget ", fnames$var)
   }
@@ -78,7 +78,7 @@ get_cached_file <- function(stfile) {
 cache_file <- function(datafile) {
   fnames <- expand_names(datafile)
   message(sprintf("cache %s", fnames$var))
-  file.copy(fnames$data, fnames$cache)
+  file.copy(fnames$data, fnames$cache, overwrite=TRUE)
   invisible(NULL)
 }
 
@@ -86,7 +86,7 @@ pretend_process <- function(in_st, out_st, R_R) {
   # we'll need a get_cached_file call in any function that [remake]depends on an
   # indicator file (nearly all functions)
   get_cached_file(stfile=in_st)
-  in_var <- readLines(in_st)
+  in_var <- readLines(expand_names(in_st)$data)
   
   # read the "script" (it just defines a variable called R)
   source(R_R)
