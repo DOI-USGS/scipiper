@@ -2,10 +2,10 @@
 % Please edit documentation in R/remake.R
 \name{POSIX2char}
 \alias{POSIX2char}
-\title{Formats a POSIXct timestamp with UTC into a character string}
+\title{Format a POSIXct timestamp with UTC into a character string}
 \usage{
 POSIX2char(ptime)
 }
 \description{
-Formats a POSIXct timestamp with UTC into a character string
+Format a POSIXct timestamp with UTC into a character string
 }

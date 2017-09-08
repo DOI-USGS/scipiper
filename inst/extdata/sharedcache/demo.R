@@ -82,14 +82,11 @@ cache_file <- function(datafile) {
   invisible(NULL)
 }
 
-pretend_process <- function(in_st, out_st, R_R) {
+pretend_process <- function(in_st, out_st) {
   # we'll need a get_cached_file call in any function that [remake]depends on an
   # indicator file (nearly all functions)
   get_cached_file(stfile=in_st)
   in_var <- readLines(expand_names(in_st)$data)
-  
-  # read the "script" (it just defines a variable called R)
-  source(R_R)
   
   # identify the names for the output
   fnames <- expand_names(out_st)
