@@ -20,7 +20,7 @@ scmake <- function(
   status_pre <- get_remake_status(target_names)
   
   # run remake::make
-  remake::make(target_names=target_names, ..., verbose=verbose,
+  out <- remake::make(target_names=target_names, ..., verbose=verbose,
                allow_missing_packages=allow_missing_packages, remake_file=remake_file)
   
   # record status after running make
@@ -32,6 +32,8 @@ scmake <- function(
   tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
   tdiffs <- tdiffs[grepl('\\.st$', tdiffs$target),]
   YAMLify_build_status(tdiffs$target)
+  
+  invisible(out)
 }
 
 #' Wrapper for remake::delete that permits cache sharing
@@ -73,6 +75,7 @@ scdel <- function(
   status_targets <- target_names[is_status_indicator(target_names)]
   status_keys <- get_mangled_key(status_targets, dbstore)
   status_files <- file.path('build/status', paste0(status_keys, '.yml'))
+  status_exists <- status_files[file.exists(status_files)]
   file.remove(status_files)
 }
 

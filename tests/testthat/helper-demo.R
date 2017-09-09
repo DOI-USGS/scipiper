@@ -27,13 +27,10 @@ setup_demo <- function(remote_target='B.rds') {
   # git pull all the committable files (not data files or .remake) into the local repo
   git_pull(dirinfo)
   
-  # put us in the local dir to help pretend that's our repo
-  setwd(dirinfo$local)
-  
   return(dirinfo)
 }
 
-develop_remote_A2 <- function(dirinfo, remote_target='B.rds') {
+develop_remote_A2 <- function(dirinfo, remote_target='B.rds', rdelete_target='A.txt.st', remove=NA) {
   setwd(dirinfo$remote)
   
   # in this scenario we are updating A.txt.cache to contain 'A2' instead of 'A1'
@@ -41,14 +38,16 @@ develop_remote_A2 <- function(dirinfo, remote_target='B.rds') {
   
   # simply updating the cached file is not enough, because remake will assume
   # the cached file is unchanged until told otherwise.
-  scdel("A.txt.st", verbose=FALSE)
+  if(length(rdelete_target) > 1 || !is.na(rdelete_target)) scdel(rdelete_target, verbose=FALSE)
   
   # make the project in the remote repo
   if(!is.na(remote_target)) capture_make(remote_target)
   
+  # delete more files if requested
+  if(length(remove) > 1 || !is.na(remove)) file.remove(remove)
+  
   # git pull all the committable files (not data files or .remake) into the local repo
   git_pull(dirinfo)
-  setwd(dirinfo$local)
 }
 
 develop_local_R3 <- function(dirinfo, local_target='B.rds') {
@@ -58,11 +57,6 @@ develop_local_R3 <- function(dirinfo, local_target='B.rds') {
   
   # make the project in the local repo
   if(!is.na(local_target)) capture_make(local_target)
-}
-
-cleanup_demo <- function(dirinfo) {
-  setwd(dirinfo$wd)
-  unlink(dirinfo$newdir, recursive=TRUE)
 }
 
 # a fragile mock of git pull for testing scenarios
@@ -75,11 +69,16 @@ git_pull <- function(dirinfo) {
   are_files <- !dir.exists(from) & grepl('\\.(st|cache|R|yml)$', basename(from))
   from_files <- from[are_files]
   to_files <- to[are_files]
+  gone_files <- file.path(
+    dirinfo$local, 
+    setdiff(dir(dirinfo$local, recursive=TRUE, include.dirs = TRUE),
+            dir(dirinfo$remote, recursive=TRUE, include.dirs = TRUE)))
   
   # create the needed directories
   lapply(to_dirs, function(todir) if(!dir.exists(todir)) dir.create(todir))
   
-  # copy the files
+  # copy the changed files. uses hashes instead of timetstamps so that tests can
+  # be quick (otherwise need to wait >= 1 sec between changing & pulling)
   mapply(function(from, to) {
     if(!file.exists(to) || tools::md5sum(from) != tools::md5sum(to)) {
       return(file.copy(from, to, recursive=dir.exists(from), overwrite=TRUE))
@@ -87,6 +86,12 @@ git_pull <- function(dirinfo) {
       return(NA)
     }
   }, from_files, to_files, USE.NAMES=FALSE)
+  
+  # delete the gone files
+  file.remove(gone_files)
+  
+  # put us in the local dir to help pretend that's our repo
+  setwd(dirinfo$local)
 }
 
 # captures output from a non-verbose scmake, removes '\n's from outputs, and
@@ -94,8 +99,32 @@ git_pull <- function(dirinfo) {
 # build sequence
 capture_make <- function(target) {
   options('remake.verbose'=FALSE, 'remake.verbose.noop'=FALSE, 'remake.verbose.command'=FALSE, 'remake.verbose.command.abbreviate'=FALSE)
-  rawmsg <- capture_messages(scmake(target, verbose=FALSE))
+  rawmsg <- testthat::capture_messages(scmake(target, verbose=FALSE))
   options('remake.verbose'=NULL, 'remake.verbose.noop'=NULL, 'remake.verbose.command'=NULL, 'remake.verbose.command.abbreviate'=NULL)
   msg <- paste(gsub('\n', '', rawmsg), collapse='; ')
   gsub('[  LOAD ] ; [  READ ] ; ', '', msg, fixed=TRUE)
+}
+
+inspect_local <- function(dirinfo) {
+  setwd(dirinfo$local)
+  files <- dir(pattern=c('^(A|B|R)'))
+  contents <- sapply(files, function(file) {
+    switch(
+      file,
+      A.txt.cache = , A.txt = readLines(file),
+      B.rds.cache = , B.rds = readRDS(file),
+      R.R = gsub('R <- ', '', readLines(file)),
+      A.txt.st = , B.rds.st = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1')[[
+        substring(readLines(file), 1, 6)]], ']')
+    )
+  })
+  targets <- c('A.txt.cache','A.txt.st','A.txt','R.R','B.rds.cache','B.rds.st','B.rds')
+  all <- setNames(contents[targets], targets)
+  all[is.na(all)] <- '---'
+  return(all)
+}
+
+cleanup_demo <- function(dirinfo) {
+  setwd(dirinfo$wd)
+  unlink(dirinfo$newdir, recursive=TRUE)
 }
