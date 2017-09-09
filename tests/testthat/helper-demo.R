@@ -81,7 +81,7 @@ git_pull <- function(dirinfo) {
   
   # copy the files
   mapply(function(from, to) {
-    if(!file.exists(to) || file.mtime(from) > file.mtime(to)) {
+    if(!file.exists(to) || tools::md5sum(from) != tools::md5sum(to)) {
       return(file.copy(from, to, recursive=dir.exists(from), overwrite=TRUE))
     } else {
       return(NA)

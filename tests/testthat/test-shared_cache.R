@@ -97,7 +97,7 @@ context("shared cache - b")
 # cache
 
 test_that("b1", {
-  # pull once, remote gets A2, pull again
+  # pull once, remote updates to A2, pull again
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   develop_remote_A2(di, 'A.txt.st')
