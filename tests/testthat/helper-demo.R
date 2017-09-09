@@ -33,30 +33,31 @@ setup_demo <- function(remote_target='B.rds') {
   return(dirinfo)
 }
 
-build <- function(dirinfo, where, Ac=1, Ai=1, Ad=NA, R=1, Bc=1, Bi=1, Bd=NA) {
-  setwd(dirinfo[[where]])
+develop_remote_A2 <- function(dirinfo, remote_target='B.rds') {
+  setwd(dirinfo$remote)
   
-  # create data, cache, and indicator files
-  scmake('B.rds')
+  # in this scenario we are updating A.txt.cache to contain 'A2' instead of 'A1'
+  make_file("A.txt.cache", "A2")
   
+  # simply updating the cached file is not enough, because remake will assume
+  # the cached file is unchanged until told otherwise.
+  scdel("A.txt.st", verbose=FALSE)
   
-  # get_cached_file("A.txt.st")
-  # pretend_process(in_st="A.txt.st", out_st="B.rds.st", R_R="R.R")
+  # make the project in the remote repo
+  if(!is.na(remote_target)) capture_make(remote_target)
   
-  # revise files as requested
-  # make_file("A.txt.cache", sprintf("A%d", Ac))
-  # make_file("R.R", sprintf("R <- %d", R))
+  # git pull all the committable files (not data files or .remake) into the local repo
+  git_pull(dirinfo)
+  setwd(dirinfo$local)
+}
+
+develop_local_R3 <- function(dirinfo, local_target='B.rds') {
+  setwd(dirinfo$local) # make sure
   
-  # revise files as requested
-  if(is.na(Ac)) file.remove("A.txt.cache")
-  if(is.na(Ai)) remake::delete("A.txt.st")
-  if(is.na(Ad)) remake::delete("A.txt")
-  if(is.na(R))  file.remove("R.R")
-  if(is.na(Bc)) file.remove("B.rds.cache")
-  if(is.na(Bi)) remake::delete("B.rds.st")
-  if(is.na(Bd)) remake::delete("B.rds")
+  make_file("R.R", "R <- 3")
   
-  return(dirinfo)
+  # make the project in the local repo
+  if(!is.na(local_target)) capture_make(local_target)
 }
 
 cleanup_demo <- function(dirinfo) {
@@ -79,7 +80,13 @@ git_pull <- function(dirinfo) {
   lapply(to_dirs, function(todir) if(!dir.exists(todir)) dir.create(todir))
   
   # copy the files
-  mapply(function(from, to) file.copy(from, to, recursive=dir.exists(from)), from_files, to_files, USE.NAMES=FALSE)
+  mapply(function(from, to) {
+    if(!file.exists(to) || file.mtime(from) > file.mtime(to)) {
+      return(file.copy(from, to, recursive=dir.exists(from), overwrite=TRUE))
+    } else {
+      return(NA)
+    }
+  }, from_files, to_files, USE.NAMES=FALSE)
 }
 
 # captures output from a non-verbose scmake, removes '\n's from outputs, and
