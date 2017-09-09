@@ -34,16 +34,90 @@ scmake <- function(
   YAMLify_build_status(tdiffs$target)
 }
 
+#' Wrapper for remake::delete that permits cache sharing
+#'
+#' [remake::delete()] claims that for files you can generally just delete the
+#' file itself with no need to call remake::delete(). This may also be the case
+#' for a shared cache; especially for non-status-indicator files (which have no
+#' build status file) however, it seems cleaner to delete the build status files
+#' at the same time that one deletes an indicator file.
+#'
+#' The option to set `dependencies=TRUE` for [remake::delete()] is omitted
+#' because it sounds terrifying to me: as currently implemented in remake,
+#' dependencies are the UPSTREAM targets on which the current target_names
+#' depend - i.e., if B is built from A and you ask to delete B with
+#' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
+#'
+#' @param target_names vector of targets to delete
+#' @param verbose as in [remake::delete()]
+#' @param remake_file as in [remake::delete()]
+#' @md
+#' @export
+scdel <- function(
+  target_names, verbose = TRUE,
+  remake_file = "remake.yml") {
+  
+  # run remake::delete, which takes care of the file itself and the RDS status
+  # file, leaving us with just the YAML file to deal with below. Lock in
+  # dependencies=FALSE
+  remake::delete(target_names=target_names, dependencies = FALSE,
+                 verbose = verbose, remake_file=remake_file)
+  
+  # get info about the remake project
+  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  dbstore <- remake_object$store$db
+  
+  # for every deleted target that is a status indicator file,
+  # delete or confirm the absence of the corresponding text (YAML) version of
+  # the build status file in build/status
+  status_targets <- target_names[is_status_indicator(target_names)]
+  status_keys <- get_mangled_key(status_targets, dbstore)
+  status_files <- file.path('build/status', paste0(status_keys, '.yml'))
+  file.remove(status_files)
+}
 
+#' Determine whether target_names are status indicator files
+#'
+#' Status indicator files are those files (not objects) included in the remake
+#' yml whose final extension is one of the accepted indicator file extensions
+#' ('st' by default, but see Details). If any of these criteria is not met,
+#' FALSE is returned; no warnings or errors are given if the target is not in
+#' the remake yml.
+#'
+#' By default, the only accepted indicator file extension is 'st'. If you want
+#' other extensions to be used, add a object target to your remake.yml that
+#' contains a character vector of the accepted extensions. See below for a
+#' yaml-based example.
+#'
+#' @examples
+#' \dontrun{
+#' # example remake.yml target to define extensions
+#' targets:
+#'   indicator_file_extensions:
+#'     packages: yaml
+#'     command: yaml.load(I("[st,s3,yeti]"))
+#' }
+#' @export
+is_status_indicator <- function(target_names, remake_file='remake.yml') {
+  all_targets <- remake::list_targets(remake_file=remake_file)
+  indicator_file_extensions <- if('indicator_file_extensions' %in% all_targets) {
+    remake::make('indicator_file_extensions', remake_file=remake_file, verbose=FALSE)
+  } else {
+    c('st') # the default is to recognize only the .st extension
+  }
+  file_targets <- remake::list_targets(type='file', remake_file=remake_file)
+  (target_names %in% file_targets) & 
+    (tools::file_ext(target_names) %in% indicator_file_extensions)
+}
 
 #' Produce a table describing the remake build status relative to 1+ targets
 #'
 #' @param target_names character vector of targets for which to determine build
 #'   status (complete status will include dependencies of these targets)
 #' @export
-get_remake_status <- function(target_names) {
+get_remake_status <- function(target_names, remake_file='remake.yml') {
   # collect information about the current remake database. do load sources to get the dependencies right
-  remake_object <- remake:::remake()
+  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
   unknown_targets <- setdiff(target_names, names(remake_object$targets))
   if(length(unknown_targets) > 0) stop('unknown targets: ', paste(unknown_targets, collapse=', '))
@@ -77,12 +151,12 @@ get_remake_status <- function(target_names) {
 #' (versionable text)
 #'  
 #' @keywords internal
-YAMLify_build_status <- function(target_names) {
+YAMLify_build_status <- function(target_names, remake_file='remake.yml') {
   # ensure there's a directory to receive the export
   if(!dir.exists('build/status')) dir.create('build/status', recursive=TRUE)
   
   # get info about the remake project
-  remake_object <- remake:::remake(load_sources=FALSE)
+  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   dbstore <- remake_object$store$db
   
   # figure out which of target_names to export: we stick to files that have keys
@@ -91,8 +165,8 @@ YAMLify_build_status <- function(target_names) {
   # too, which sounds a lot like writing and sharing files but would require a
   # second system on top of the one we're already supporting. and no sense in
   # trying to export targets for which we have no .remake status
-  rtargs <- remake::list_targets(type='file')
-  rstats <- dbstore$list()
+  rtargs <- remake::list_targets(type='file') # file targets
+  rstats <- dbstore$list() # exist in db
   to_export <- intersect(intersect(rtargs, rstats), target_names)
   
   # for each target whose status we want to export, pull the status data,
@@ -103,7 +177,7 @@ YAMLify_build_status <- function(target_names) {
     status$time <- POSIX2char(status$time)
     
     status_yml <- yaml::as.yaml(status)
-    status_key <- basename(dbstore$driver$name_key(to_export[i], ''))
+    status_key <- get_mangled_key(to_export[i], dbstore)
     status_file <- file.path('build/status', paste0(status_key, '.yml'))
     writeLines(status_yml, status_file)
     
@@ -122,11 +196,11 @@ YAMLify_build_status <- function(target_names) {
 #'   recourse; set new_only=FALSE to overwrite all .remake files for which we
 #'   have build/status files
 #' @keywords internal
-RDSify_build_status <- function(new_only=TRUE) {
+RDSify_build_status <- function(new_only=TRUE, remake_file='remake.yml') {
   # get info about the remake project. calling remake:::remake gives us info and
   # simultaneously ensures there's a directory to receive the export (creates
   # the .remake dir as a storr)
-  remake_object <- remake:::remake(load_sources = FALSE)
+  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   dbstore <- remake_object$store$db
   
   # figure out which build/status files to import. don't import info for targets
@@ -178,22 +252,9 @@ RDSify_build_status <- function(new_only=TRUE) {
 #' names, mangled keys are always good as file names - no punctuation or
 #' misleading suffixes
 #' @param key character vector of key[s] to convert
-#' @param dbstore a storr containing the remake build status
+#' @param dbstore a storr containing the remake build status, as from
+#'   remake:::remake(load_sources=FALSE)$store$db
 #' @keywords internal
-get_mangled_key <- function(key, dbstore=remake:::remake(load_sources=FALSE)$store$db) {
+get_mangled_key <- function(key, dbstore) {
   basename(dbstore$driver$name_key(key, ''))
-}
-
-#### timestamp helpers ####
-
-#' Format a POSIXct timestamp with UTC into a character string
-#' @export
-POSIX2char <- function(ptime) {
-  format(ptime, tz='UTC', format="%Y-%m-%d %H:%M:%S", usetz=TRUE)
-}
-
-#' Format a character string into POSIXct timestamp with UTC
-#' @export
-char2POSIX <- function(stime) {
-  as.POSIXct(strptime(stime, format="%Y-%m-%d %H:%M:%S", tz="UTC"))
 }
