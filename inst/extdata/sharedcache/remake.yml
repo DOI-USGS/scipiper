@@ -43,6 +43,7 @@ targets:
   # target_name has to be first argument. see https://github.com/richfitz/remake/issues/173
   B.rds.st :
     command: pretend_process(out_st=target_name, in_st='A.txt.st')
+    depends: R.R
     
   B.rds :
     command: get_cached_file('B.rds.st')

@@ -50,13 +50,9 @@ develop_remote_A2 <- function(dirinfo, remote_target='B.rds', rdelete_target='A.
   git_pull(dirinfo)
 }
 
-develop_local_R3 <- function(dirinfo, local_target='B.rds') {
+develop_local_R3 <- function(dirinfo) {
   setwd(dirinfo$local) # make sure
-  
   make_file("R.R", "R <- 3")
-  
-  # make the project in the local repo
-  if(!is.na(local_target)) capture_make(local_target)
 }
 
 # a fragile mock of git pull for testing scenarios
@@ -114,7 +110,7 @@ inspect_local <- function(dirinfo) {
       A.txt.cache = , A.txt = readLines(file),
       B.rds.cache = , B.rds = readRDS(file),
       R.R = gsub('R <- ', '', readLines(file)),
-      A.txt.st = , B.rds.st = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1')[[
+      A.txt.st = , B.rds.st = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1', '6ec33b'='A1B3')[[
         substring(readLines(file), 1, 6)]], ']')
     )
   })

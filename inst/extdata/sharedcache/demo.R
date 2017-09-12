@@ -59,10 +59,10 @@ get_cached_file <- function(stfile) {
   fnames <- expand_names(stfile)
   
   # check the integrity of the cache relative to the status file
-  if(!file.exists(fnames$cache)) stop(paste("missing", fnames$cache))
+  if(!file.exists(fnames$cache)) stop(paste0("despite ", fnames$indicator, ", missing ", fnames$cache))
   hash_cache <- get_hash(fnames$cache)
   hash_st <- readLines(fnames$indicator)
-  if(hash_cache != hash_st) stop(paste("badhash", fnames$cache))
+  if(hash_cache != hash_st) stop(paste0("despite ", fnames$indicator, ", badhash ", fnames$cache))
   
   # update iff the fnames$data needs to be updated. if the cache were remote, we
   # could look at a timestamp in stfile as an indicator of the cache status
