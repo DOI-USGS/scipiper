@@ -7,11 +7,13 @@
 #' @param ... as in remake::make
 #' @param verbose as in remake::make
 #' @param allow_missing_packages as in remake::make
-#' @param remake_file as in remake::make
+#' @param remake_file as in remake::make, except that for scmake this param
+#'   comes before ... and second in line, so it can be easily specified without
+#'   naming the argument
 #' @export
 scmake <- function(
-  target_names = NULL, ..., verbose = TRUE,
-  allow_missing_packages = FALSE, remake_file = "remake.yml") {
+  target_names = NULL, remake_file = "remake.yml", ..., 
+  verbose = TRUE, allow_missing_packages = FALSE) {
   
   # update .remake with any new build/status info
   RDSify_build_status()

@@ -4,19 +4,21 @@
 \alias{scmake}
 \title{Wrapper for remake::make that permits cache sharing}
 \usage{
-scmake(target_names = NULL, ..., verbose = TRUE,
-  allow_missing_packages = FALSE, remake_file = "remake.yml")
+scmake(target_names = NULL, remake_file = "remake.yml", ...,
+  verbose = TRUE, allow_missing_packages = FALSE)
 }
 \arguments{
 \item{target_names}{as in remake::make}
+
+\item{remake_file}{as in remake::make, except that for scmake this param
+comes before ... and second in line, so it can be easily specified without
+naming the argument}
 
 \item{...}{as in remake::make}
 
 \item{verbose}{as in remake::make}
 
 \item{allow_missing_packages}{as in remake::make}
-
-\item{remake_file}{as in remake::make}
 }
 \description{
 The name: sc=scipiper, sc=shared cache. This wrapper could eventually involve
