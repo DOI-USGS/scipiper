@@ -2,6 +2,10 @@
 
 export(POSIX2char)
 export(char2POSIX)
+export(create_task_makefile)
+export(create_task_plan)
+export(create_task_step)
+export(create_task_table)
 export(get_remake_status)
 export(get_s3)
 export(inventory_s3)
