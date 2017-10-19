@@ -6,6 +6,8 @@ Description: Functions to organize a data analysis repository and ensure that da
 Depends:
     R (>= 3.4.1)
 Imports:
+  aws.signature,
+  aws.s3,
   dplyr,
   remake,
   storr,

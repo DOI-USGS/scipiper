@@ -39,9 +39,9 @@ post_s3 <- function(file.name, s3.config="lib/cfg/s3_config.yaml", s3.post="lib/
     # download the file from S3 to the local file.name
     s3_config <- yaml.load_file(s3.config)
     message("Uploading ", file.name, " to S3 because s3_post.yaml says 'post: TRUE'")
-    use_credentials(profile = s3_config$s3Profile)
+    aws.signature::use_credentials(profile = s3_config$s3Profile)
     key <- file.path(s3_config$s3Path, basename(file.name))
-    success <- put_object(
+    success <- aws.s3::put_object(
       file = file.name,
       object = key, 
       bucket = s3_config$bucket)
@@ -63,9 +63,9 @@ get_s3 <- function(file.name, s3.config="lib/cfg/s3_config.yaml") {
   
   message("Downloading ", file.name, " from S3")
   s3_config <- yaml.load_file(s3.config)
-  use_credentials(profile = s3_config$s3Profile)
+  aws.signature::use_credentials(profile = s3_config$s3Profile)
   key <- file.path(s3_config$s3Path, basename(file.name))
-  save_object(
+  aws.s3::save_object(
     object = key, 
     bucket = s3_config$bucket,
     file = file.name)
@@ -80,9 +80,9 @@ get_s3 <- function(file.name, s3.config="lib/cfg/s3_config.yaml") {
 list_s3 <- function(s3.config="lib/cfg/s3_config.yaml", prefix="s3Path") {
   
   message("Listing project files on S3")
-  s3_config <- yaml.load_file(s3.config)
+  s3_config <- yaml::yaml.load_file(s3.config)
   if(prefix=="s3Path") prefix <- s3_config$s3Path
-  use_credentials(profile = s3_config$s3Profile)
+  aws.signature::use_credentials(profile = s3_config$s3Profile)
   bucket_df <- aws.s3::get_bucket_df(bucket=s3_config$bucket, prefix=prefix)
   dplyr::filter(bucket_df, grepl(sprintf("^%s/.+", s3_config$s3Path),Key))
   
