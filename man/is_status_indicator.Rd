@@ -6,15 +6,20 @@
 \usage{
 is_status_indicator(target_names, remake_file = "remake.yml")
 }
+\arguments{
+\item{target_names}{character vector of remake target names}
+
+\item{remake_file}{filename of the remake YAML file}
+}
 \description{
 Status indicator files are those files (not objects) included in the remake
 yml whose final extension is one of the accepted indicator file extensions
-('st' by default, but see Details). If any of these criteria is not met,
+('ind' by default, but see Details). If any of these criteria is not met,
 FALSE is returned; no warnings or errors are given if the target is not in
 the remake yml.
 }
 \details{
-By default, the only accepted indicator file extension is 'st'. If you want
+By default, the only accepted indicator file extension is 'ind'. If you want
 other extensions to be used, add a object target to your remake.yml that
 contains a character vector of the accepted extensions. See below for a
 yaml-based example.

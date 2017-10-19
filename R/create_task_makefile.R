@@ -21,6 +21,10 @@
 #' @param sources character vector of any files that should be sourced before
 #'   running steps. If any files must be quoted in the remake file, quote them
 #'   with inner single quotes, e.g. `c("unquoted", "'quoted file name.tsv'")`
+#' @param file_extensions character vector of file extensions to be added to the
+#'   defaults at `remake::file_extensions()`. Inclusion of `'ind'` is
+#'   recommended because this indicator file extension is commonly used by
+#'   scipiper.
 #' @param template_file character name of the mustache template to render into
 #'   `makefile`. The default is recommended
 #' @return the file name of the makefile that was created (can be displayed with
@@ -58,7 +62,7 @@ create_task_makefile <- function(
   task_plan, makefile=NULL,
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
   indicator_dir=attr(task_plan, 'indicator_dir'),
-  template_file='../lib/task_makefile.mustache') {
+  template_file=system.file('extdata/task_makefile.mustache', package='scipiper')) {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -74,7 +78,7 @@ create_task_makefile <- function(
     # even though target_name is an object (not file), job_command should write
     # to indicator_file - again so the calling remake file can use
     # indicator_file as its target
-    command = sprintf("write_timestamp(I('%s'))", indicator_file),
+    command = sprintf("write_indicator(I('%s'))", indicator_file),
     # as dependencies of this overall/default job, extract the target_name from
     # every task and all those steps indexed by job_steps. an alternative (or
     # complement) would be to create a dummy target for each task (probably with

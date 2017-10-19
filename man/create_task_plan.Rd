@@ -50,7 +50,7 @@ task_config <- data.frame(
 )
 step1 <- create_task_step(
   step_name = 'prep',
-  target = function(task_name, step_name, ...) {
+  target_name = function(task_name, step_name, ...) {
     sprintf('\%s_\%s', task_name, step_name)
   },
   depends = c('A','B'),

@@ -28,6 +28,8 @@
 #' unlink('example_project', recursive=TRUE)
 setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_report'=default, 'lib'='')) {
   
+  code <- codes <- subdir <- fulldir <- '.dplyr.var'
+  
   # collect arguments or assign the default
   maindirs <- list(...)
   if(length(maindirs) > 0 && !missing(.list)) stop('specify ... or .list but not both')
@@ -40,9 +42,9 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
     if(length(subdirs)!=1) stop('arguments should each have length 1')
     if(!is.character(subdirs)) stop('arguments should be strings')
     if(is.null(maindir) || maindir=='') {
-      setNames(default, subdirs)
+      stats::setNames(default, subdirs)
     } else {
-      setNames(subdirs, maindir)
+      stats::setNames(subdirs, maindir)
     }
   })
   # convert names and 1-letter subdirectory codes to full dir and subdir names

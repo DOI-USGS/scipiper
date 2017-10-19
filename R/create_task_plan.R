@@ -35,7 +35,7 @@
 #' )
 #' step1 <- create_task_step(
 #'   step_name = 'prep',
-#'   target = function(task_name, step_name, ...) {
+#'   target_name = function(task_name, step_name, ...) {
 #'     sprintf('%s_%s', task_name, step_name)
 #'   },
 #'   depends = c('A','B'),
@@ -62,12 +62,12 @@ create_task_plan <- function(
   if(!is.character(task_names)) {
     stop('task_names must be a character vector')
   }
-  task_names <- setNames(as.list(rep(NA, length(task_names))), task_names)
+  task_names <- stats::setNames(as.list(rep(NA, length(task_names))), task_names)
   
   # check that task_steps is a list of task_steps
   if(!is.list(task_steps)) {
     stop('task_steps must be a list')
-  } else if(any(!sapply(task_steps, function(ts) is(ts, 'task_step')))) {
+  } else if(any(!sapply(task_steps, function(ts) methods::is(ts, 'task_step')))) {
     stop('task_steps must be a list of task_step objects (see ?create_task_step)')
   }
   step_names <- sapply(task_steps, `[[`, 'step_name')
@@ -95,7 +95,7 @@ create_task_plan <- function(
   if(add_complete) {
     complete_task <- create_task_step(
       step_name = 'complete',
-      target = function(task_name, ...) {
+      target_name = function(task_name, ...) {
         sprintf("'%s.ind'", file.path(indicator_dir, task_name))
       },
       depends = function(steps, ...) {
@@ -105,7 +105,7 @@ create_task_plan <- function(
         # return the target_names from each of the chosen_steps
         sapply(chosen_steps, `[[`, 'target_name', USE.NAMES=FALSE)
       },
-      command = "write_timestamp(target_name)"
+      command = "write_indicator(target_name)"
     )
     task_steps <- c(task_steps, list(complete_task))
   }

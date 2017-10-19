@@ -9,6 +9,8 @@ get_remake_status(target_names, remake_file = "remake.yml")
 \arguments{
 \item{target_names}{character vector of targets for which to determine build
 status (complete status will include dependencies of these targets)}
+
+\item{remake_file}{filename of the remake YAML file}
 }
 \description{
 Produce a table describing the remake build status relative to 1+ targets

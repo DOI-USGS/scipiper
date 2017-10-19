@@ -7,7 +7,8 @@
 create_task_makefile(task_plan, makefile = NULL, include = c(),
   packages = c(), sources = c(), file_extensions = c("ind"),
   indicator_dir = attr(task_plan, "indicator_dir"),
-  template_file = "../lib/task_makefile.mustache")
+  template_file = system.file("extdata/task_makefile.mustache", package =
+  "scipiper"))
 }
 \arguments{
 \item{task_plan}{a task plan as produced by \code{create_task_plan()}}
@@ -23,6 +24,11 @@ inner single quotes, e.g. \code{c("unquoted", "'quoted file name.tsv'")}}
 \item{sources}{character vector of any files that should be sourced before
 running steps. If any files must be quoted in the remake file, quote them
 with inner single quotes, e.g. \code{c("unquoted", "'quoted file name.tsv'")}}
+
+\item{file_extensions}{character vector of file extensions to be added to the
+defaults at \code{remake::file_extensions()}. Inclusion of \code{'ind'} is
+recommended because this indicator file extension is commonly used by
+scipiper.}
 
 \item{indicator_dir}{directory path specifing the location where an overall
 job indicator file should be written once all tasks and steps are complete.

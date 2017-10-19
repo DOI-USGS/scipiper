@@ -1,3 +1,5 @@
+# make_file must be defined in both helper-demo.R and extdata/sharedcache/demo.R
+# because we need it both places, remake only sees one
 make_file <- function(fname, ftext='', ftstamp=Sys.time()) { # "2017-09-05 07:00:00 MST"
   writeLines(ftext, con=fname)
   system(sprintf('touch -d "%s" %s', POSIX2char(ftstamp), fname))
@@ -30,7 +32,7 @@ setup_demo <- function(remote_target='B.rds') {
   return(dirinfo)
 }
 
-develop_remote_A2 <- function(dirinfo, remote_target='B.rds', rdelete_target='A.txt.st', remove=NA) {
+develop_remote_A2 <- function(dirinfo, remote_target='B.rds', rdelete_target='A.txt.ind', remove=NA) {
   setwd(dirinfo$remote)
   
   # in this scenario we are updating A.txt.cache to contain 'A2' instead of 'A1'
@@ -62,7 +64,7 @@ git_pull <- function(dirinfo) {
   to <- gsub(dirinfo$remote, dirinfo$local, from, fixed=TRUE)
   
   to_dirs <- to[dir.exists(from)]
-  are_files <- !dir.exists(from) & grepl('\\.(st|cache|R|yml)$', basename(from))
+  are_files <- !dir.exists(from) & grepl('\\.(ind|cache|R|yml)$', basename(from))
   from_files <- from[are_files]
   to_files <- to[are_files]
   gone_files <- file.path(
@@ -110,11 +112,11 @@ inspect_local <- function(dirinfo) {
       A.txt.cache = , A.txt = readLines(file),
       B.rds.cache = , B.rds = readRDS(file),
       R.R = gsub('R <- ', '', readLines(file)),
-      A.txt.st = , B.rds.st = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1', '6ec33b'='A1B3')[[
+      A.txt.ind = , B.rds.ind = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1', '6ec33b'='A1B3')[[
         substring(readLines(file), 1, 6)]], ']')
     )
   })
-  targets <- c('A.txt.cache','A.txt.st','A.txt','R.R','B.rds.cache','B.rds.st','B.rds')
+  targets <- c('A.txt.cache','A.txt.ind','A.txt','R.R','B.rds.cache','B.rds.ind','B.rds')
   all <- setNames(contents[targets], targets)
   all[is.na(all)] <- '---'
   return(all)

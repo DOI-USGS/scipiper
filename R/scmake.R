@@ -32,7 +32,7 @@ scmake <- function(
   # make a text (YAML) copy of the build status file from the remake db storr;
   # put it in build/status
   tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
-  tdiffs <- tdiffs[grepl('\\.st$', tdiffs$target),]
+  tdiffs <- tdiffs[grepl('\\.ind$', tdiffs$target),]
   YAMLify_build_status(tdiffs$target)
   
   invisible(out)
@@ -85,15 +85,17 @@ scdel <- function(
 #'
 #' Status indicator files are those files (not objects) included in the remake
 #' yml whose final extension is one of the accepted indicator file extensions
-#' ('st' by default, but see Details). If any of these criteria is not met,
+#' ('ind' by default, but see Details). If any of these criteria is not met,
 #' FALSE is returned; no warnings or errors are given if the target is not in
 #' the remake yml.
 #'
-#' By default, the only accepted indicator file extension is 'st'. If you want
+#' By default, the only accepted indicator file extension is 'ind'. If you want
 #' other extensions to be used, add a object target to your remake.yml that
 #' contains a character vector of the accepted extensions. See below for a
 #' yaml-based example.
 #'
+#' @param target_names character vector of remake target names
+#' @param remake_file filename of the remake YAML file
 #' @examples
 #' \dontrun{
 #' # example remake.yml target to define extensions
@@ -108,7 +110,7 @@ is_status_indicator <- function(target_names, remake_file='remake.yml') {
   indicator_file_extensions <- if('indicator_file_extensions' %in% all_targets) {
     remake::make('indicator_file_extensions', remake_file=remake_file, verbose=FALSE)
   } else {
-    c('st') # the default is to recognize only the .st extension
+    c('ind') # the default is to recognize only the .ind extension
   }
   file_targets <- remake::list_targets(type='file', remake_file=remake_file)
   (target_names %in% file_targets) & 
@@ -119,6 +121,7 @@ is_status_indicator <- function(target_names, remake_file='remake.yml') {
 #'
 #' @param target_names character vector of targets for which to determine build
 #'   status (complete status will include dependencies of these targets)
+#' @param remake_file filename of the remake YAML file
 #' @export
 get_remake_status <- function(target_names, remake_file='remake.yml') {
   # collect information about the current remake database. do load sources to get the dependencies right

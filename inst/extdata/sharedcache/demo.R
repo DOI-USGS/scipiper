@@ -4,15 +4,15 @@
 record_mtime <- function(filename) {
   POSIX2char(file.mtime(filename))
 }
-#' reads a timestamp from an .st file into POSIXct
-read_time <- function(stfile) {
-  char2POSIX(readLines(stfile))
+#' reads a timestamp from an .ind file into POSIXct
+read_time <- function(indfile) {
+  char2POSIX(readLines(indfile))
 }
 
-#' Create length-3 vector of cache, status, and data filenames
+#' Create length-3 vector of cache, indicator, and data filenames
 #' 
-#' For shared cache: given any name ending in .cache, .st, or something else,
-#' categorizes the name and finds matching versions of .cache, .st, and data
+#' For shared cache: given any name ending in .cache, .ind, or something else,
+#' categorizes the name and finds matching versions of .cache, .ind, and data
 #' filenames
 expand_names <- function(filename) {
   # the result will be a named vector
@@ -20,11 +20,11 @@ expand_names <- function(filename) {
   
   # determine the name of the datafile
   if(grepl('\\.cache$', filename)) allnames$data <- gsub('.cache', '', filename)
-  else if(grepl('\\.st$', filename)) allnames$data <- gsub('.st', '', filename)
+  else if(grepl('\\.ind$', filename)) allnames$data <- gsub('.ind', '', filename)
   else allnames$data <- filename
   
   allnames$cache <- paste0(allnames$data, '.cache')
-  allnames$indicator <- paste0(allnames$data, '.st')
+  allnames$indicator <- paste0(allnames$data, '.ind')
   allnames$var <- tools::file_path_sans_ext(allnames$data)
   
   return(allnames)
@@ -41,8 +41,16 @@ get_hash <- function(fname) {
   unname(tools::md5sum(fname))
 }
 
-make_cache_indicator <- function(stfile) {
-  fnames <- expand_names(stfile)
+# make_file must be defined in both helper-demo.R and extdata/sharedcache/demo.R
+# because we need it both places, remake only sees one
+make_file <- function(fname, ftext='', ftstamp=Sys.time()) { # "2017-09-05 07:00:00 MST"
+  writeLines(ftext, con=fname)
+  system(sprintf('touch -d "%s" %s', POSIX2char(ftstamp), fname))
+  invisible(NULL)
+}
+
+make_cache_indicator <- function(indfile) {
+  fnames <- expand_names(indfile)
   if(!file.exists(fnames$cache)) stop(paste(fnames$data, "is missing from the cache"))
   message("note ", fnames$var)
   
@@ -54,18 +62,18 @@ make_cache_indicator <- function(stfile) {
   invisible(NULL)
 }
 
-get_cached_file <- function(stfile) {
-  # compute names of the cache and data files corresponding to the stfile indicator file
-  fnames <- expand_names(stfile)
+get_cached_file <- function(indfile) {
+  # compute names of the cache and data files corresponding to the indfile indicator file
+  fnames <- expand_names(indfile)
   
-  # check the integrity of the cache relative to the status file
+  # check the integrity of the cache relative to the indicator file
   if(!file.exists(fnames$cache)) stop(paste0("despite ", fnames$indicator, ", missing ", fnames$cache))
   hash_cache <- get_hash(fnames$cache)
-  hash_st <- readLines(fnames$indicator)
-  if(hash_cache != hash_st) stop(paste0("despite ", fnames$indicator, ", badhash ", fnames$cache))
+  hash_ind <- readLines(fnames$indicator)
+  if(hash_cache != hash_ind) stop(paste0("despite ", fnames$indicator, ", badhash ", fnames$cache))
   
   # update iff the fnames$data needs to be updated. if the cache were remote, we
-  # could look at a timestamp in stfile as an indicator of the cache status
+  # could look at a timestamp in indfile as an indicator of the cache status
   if(!file.exists(fnames$data) || get_hash(fnames$data) != hash_cache) {
     message("get ", fnames$var)
     file.copy(fnames$cache, fnames$data, overwrite=TRUE)
@@ -82,15 +90,15 @@ cache_file <- function(datafile) {
   invisible(NULL)
 }
 
-pretend_process <- function(in_st, out_st) {
+pretend_process <- function(in_ind, out_ind) {
   # we'll need a get_cached_file call in any function that [remake]depends on an
   # indicator file (nearly all functions)
-  in_data <- expand_names(in_st)$data
+  in_data <- expand_names(in_ind)$data
   scmake(in_data, verbose=FALSE)
   in_var <- readLines(in_data)
   
   # identify the names for the output
-  fnames <- expand_names(out_st)
+  fnames <- expand_names(out_ind)
   
   # create the actual data file
   message(sprintf("make %s", fnames$var))
