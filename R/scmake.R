@@ -137,15 +137,21 @@ get_remake_status <- function(target_names, remake_file='remake.yml') {
   status$target <- rownames(status)
   rownames(status) <- NULL
   
-  status$is_current <- status$hash <- status$time <- status$fixed <- as.character(NA)
-  for(i in seq_len(nrow(status))) {
-    tryCatch({
-      status[i,'is_current'] <- remake:::remake_is_current(remake_object, status$target[i])
-      remeta <- remake_object$store$db$get(status$target[i])
-      status[i,'hash'] <- as.character(remeta$hash)
-      status[i,'time'] <- as.character(POSIX2char(remeta$time))
-      status[i,'fixed'] <- if(!is.null(remeta$fixed)) remeta$fixed else as.character(NA)
-    }, error=function(e) NULL)
+  if(nrow(status) == 0) {
+    status <- data.frame(
+      target='', is_current=FALSE, dirty=TRUE, dirty_by_descent=TRUE, time='', hash='', fixed='',
+      stringsAsFactors=FALSE)[c(),]
+  } else {
+    status$is_current <- status$hash <- status$time <- status$fixed <- as.character(NA)
+    for(i in seq_len(nrow(status))) {
+      tryCatch({
+        status[i,'is_current'] <- remake:::remake_is_current(remake_object, status$target[i])
+        remeta <- remake_object$store$db$get(status$target[i])
+        status[i,'hash'] <- as.character(remeta$hash)
+        status[i,'time'] <- as.character(POSIX2char(remeta$time))
+        status[i,'fixed'] <- if(!is.null(remeta$fixed)) remeta$fixed else as.character(NA)
+      }, error=function(e) NULL)
+    }
   }
   status[c('target','is_current','dirty','dirty_by_descent','time','hash','fixed')]
 }
