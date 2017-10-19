@@ -10,19 +10,19 @@ create_task_makefile(task_plan, makefile = NULL, include = c(),
   template_file = "../lib/task_makefile.mustache")
 }
 \arguments{
-\item{task_plan}{a task plan as produced by `create_task_plan()`}
+\item{task_plan}{a task plan as produced by \code{create_task_plan()}}
 
 \item{makefile}{character name of the remake file to create}
 
 \item{include}{character vector of any remake .yml files to include within
 this one. If any files must be quoted in the remake file, quote them with
-inner single quotes, e.g. `c("unquoted", "'quoted file name.tsv'")`}
+inner single quotes, e.g. \code{c("unquoted", "'quoted file name.tsv'")}}
 
 \item{packages}{character vector of any packages to load before running steps}
 
 \item{sources}{character vector of any files that should be sourced before
 running steps. If any files must be quoted in the remake file, quote them
-with inner single quotes, e.g. `c("unquoted", "'quoted file name.tsv'")`}
+with inner single quotes, e.g. \code{c("unquoted", "'quoted file name.tsv'")}}
 
 \item{indicator_dir}{directory path specifing the location where an overall
 job indicator file should be written once all tasks and steps are complete.
@@ -30,20 +30,20 @@ This file will always be named after the makefile, but with '.ind' instead
 of '.yml' as a suffix}
 
 \item{template_file}{character name of the mustache template to render into
-`makefile`. The default is recommended}
+\code{makefile}. The default is recommended}
 }
 \value{
 the file name of the makefile that was created (can be displayed with
-  `cat(readLines(makefile), sep='\n')`).
+\code{cat(readLines(makefile), sep="\n")}).
 }
 \description{
 Create a .yml makefile (for use with remake or scipiper) for a set of tasks
 that together form a single job.  The default target will be named after
-`makefile` (specifically,
-`indicator_file=tools::file_path_sans_ext(basename(makefile))`) and can be
-evoked from another remake file as 
-`make(I('indicatorfile'),remake_file='thismakefile')`
-after replacing `indicatorfile` and `thismakefile` with their values.
+\code{makefile} (specifically,
+\code{indicator_file=tools::file_path_sans_ext(basename(makefile))}) and can be
+evoked from another remake file as
+\code{make(I('indicatorfile'),remake_file='thismakefile')} after replacing
+\code{indicatorfile} and \code{thismakefile} with their values.
 }
 \examples{
 task_config <- data.frame(

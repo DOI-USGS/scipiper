@@ -11,3 +11,9 @@ POSIX2char <- function(ptime) {
 char2POSIX <- function(stime) {
   as.POSIXct(strptime(stime, format="%Y-%m-%d %H:%M:%S", tz="UTC"))
 }
+
+#' Write a timestamp to an indicator file
+#' @export
+write_timestamp <- function(job_target) {
+  writeLines(text=POSIX2char(Sys.time()), con=job_target)
+}
