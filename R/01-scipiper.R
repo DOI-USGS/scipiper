@@ -1,4 +1,3 @@
-#'@importFrom methods new
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(paste(strwrap(
     'USGS Support Package: 

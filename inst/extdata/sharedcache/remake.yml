@@ -20,7 +20,7 @@ sources:
   - demo.R
   - R.R
 
-file_extensions: ["st","cache"]
+file_extensions: ["ind","cache"]
 
 target_default: B.rds
 
@@ -30,23 +30,23 @@ targets:
   
   indicator_file_extensions:
     packages: yaml
-    command: yaml.load(I("[st,s3,yeti]"))
+    command: yaml.load(I("[ind,s3,yeti]"))
 
   # project
 
-  A.txt.st :
+  A.txt.ind :
     command: make_cache_indicator(target_name)
     
   A.txt :
-    command: get_cached_file('A.txt.st')
+    command: get_cached_file('A.txt.ind')
     
   # target_name has to be first argument. see https://github.com/richfitz/remake/issues/173
-  B.rds.st :
-    command: pretend_process(out_st=target_name, in_st='A.txt.st')
+  B.rds.ind :
+    command: pretend_process(out_ind=target_name, in_ind='A.txt.ind')
     depends: R.R
     
   B.rds :
-    command: get_cached_file('B.rds.st')
+    command: get_cached_file('B.rds.ind')
     
   # objects need to depend on I() of data inputs (files or objects) and need to be depended
   # on as I() as well (and then retrieved within the calling function using remake::fetch);

@@ -1,0 +1,61 @@
+# Do not edit - automatically generated
+# from the task_makefile.mustache template
+# by {{rendering_function}}
+
+target_default: {{#job}}{{target_name}}{{/job}}
+
+{{#has_include}}
+include:
+{{#include}}
+  - {{.}}
+{{/include}}
+{{/has_include}}
+
+{{#has_packages}}
+packages:
+{{#packages}}
+  - {{.}}
+{{/packages}}
+{{/has_packages}}
+
+{{#has_sources}}
+sources:
+{{#sources}}
+  - {{.}}
+{{/sources}}
+{{/has_sources}}
+
+{{#has_file_extensions}}
+file_extensions:
+{{#file_extensions}}
+  - "{{.}}"
+{{/file_extensions}}
+{{/has_file_extensions}}
+
+targets:
+{{#tasks}}
+  # --- {{task_name}} --- #
+  
+{{#steps}}
+  {{target_name}}:
+    command: {{command}}
+{{#has_depends}}
+    depends:
+{{#depends}}
+      - {{.}}
+{{/depends}}
+{{/has_depends}}
+
+{{/steps}}
+{{/tasks}}
+
+  # --- Overall job --- #
+
+{{#job}}
+  {{target_name}}:
+    command: {{command}}
+    depends: 
+{{#depends}}
+      - {{.}}
+{{/depends}}
+{{/job}}

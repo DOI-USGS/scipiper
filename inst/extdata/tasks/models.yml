@@ -13,7 +13,7 @@ packages:
 sources:
   - model.R
 
-file_extensions: ["st","rds"]
+file_extensions: ["ind","rds"]
 
 target_default: models_tsv_st
 
@@ -43,16 +43,16 @@ targets:
   # construct this yml, by virtue of choosing the target names and commands such that
   # an intermediate or final target isn't created (errors first) unless it's successful.
   # This target doesn't declare dependencies on AK_mod_st, etc., because we want to be
-  # able to run it and create 'models.tsv' and 'models.tsv.st'. But summarize_models_and_post
+  # able to run it and create 'models.tsv' and 'models.tsv.ind'. But summarize_models_and_post
   # should break after creating those files unless every site or model is complete, so
   # that this target remains unbuilt in remake's eyes until we're actually done updating it.
   models_tsv_st:
-    command: summarize_models_and_post('models.yml', I('models.tsv.st'))
+    command: summarize_models_and_post('models.yml', I('models.tsv.ind'))
 
   # XX_dat is the input data relevant to site XX; if data-getting fails, files may be created but get_model_inputs stops on error
   # XX_mod.rds is the model output for site XX; if model fails, files may be created but run_model stops on error
   # XX_mod_st is created iff XX has been successfully posted; otherwise, post_model stops on error.
-  #   Because we'll summarize and share it in models_success.st, it can be an unversioned object rather than a file to version
+  #   Because we'll summarize and share it in models_success.ind, it can be an unversioned object rather than a file to version
   # The commands used by these targets are project-specifc and would be provided in the call to create_task_makefile(), along
   # with the vector of target name prefixes (AK, AZ, CO). It makes sense to break them up because the processing could fail
   # at any one of these steps and would only need to fall back to the previous step rather than starting from scratch. However,

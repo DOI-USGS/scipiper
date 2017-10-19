@@ -14,7 +14,7 @@ test_that("a1", {
 
 test_that("a2", {
   # fresh start
-  di <- setup_demo('A.txt.st')
+  di <- setup_demo('A.txt.ind')
   on.exit(cleanup_demo(di))
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','---','1','---','---','---'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
@@ -23,7 +23,7 @@ test_that("a2", {
 
 test_that("a3", {
   # odd: built remotely, make up a B.rds locally
-  di <- setup_demo('A.txt.st')
+  di <- setup_demo('A.txt.ind')
   on.exit(cleanup_demo(di))
   saveRDS('A1B1', 'B.rds')
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','---','1','---','---','A1B1'))
@@ -32,7 +32,7 @@ test_that("a3", {
 })
 
 test_that("a4", {
-  # new to project; only have .st
+  # new to project; only have .ind
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','---','1','A1B1','[A1B1]','---'))
@@ -42,7 +42,7 @@ test_that("a4", {
 
 test_that("a5", {
   # already had A; adding step B
-  di <- setup_demo('A.txt.st')
+  di <- setup_demo('A.txt.ind')
   on.exit(cleanup_demo(di))
   capture_make('A.txt')
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','A1','1','---','---','---'))
@@ -82,7 +82,7 @@ test_that("a7b", {
 })
 
 test_that("a8", {
-  # pulled A,B.st; got A
+  # pulled A,B.ind; got A
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('A.txt')
@@ -110,7 +110,7 @@ test_that("b1-RDSify", {
   # pull once, remote updates to A2, pull again
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   stat <- get_remake_status('B.rds')
   expect_equal(stat$dirty, c(T,F,T,T)) # before RDSify or first build, remake figures we're all dirty
   scipiper:::RDSify_build_status()
@@ -122,7 +122,7 @@ test_that("b1", {
   # pull once, remote updates to A2, pull again
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','---','1','A1B1','[A1B1]','---'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A2B1'))
@@ -133,7 +133,7 @@ test_that("b2", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('B.rds')
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target=c('A.txt.st','B.rds.st'), remove='B.rds.cache')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target=c('A.txt.ind','B.rds.ind'), remove='B.rds.cache')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','---','1','---','---','A1B1'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A2B1'))
@@ -144,7 +144,7 @@ test_that("b3", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('A.txt')
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target=c('A.txt.st','B.rds.st'), remove='B.rds.cache')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target=c('A.txt.ind','B.rds.ind'), remove='B.rds.cache')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','---','---','---'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A2B1'))
@@ -155,7 +155,7 @@ test_that("b4", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('B.rds'))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target=c('A.txt.st'))
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target=c('A.txt.ind'))
   stat <- get_remake_status('B.rds')
   expect_equal(stat$dirty | stat$dirty_by_descent, c(F,F,T,T))
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','---','1','A1B1','[A1B1]','A1B1'))
@@ -168,7 +168,7 @@ test_that("b5", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('B.rds'))
-  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','---','1','A2B1','[A2B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "get B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','---','1','A2B1','[A2B1]','A2B1'))
@@ -184,7 +184,7 @@ test_that("b10", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('A.txt'))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A1B1','[A1B1]','---'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A2B1'))
@@ -194,7 +194,7 @@ test_that("b11", {
   # pull once, remote updates to A2, pull again, get A
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   capture_make(c('A.txt'))
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A1B1','[A1B1]','---'))
   expect_equal(capture_make('B.rds'), "make B; cache B; note B; noget B")
@@ -206,7 +206,7 @@ test_that("b12", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('A.txt'))
-  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A2B1','[A2B1]','---'))
   expect_equal(capture_make('B.rds'), "get B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A2B1','[A2B1]','A2B1'))
@@ -217,7 +217,7 @@ test_that("b13", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('A.txt','B.rds'))
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A1B1','[A1B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "get A; make B; cache B; note B; noget B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A2B1'))
@@ -228,7 +228,7 @@ test_that("b14", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('B.rds')
-  develop_remote_A2(di, remote_target='A.txt.st', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='A.txt.ind', rdelete_target='A.txt.ind')
   capture_make('A.txt')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A1B1','[A1B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "make B; cache B; note B; noget B")
@@ -240,7 +240,7 @@ test_that("b15", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('A.txt','B.rds'))
-  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.ind')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A2B1','[A2B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "get B")
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A2B1','[A2B1]','A2B1'))
@@ -251,7 +251,7 @@ test_that("b16", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make(c('A.txt','B.rds'))
-  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.ind')
   capture_make('A.txt')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A2','1','A2B1','[A2B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "get B")
@@ -266,7 +266,7 @@ test_that("b19", {
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('A.txt')
-  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.st')
+  develop_remote_A2(di, remote_target='B.rds', rdelete_target='A.txt.ind')
   capture_make('B.rds')
   expect_equal(unname(inspect_local(di)), c('A2','[A2]','A1','1','A2B1','[A2B1]','A2B1'))
   expect_equal(capture_make('B.rds'), "")
@@ -329,45 +329,45 @@ test_that("c6", {
 
 context("shared cache - d")
 # "d" series of scenarios: Various forms of corruption: missing or out of date
-# cached files or .st files
+# cached files or .ind files
 
 test_that("d1", {
-  # pull once, delete A.st or collab forgot to commit it or we've just never created A.st
+  # pull once, delete A.ind or collab forgot to commit it or we've just never created A.ind
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  capture_output(scdel('A.txt.st'))
+  capture_output(scdel('A.txt.ind'))
   expect_equal(unname(inspect_local(di)), c('A1','---','---','1','A1B1','[A1B1]','---'))
   expect_equal(capture_make('B.rds'), "note A; get B")
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','---','1','A1B1','[A1B1]','A1B1'))
 })
 
 test_that("d2", {
-  # pull once, make B, delete A.st
+  # pull once, make B, delete A.ind
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('B.rds')
-  capture_output(scdel('A.txt.st'))
+  capture_output(scdel('A.txt.ind'))
   expect_equal(unname(inspect_local(di)), c('A1','---','---','1','A1B1','[A1B1]','A1B1'))
   expect_equal(capture_make('B.rds'), "note A")
   expect_equal(unname(inspect_local(di)), c('A1','[A1]','---','1','A1B1','[A1B1]','A1B1'))
 })
 
 test_that("d3", {
-  # pull once, delete A.st AND A.cache
+  # pull once, delete A.ind AND A.cache
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  capture_output(scdel('A.txt.st'))
+  capture_output(scdel('A.txt.ind'))
   file.remove('A.txt.cache')
   expect_equal(unname(inspect_local(di)), c('---','---','---','1','A1B1','[A1B1]','---'))
   expect_error(capture_make('B.rds'), "A.txt is missing from the cache")
 })
 
 test_that("d4", {
-  # pull once, make B, delete A.st AND A.cache
+  # pull once, make B, delete A.ind AND A.cache
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
   capture_make('B.rds')
-  capture_output(scdel('A.txt.st'))
+  capture_output(scdel('A.txt.ind'))
   file.remove('A.txt.cache')
   expect_equal(unname(inspect_local(di)), c('---','---','---','1','A1B1','[A1B1]','A1B1'))
   expect_error(capture_make('B.rds'), "A.txt is missing from the cache")
@@ -400,7 +400,7 @@ test_that("d6", {
   file.remove('A.txt.cache')
   develop_local_R3(di)
   expect_equal(unname(inspect_local(di)), c('---','[A1]','---','3','A1B1','[A1B1]','---'))
-  expect_error(capture_make('B.rds'), "despite A.txt.st, missing A.txt.cache")
+  expect_error(capture_make('B.rds'), "despite A.txt.ind, missing A.txt.cache")
 })
 
 test_that("d7", {
@@ -410,5 +410,5 @@ test_that("d7", {
   writeLines('A2', 'A.txt.cache')
   develop_local_R3(di)
   expect_equal(unname(inspect_local(di)), c('A2','[A1]','---','3','A1B1','[A1B1]','---'))
-  expect_error(capture_make('B.rds'), "despite A.txt.st, badhash A.txt.cache")
+  expect_error(capture_make('B.rds'), "despite A.txt.ind, badhash A.txt.cache")
 })

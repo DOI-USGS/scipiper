@@ -11,7 +11,7 @@
 #' @section Cache sharing strategy:
 #'
 #'   Every file (cached and uncached) is assigned a corresponding lightweight
-#'   indicator file of the same name but with the additional extension '.st'.
+#'   indicator file of the same name but with the additional extension '.ind'.
 #'
 #'   remake.yml targets should declare dependencies on the indicator files
 #'   rather than among the data files. The data files can be included as targets
