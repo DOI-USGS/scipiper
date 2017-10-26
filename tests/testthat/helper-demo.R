@@ -113,7 +113,7 @@ inspect_local <- function(dirinfo) {
       B.rds.cache = , B.rds = readRDS(file),
       R.R = gsub('R <- ', '', readLines(file)),
       A.txt.ind = , B.rds.ind = paste0('[', c('dc7cf3'='A1', '35775d'='A2', 'cb4bb7'='A1B1', 'e556ae'='A2B1', '6ec33b'='A1B3')[[
-        substring(readLines(file), 1, 6)]], ']')
+        substring(yaml::yaml.load_file(file)$hash, 1, 6)]], ']')
     )
   })
   targets <- c('A.txt.cache','A.txt.ind','A.txt','R.R','B.rds.cache','B.rds.ind','B.rds')

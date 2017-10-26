@@ -105,7 +105,7 @@ create_task_plan <- function(
         # return the target_names from each of the chosen_steps
         sapply(chosen_steps, `[[`, 'target_name', USE.NAMES=FALSE)
       },
-      command = "write_indicator(target_name)"
+      command = "sc_indicate(target_name)"
     )
     task_steps <- c(task_steps, list(complete_task))
   }

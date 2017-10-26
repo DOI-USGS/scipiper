@@ -81,6 +81,64 @@ scdel <- function(
   file.remove(status_files)
 }
 
+#' Create an indicator file
+#'
+#' If only the first argument (`indicator`) is given, the contents of the
+#' indicator file change every time. To create an indicator file whose contents
+#' are static, specify a fixed argument in `...`.
+#'
+#' @param indicator file name of the indicator file to write
+#' @param ... optional. named character strings/vectors to be written to the
+#'   indicator file. one good option is a pre-computed hash of the actual data
+#'   file (possibly retrieved as a hash from the remote cache). If you have the
+#'   data_file locally and don't yet have a hash, just specify the `data_file`
+#'   argument instead.
+#' @param data_file optional. file name of the data file whose presence is being
+#'   indicated. if given, the hash of the data file will be included in the
+#'   indicator file as the `hash` element.
+#' @md
+#' @export
+sc_indicate <- function(indicator, ..., data_file) {
+  
+  info_list <- list(...)
+  
+  # if data_file is given, get a hash of the file so we have the option of
+  # checking whether this indicator file has gone bad
+  if(!missing(data_file)) {
+    if(!file.exists(data_file)) {
+      stop('data_file must exist if specified')
+    }
+    info_list$hash <- unname(tools::md5sum(data_file))
+  }
+  
+  # if no writable information is given, use the current time. this is a
+  # fallback when we don't have direct information about the contents of the
+  # data file or when the thing being indicated isn't a file and probably
+  # changes every time the indicator file gets written
+  if(length(info_list) == 0) {
+    info_list$indication_time <- POSIX2char(Sys.time())
+  }
+  
+  # write the info to the indicator file
+  writeLines(yaml::as.yaml(info_list), con=indicator)
+  
+  invisible(NULL)
+}
+#' Retrieve the data file declared by an indicator
+#'
+#' Identifies the data file's name by removing the indicator extension, then
+#' calls `scmake` to retrieve that file using a recipe given in the remake.yml
+#'
+#' @md
+#' @param indicator the file path of the indicator
+#' @export
+sc_retrieve <- function(indicator) {
+  data_file <- as_data_file(indicator)
+  scmake(data_file, verbose=FALSE)
+  return(data_file)
+}
+
+
 #' Determine whether target_names are status indicator files
 #'
 #' Status indicator files are those files (or maybe someday objects?) included
