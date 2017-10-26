@@ -96,7 +96,7 @@ create_task_plan <- function(
     complete_task <- create_task_step(
       step_name = 'complete',
       target_name = function(task_name, ...) {
-        sprintf("'%s.ind'", file.path(indicator_dir, task_name))
+        as_indicator(file.path(indicator_dir, task_name))
       },
       depends = function(steps, ...) {
         # when this final step is evaluated, steps will contain all preceding
