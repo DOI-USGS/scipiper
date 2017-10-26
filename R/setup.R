@@ -52,7 +52,7 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
   alldirs <- data_frame(dir=names(dircodes), code=unname(dircodes)) %>%
     mutate(code=ifelse(code=='', '0', code),
            codes=strsplit(code, '')) %>%
-    unnest() %>%
+    tidyr::unnest() %>%
     mutate(
       allgood=if(!all(codes %in% names(codekey))) {
         stop(paste("unexpected code; characters must be among", paste(names(codekey), collapse=',')))
@@ -74,8 +74,6 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
 #'   or unnamed characters where value=filepath[s]. Paths can be relative.
 #' @param .list as an alternative to ..., use .list to specify files in a single
 #'   list argument
-#' @import tidyr
-#' @import dplyr
 #' @export
 #' @md
 #' @examples

@@ -6,8 +6,6 @@ Description: Functions to organize a data analysis repository and ensure that da
 Depends:
     R (>= 3.4.1)
 Imports:
-  aws.signature,
-  aws.s3,
   dplyr,
   methods,
   remake,
@@ -16,6 +14,8 @@ Imports:
   whisker,
   yaml
 Suggests:
+  aws.signature,
+  aws.s3,
   testthat
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
