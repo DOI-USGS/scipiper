@@ -4,7 +4,8 @@
 \alias{get_remake_status}
 \title{Produce a table describing the remake build status relative to 1+ targets}
 \usage{
-get_remake_status(target_names, remake_file = "remake.yml")
+get_remake_status(target_names,
+  remake_file = options("scipiper.remake_file")[[1]])
 }
 \arguments{
 \item{target_names}{character vector of targets for which to determine build
