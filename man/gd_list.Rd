@@ -4,7 +4,7 @@
 \alias{gd_list}
 \title{List the Google Drive objects for this project}
 \usage{
-gd_list(..., config_file = "lib/cfg/gd_config.yml")
+gd_list(..., config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
 \item{...}{arguments passed to googledrive::drive_ls}

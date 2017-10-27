@@ -10,7 +10,8 @@
   # set defaults. code inspired by github.com/jennybc/googlesheets
   op <- options()
   op.scipiper <- list(
-    scipiper.remake_file = 'remake.yml'
+    scipiper.remake_file = 'remake.yml',
+    scipiper.gd_config_file = "lib/cfg/gd_config.yml"
   )
   toset <- !(names(op.scipiper) %in% names(op))
   if(any(toset)) options(op.scipiper[toset])

@@ -4,7 +4,7 @@
 \alias{gd_config}
 \title{Create or overwrite a Google Drive configuration file}
 \usage{
-gd_config(folder, config_file = "lib/cfg/gd_config.yml")
+gd_config(folder, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
 \item{folder}{character name of the Google Drive folder where all files for

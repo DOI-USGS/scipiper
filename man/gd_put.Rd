@@ -4,7 +4,8 @@
 \alias{gd_put}
 \title{Upload a file to Google Drive}
 \usage{
-gd_put(data_file, ind_file, config_file = "lib/cfg/gd_config.yml")
+gd_put(data_file, ind_file,
+  config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
 \item{data_file}{character name of the data file to upload. The basename will

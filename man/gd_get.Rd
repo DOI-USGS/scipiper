@@ -4,14 +4,14 @@
 \alias{gd_get}
 \title{Download a file from Google Drive}
 \usage{
-gd_get(data_file, config_file = "lib/cfg/gd_config.yml")
+gd_get(indicator, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{data_file}{character name of the data file to download (downloads the
-Google Drive object whose key equals the data_file basename)}
-
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}
+
+\item{data_file}{character name of the data file to download (downloads the
+Google Drive object whose key equals the data_file basename)}
 }
 \description{
 Download a file from Google Drive to the local project

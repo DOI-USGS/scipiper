@@ -8,16 +8,16 @@
 #' @param config_file character name of the yml file where this configuration
 #'   information should be written
 #' @export
-gd_config <- function(folder, config_file="lib/cfg/gd_config.yml") {
+gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]]) {
   # write the given information to the specified config_file
   cfg <- list(folder=folder)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
   writeLines(yaml::as.yaml(cfg), config_file)
   
   # check for credentials
-  cred_file <- aws.signature::default_credentials_file()
+  cred_file <- '.httr-oauth'
   if(!file.exists(cred_file)) {
-    warning(paste0("aws.signature expects credentials at ", cred_file, " - see ??read_credentials to create this file"))
+    warning(paste0("googledrive expects credentials at ", cred_file, " - see ??drive_auth to create this file"))
   }
 }
 
@@ -32,7 +32,9 @@ gd_config <- function(folder, config_file="lib/cfg/gd_config.yml") {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_put <- function(data_file, ind_file, config_file="lib/cfg/gd_config.yml") {
+gd_put <- function(data_file, ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
+  
+  scmake(as_data_file(ind_file))
   
   require_libs('googledrive')
   
@@ -58,14 +60,30 @@ gd_put <- function(data_file, ind_file, config_file="lib/cfg/gd_config.yml") {
 
 #' Download a file from Google Drive
 #'
-#' Download a file from Google Drive to the local project
+#' Download a file from Google Drive to the local project based on the
+#' information implied by the indicator file (including the location on google
+#' drive and the local destination location)
 #'
-#' @param data_file character name of the data file to download (downloads the
-#'   Google Drive object whose key equals the data_file basename)
+#' @param indicator character name of the indicator file for which data should
+#'   be downloaded. downloads the Google Drive object whose key equals the
+#'   data_file basename
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_get <- function(data_file, config_file="lib/cfg/gd_config.yml") {
+gd_get <- function(indicator, config_file=options("scipiper.gd_config_file")[[1]]) {
+  
+  # infer the data file name from the indicator. gd_get always downloads to that
+  # location if it downloads at all
+  data_file <- as_data_file(indicator)
+  
+  # if this function is being called straight from gd_put and the data file
+  # exists, then gd_put is trying to bypass a superfluous download from google
+  # drive. don't re-pull the data right now, just return smoothly so remake
+  # understands that what we have is already up to date.
+  gd_put_is_parent <- any(sapply(sys.calls(), function(sc) { isTRUE(sc[[1]] == 'gd_put') }))
+  if(file.exists(data_file) && gd_put_is_parent) {
+    invisible()
+  }
   
   require_libs('googledrive')
   
@@ -88,7 +106,7 @@ gd_get <- function(data_file, config_file="lib/cfg/gd_config.yml") {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_list <- function(..., config_file="lib/cfg/gd_config.yml") {
+gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
   
   require_libs('googledrive')
   
@@ -108,7 +126,7 @@ gd_list <- function(..., config_file="lib/cfg/gd_config.yml") {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/gd_config.yml") {
+gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
   
   # look on Google Drive for the specified file
   gd_config <- yaml::yaml.load_file(config_file)
