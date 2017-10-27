@@ -4,7 +4,8 @@
 \alias{scdel}
 \title{Wrapper for remake::delete that permits cache sharing}
 \usage{
-scdel(target_names, verbose = TRUE, remake_file = "remake.yml")
+scdel(target_names, verbose = TRUE,
+  remake_file = options("scipiper.remake_file")[[1]])
 }
 \arguments{
 \item{target_names}{vector of targets to delete}

@@ -12,7 +12,7 @@
 #'   naming the argument
 #' @export
 scmake <- function(
-  target_names = NULL, remake_file = "remake.yml", ..., 
+  target_names = NULL, remake_file = options('scipiper.remake_file')[[1]], ..., 
   verbose = TRUE, allow_missing_packages = FALSE) {
   
   # update .remake with any new build/status info
@@ -62,7 +62,7 @@ scmake <- function(
 #' @export
 scdel <- function(
   target_names, verbose = TRUE,
-  remake_file = "remake.yml") {
+  remake_file = options('scipiper.remake_file')[[1]]) {
   
   # run remake::delete, which takes care of the file itself and the RDS status
   # file, leaving us with just the YAML file to deal with below. Lock in
