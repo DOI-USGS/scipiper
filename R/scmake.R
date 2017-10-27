@@ -22,8 +22,11 @@ scmake <- function(
   status_pre <- get_remake_status(target_names)
   
   # run remake::make
-  out <- remake::make(target_names=target_names, ..., verbose=verbose,
-               allow_missing_packages=allow_missing_packages, remake_file=remake_file)
+  message('Starting build at ', Sys.time())
+  out <- remake::make(
+    target_names=target_names, ..., verbose=verbose,
+    allow_missing_packages=allow_missing_packages, remake_file=remake_file)
+  message('Finished build at ', Sys.time())
   
   # record status after running make
   status_post <- get_remake_status(target_names)
