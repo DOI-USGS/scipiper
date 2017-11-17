@@ -4,11 +4,11 @@
 \alias{gd_get}
 \title{Download a file from Google Drive}
 \usage{
-gd_get(indicator, type = NULL, overwrite = TRUE, verbose = FALSE,
+gd_get(ind_file, type = NULL, overwrite = TRUE, verbose = FALSE,
   config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{indicator}{character name of the indicator file for which data should
+\item{ind_file}{character name of the indicator file for which data should
 be downloaded. downloads the Google Drive object whose key equals the
 data_file basename}
 

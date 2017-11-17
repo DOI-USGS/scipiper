@@ -23,13 +23,27 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 
 #' Upload a file to Google Drive
 #'
-#' Upload (create or overwrite) a file to the project bucket and path.
+#' Upload (create or overwrite) a file to the project bucket and path. Writes an
+#' indicator file exactly corresponding to the data_file path and name (but with
+#' indicator file extension).
 #'
-#' @param data_file character name of the data file to upload. The basename will
-#'   be used as the Google Drive key and must be unique within the project
-#'   (bucket & path)
-#' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
+#' @param remote_ind character name of the indicator file to write locally, but
+#'   which describes the status of the remote file once the file has been
+#'   uploaded by this function. The remote data file will have a name
+#'   corresponding to this ind_file (without the indicator extension, but with
+#'   same path and basename).
+#' @param local_source character name of EITHER a data file to upload OR the
+#'   indicator file of a data file to upload. Using the same value for both
+#'   remote_ind and local_source (or setting local_source to the data file name
+#'   corresponding to the indicator in remote_ind) will only work (in remake) if
+#'   you are calling `gd_put` from within the same function that created the
+#'   data_file. If instead you have separate recipes for (a) creating the
+#'   original data_file, (b) posting the data_file, and (c) retrieving the
+#'   data_file from google drive, then the 'a' and 'c' recipes must have
+#'   different targets and this function's local_source argument should match
+#'   the target of the 'a' recipe while this function's remote_ind argument
+#'   should match the target of this recipe (=='b') and the data_file target of
+#'   the 'c' recipe. See the examples.
 #' @param on_exists what to do if the file already exists - update, replace, or
 #'   throw an error? the default is to update (using google drive's versioning
 #'   functionality)
@@ -38,15 +52,55 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
+#' @md
 #' @export
+#' @examples
+#' \dontrun{
+#' #### using 2 recipes
+#' 
+#' ## remake file
+#' # create and post 1_data/out/mydata.rds (and an indicator for it) at once
+#' 1_data/out/mydata.rds.ind:
+#'   command: create_and_post_mydata(target_name)
+#' 1_data/out/mydata.rds:
+#'   command: gd_get('1_data/out/mydata.rds.ind')
+#' }
+#'
+#' ## function definitions
+#' create_and_post_mydata <- function(ind_file) {
+#'   data_file <- as_data_file(ind_file)
+#'   mydata # <- ...compute mydata here...
+#'   write.csv(mydata, data_file)
+#'   gd_put(remote_ind=ind_file, local_source=data_file)
+#'   sc_indicate(ind_file, data_file=data_file)
+#' }
+#' 
+#' #### using 3 recipes
+#'
+#' ## remake file
+#' # create 1_data/cache/mydata.rds (and an indicator for it) locally
+#' 1_data/tmp/mydata.rds.ind:
+#'   command: create_mydata(target_name)
+#' # post 1_data/cache/mydata.rds to 1_data/out/mydata.rds on Drive
+#' 1_data/out/mydata.rds.ind:
+#'   command: gd_put(remote_ind=target_name, local_source='1_data/tmp/mydata.rds.ind')
+#' 1_data/out/mydata.rds:
+#'   command: gd_get('1_data/out/mydata.rds.ind')
+#'
+#' }
 gd_put <- function(
-  data_file, ind_file=as_indicator(data_file),
+  remote_ind, local_source,
   on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
   config_file=options("scipiper.gd_config_file")[[1]]) {
   
+  # decide whether local_source is an indicator or data_file and find the data_file
+  if(is_indicator(local_source)) {
+    local_file <- as_data_file(local_source)
+  } else {
+    local_file <- local_source
+  }
   on_exists <- match.arg(on_exists)
   if(!file.exists(data_file)) stop('data_file does not exist')
-  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file))
   
   require_libs('googledrive')
   gd_config <- yaml::yaml.load_file(config_file)
@@ -122,7 +176,7 @@ gd_put <- function(
 #' information implied by the indicator file (including the location on google
 #' drive and the local destination location)
 #'
-#' @param indicator character name of the indicator file for which data should
+#' @param ind_file character name of the indicator file for which data should
 #'   be downloaded. downloads the Google Drive object whose key equals the
 #'   data_file basename
 #' @param type see `type` argument to `googledrive::drive_download()`
@@ -137,18 +191,18 @@ gd_put <- function(
 #' gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)
 #' }
 #' @export
-gd_get <- function(indicator, type=NULL, overwrite=TRUE, verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
   
-  # infer the data file name from the indicator. gd_get always downloads to that
+  # infer the data file name from the ind_file. gd_get always downloads to that
   # location if it downloads at all
-  data_file <- as_data_file(indicator)
+  data_file <- as_data_file(ind_file)
   
-  # if this function is being called straight from gd_put and the data file
-  # exists, then gd_put is trying to bypass a superfluous download from google
-  # drive. don't re-pull the data right now, just return smoothly so remake
-  # understands that what we have is already up to date.
-  gd_put_is_parent <- any(sapply(sys.calls(), function(sc) { isTRUE(sc[[1]] == 'gd_put') }))
-  if(file.exists(data_file) && gd_put_is_parent) {
+  # if this function is being called from gd_put and the data file exists, then
+  # gd_put is trying to bypass a superfluous download from google drive. don't
+  # re-pull the data right now, just return smoothly so remake understands that
+  # what we have is already up to date.
+  gd_put_is_ancestor <- any(sapply(sys.calls(), function(sc) { isTRUE(sc[[1]] == 'gd_put') }))
+  if(file.exists(data_file) && gd_put_is_ancestor) {
     invisible()
   }
   
@@ -258,7 +312,8 @@ gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper
   if(is.na(remote_id)) stop('file was not posted to googledrive')
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
-  gd_make_indicator(ind_file, remote_time=remote_info$modifiedTime, md5_checksum=remote_info$md5Checksum)
+  # we could prepare a timestamp...but checksum is even better. remote_time=remote_info$modifiedTime
+  gd_make_indicator(ind_file, md5_checksum=remote_info$md5Checksum)
   
   return(TRUE)
 }
@@ -272,11 +327,14 @@ gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @keywords internal
-gd_make_indicator <- function(ind_file, remote_time, md5_checksum) {
+gd_make_indicator <- function(ind_file, md5_checksum) { # , remote_time
+  
+  # we could prepare a timestamp...but checksum is even better
+  # if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
   
   # write the cache file
-  if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
-  writeLines(c(remote_time, md5_checksum), con=ind_file)
+  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+  writeLines(md5_checksum, con=ind_file)
   
 }
 

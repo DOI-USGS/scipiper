@@ -4,17 +4,29 @@
 \alias{gd_put}
 \title{Upload a file to Google Drive}
 \usage{
-gd_put(data_file, ind_file = as_indicator(data_file),
-  on_exists = c("update", "replace", "stop"), type = NULL,
-  verbose = FALSE, config_file = options("scipiper.gd_config_file")[[1]])
+gd_put(remote_ind, local_source, on_exists = c("update", "replace", "stop"),
+  type = NULL, verbose = FALSE,
+  config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{data_file}{character name of the data file to upload. The basename will
-be used as the Google Drive key and must be unique within the project
-(bucket & path)}
+\item{remote_ind}{character name of the indicator file to write locally, but
+which describes the status of the remote file once the file has been
+uploaded by this function. The remote data file will have a name
+corresponding to this ind_file (without the indicator extension, but with
+same path and basename).}
 
-\item{ind_file}{character name of the indicator file to write locally once
-the file has been uploaded}
+\item{local_source}{character name of EITHER a data file to upload OR the
+indicator file of a data file to upload. Using the same value for both
+remote_ind and local_source (or setting local_source to the data file name
+corresponding to the indicator in remote_ind) will only work (in remake) if
+you are calling \code{gd_put} from within the same function that created the
+data_file. If instead you have separate recipes for (a) creating the
+original data_file, (b) posting the data_file, and (c) retrieving the
+data_file from google drive, then the 'a' and 'c' recipes must have
+different targets and this function's local_source argument should match
+the target of the 'a' recipe while this function's remote_ind argument
+should match the target of this recipe (=='b') and the data_file target of
+the 'c' recipe. See the examples.}
 
 \item{on_exists}{what to do if the file already exists - update, replace, or
 throw an error? the default is to update (using google drive's versioning
@@ -29,5 +41,7 @@ googledrive::drive_update, drive_upload, and/or drive_rm}
 configuration information}
 }
 \description{
-Upload (create or overwrite) a file to the project bucket and path.
+Upload (create or overwrite) a file to the project bucket and path. Writes an
+indicator file exactly corresponding to the data_file path and name (but with
+indicator file extension).
 }
