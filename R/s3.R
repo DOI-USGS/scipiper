@@ -149,5 +149,5 @@ s3_make_indicator <- function(ind_file, remote_time) {
 #' @return POSIXct datetime
 #' @keywords internal
 s3_read_time <- function(datetime) {
-  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%S.000Z', tz='UTC')
+  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%OSZ', tz='UTC')
 }

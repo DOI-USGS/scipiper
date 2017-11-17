@@ -4,7 +4,8 @@
 \alias{gd_put}
 \title{Upload a file to Google Drive}
 \usage{
-gd_put(data_file, ind_file, on_exists = c("update", "replace", "stop"),
+gd_put(data_file, ind_file = as_indicator(data_file),
+  on_exists = c("update", "replace", "stop"), type = NULL,
   verbose = FALSE, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
@@ -18,6 +19,8 @@ the file has been uploaded}
 \item{on_exists}{what to do if the file already exists - update, replace, or
 throw an error? the default is to update (using google drive's versioning
 functionality)}
+
+\item{type}{media type as passed to drive_upload or drive_update}
 
 \item{verbose}{logical, used in gd_put and passed onto
 googledrive::drive_update, drive_upload, and/or drive_rm}

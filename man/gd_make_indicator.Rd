@@ -4,7 +4,7 @@
 \alias{gd_make_indicator}
 \title{Write an Google Drive indicator file}
 \usage{
-gd_make_indicator(ind_file, remote_time)
+gd_make_indicator(ind_file, remote_time, md5_checksum)
 }
 \arguments{
 \item{ind_file}{character name of the indicator file to write locally once

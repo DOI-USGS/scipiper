@@ -33,15 +33,20 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #' @param on_exists what to do if the file already exists - update, replace, or
 #'   throw an error? the default is to update (using google drive's versioning
 #'   functionality)
+#' @param type media type as passed to drive_upload or drive_update
 #' @param verbose logical, used in gd_put and passed onto
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_put <- function(data_file, ind_file, on_exists=c('update','replace','stop'), verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_put <- function(
+  data_file, ind_file=as_indicator(data_file),
+  on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
+  config_file=options("scipiper.gd_config_file")[[1]]) {
   
   on_exists <- match.arg(on_exists)
   if(!file.exists(data_file)) stop('data_file does not exist')
+  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file))
   
   require_libs('googledrive')
   gd_config <- yaml::yaml.load_file(config_file)
@@ -49,6 +54,10 @@ gd_put <- function(data_file, ind_file, on_exists=c('update','replace','stop'), 
   # determine whether and where the remote file exists
   remote_path <- gd_locate_file(data_file, config_file)
   remote_id <- tail(remote_path$id, 1)
+  
+  # determine the last known parent, which is either already or soon to be the
+  # proximate parent of the item to create
+  parent <- remote_path %>% slice(nrow(remote_path)-1) %>% pull(id)
   
   # create the parent folder[s] on google drive as needed
   if(is.na(remote_id)) {
@@ -61,9 +70,6 @@ gd_put <- function(data_file, ind_file, on_exists=c('update','replace','stop'), 
     # double-check that any overlapping path elements agree
     stopifnot(all.equal(final_dirs[seq_along(remote_dirs)], remote_dirs))
     
-    # determine the last known parent, which is either already or soon to be the
-    # proximate parent of the item to create
-    parent <- remote_path %>% slice(nrow(remote_path)-1) %>% pull(id)
     
     # create any needed directories on google drive, updating the parent until
     # it's the proximate parent
@@ -75,26 +81,26 @@ gd_put <- function(data_file, ind_file, on_exists=c('update','replace','stop'), 
       }
       # add the needed directories in order
       for(i in seq_along(needed_dirs)) {
-        parent <- googledrive::drive_mkdir(name=needed_dirs[i], parent=as_id(parent))$id
+        parent <- googledrive::drive_mkdir(name=needed_dirs[i], parent=googledrive::as_id(parent))$id
       }
     }
-  } else {
-    parent <- remote_path %>% slice(nrow(remote_path)-1) %>% pull(id)
   }
   
   # post the file (create or update) from the local data_file to Google Drive
-  if(verbose) message("Uploading ", data_file, " to Google Drive")
   if(is.na(remote_id)) {
-    remote_id <- googledrive::drive_upload(media=data_file)$id
+    if(verbose) message("Uploading ", data_file, " to Google Drive")
+    remote_id <- googledrive::drive_upload(media=data_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
   } else {
     switch(
       on_exists,
       update={
-        remote_id <- googledrive::drive_update(as_id(remote_id), media=data_file, verbose=verbose)$id
+        if(verbose) message("Updating ", data_file, " on Google Drive")
+        remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=data_file, verbose=verbose)$id
       },
       replace={
-        googledrive::drive_rm(as_id(remote_id), verbose=verbose)
-        remote_id <- googledrive::drive_upload(media=data_file, verbose=verbose)$id
+        if(verbose) message("Replacing ", data_file, " on Google Drive")
+        googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
+        remote_id <- googledrive::drive_upload(media=data_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
       },
       stop={
         stop('file already exists and on_exists==stop')
@@ -157,7 +163,7 @@ gd_get <- function(indicator, type=NULL, overwrite=TRUE, verbose=FALSE, config_f
     if(verbose) message("Downloading ", data_file, " from Google Drive")
     if(!dir.exists(dirname(data_file))) dir.create(dirname(data_file), recursive = TRUE)
     googledrive::drive_download(
-      file=as_id(remote_id), path=data_file,
+      file=googledrive::as_id(remote_id), path=data_file,
       type=type, overwrite=overwrite, verbose=verbose)
   } else {
     stop(paste0("Could not locate ", data_file, " for download from Google Drive"))
@@ -177,10 +183,10 @@ gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[
   # query google drive for all possibly relevant files and add their parents as
   # a simple column
   relevant_files <- bind_rows(
-    drive_get(
-      id=as_id(gd_config$project_folder)),
-    drive_ls(
-      path=as_id(gd_config$project_folder), 
+    googledrive::drive_get(
+      id=googledrive::as_id(gd_config$project_folder)),
+    googledrive::drive_ls(
+      path=googledrive::as_id(gd_config$project_folder), 
       pattern=gsub('.', '\\.', fixed=TRUE, x=gsub('/', '|', relative_path)),
       recursive=TRUE)
   ) %>%
@@ -190,7 +196,7 @@ gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[
   # navigate from the outermost directory down to the file to identify the file
   # by both its name and its directory location
   path_elements <- strsplit(relative_path, split='/')[[1]]
-  path_df <- filter(relevant_files, id==as_id(gd_config$project_folder))
+  path_df <- filter(relevant_files, id==googledrive::as_id(gd_config$project_folder))
   for(i in seq_along(path_elements)) {
     elem <- path_elements[i]
     parent <- path_df[[i,'id']]
@@ -229,7 +235,7 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
   
   message("Listing project files on Google Drive")
   gd_config <- yaml::yaml.load_file(config_file)
-  folder_df <- googledrive::drive_ls(path=as_id(gd_config$project_folder), ...)
+  folder_df <- googledrive::drive_ls(path=googledrive::as_id(gd_config$project_folder), ...)
 
   return(folder_df)  
 }
@@ -246,13 +252,15 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
 gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
   
   # look on Google Drive for the specified file
-  gd_config <- yaml::yaml.load_file(config_file)
-  key <- file.path(gd_config$path, basename(ind_file))
-  Key <- '.dplyr.var'
-  remote.info <- filter(gd_list(config_file=config_file, prefix=key), Key==key)
-  if(nrow(remote.info) != 1) stop(paste0("failed to find exactly 1 Google Drive file with Key=", key))
+  # figure out whether and where the file exists on gdrive
+  remote_path <- gd_locate_file(data_file, config_file)
+  remote_id <- tail(remote_path$id, 1)
+  if(is.na(remote_id)) stop('file was not posted to googledrive')
+  remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
-  gd_make_indicator(ind_file, remote_time=remote.info$LastModified)
+  gd_make_indicator(ind_file, remote_time=remote_info$modifiedTime, md5_checksum=remote_info$md5Checksum)
+  
+  return(TRUE)
 }
 
 #' Write an Google Drive indicator file
@@ -264,11 +272,11 @@ gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @keywords internal
-gd_make_indicator <- function(ind_file, remote_time) {
+gd_make_indicator <- function(ind_file, remote_time, md5_checksum) {
   
   # write the cache file
-  if(is.character(remote_time)) remote_time <- gd_read_time(remote_time)
-  writeLines(remote_time, con=ind_file)
+  if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
+  writeLines(c(remote_time, md5_checksum), con=ind_file)
   
 }
 
@@ -280,5 +288,5 @@ gd_make_indicator <- function(ind_file, remote_time) {
 #' @return POSIXct datetime
 #' @keywords internal
 gd_read_time <- function(datetime) {
-  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%S.000Z', tz='UTC')
+  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%OSZ', tz='UTC')
 }
