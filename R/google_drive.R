@@ -26,34 +26,86 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #' Upload (create or overwrite) a file to the project bucket and path.
 #'
 #' @param data_file character name of the data file to upload. The basename will
-#'   be used as the Google Drive key and must be unique within the project (bucket & path)
+#'   be used as the Google Drive key and must be unique within the project
+#'   (bucket & path)
 #' @param ind_file character name of the indicator file to write locally once
 #'   the file has been uploaded
+#' @param on_exists what to do if the file already exists - update, replace, or
+#'   throw an error? the default is to update (using google drive's versioning
+#'   functionality)
+#' @param verbose logical, used in gd_put and passed onto
+#'   googledrive::drive_update, drive_upload, and/or drive_rm
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-gd_put <- function(data_file, ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_put <- function(data_file, ind_file, on_exists=c('update','replace','stop'), verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
   
-  scmake(as_data_file(ind_file))
+  on_exists <- match.arg(on_exists)
+  if(!file.exists(data_file)) stop('data_file does not exist')
   
   require_libs('googledrive')
-  
-  # post the file from the local data_file to Google Drive
   gd_config <- yaml::yaml.load_file(config_file)
-  message("Uploading ", data_file, " to Google Drive")
-  aws.signature::use_credentials(profile = gd_config$profile)
-  key <- file.path(gd_config$path, basename(data_file))
-  success <- aws.gd::put_object(
-    file = data_file,
-    object = key, 
-    bucket = gd_config$bucket)
+  
+  # determine whether and where the remote file exists
+  remote_path <- gd_locate_file(data_file, config_file)
+  remote_id <- tail(remote_path$id, 1)
+  
+  # create the parent folder[s] on google drive as needed
+  if(is.na(remote_id)) {
+    # determine what exists
+    remote_dirs <- remote_path %>%
+      slice(-1) %>%slice(-nrow(.)) %>% # chop off the top parent-dir row and the bottom all-NA row
+      pull(name)
+    final_dirs <- strsplit(dirname(get_relative_path(data_file)), split='/')[[1]]
+    
+    # double-check that any overlapping path elements agree
+    stopifnot(all.equal(final_dirs[seq_along(remote_dirs)], remote_dirs))
+    
+    # determine the last known parent, which is either already or soon to be the
+    # proximate parent of the item to create
+    parent <- remote_path %>% slice(nrow(remote_path)-1) %>% pull(id)
+    
+    # create any needed directories on google drive, updating the parent until
+    # it's the proximate parent
+    if(length(final_dirs) > length(remote_dirs)) {
+      needed_dirs <- if(length(remote_dirs) == 0) {
+        final_dirs
+      } else {
+        final_dirs[-seq_along(remote_dirs)]
+      }
+      # add the needed directories in order
+      for(i in seq_along(needed_dirs)) {
+        parent <- googledrive::drive_mkdir(name=needed_dirs[i], parent=as_id(parent))$id
+      }
+    }
+  } else {
+    parent <- remote_path %>% slice(nrow(remote_path)-1) %>% pull(id)
+  }
+  
+  # post the file (create or update) from the local data_file to Google Drive
+  if(verbose) message("Uploading ", data_file, " to Google Drive")
+  if(is.na(remote_id)) {
+    remote_id <- googledrive::drive_upload(media=data_file)$id
+  } else {
+    switch(
+      on_exists,
+      update={
+        remote_id <- googledrive::drive_update(as_id(remote_id), media=data_file, verbose=verbose)$id
+      },
+      replace={
+        googledrive::drive_rm(as_id(remote_id), verbose=verbose)
+        remote_id <- googledrive::drive_upload(media=data_file, verbose=verbose)$id
+      },
+      stop={
+        stop('file already exists and on_exists==stop')
+      }
+    )
+  }
   
   # write the indicator file (involves another check on Google Drive to get the timestamp)
-  if(success) {
-    success <- gd_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file)
-  }
+  success <- gd_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file)
   if(!success) {
-    warning(paste0("Data file could not be posted to Google Drive: ", data_file))
+    stop(paste0("Data file could not be posted to Google Drive: ", data_file))
   }
   return(success)
 }
@@ -67,10 +119,19 @@ gd_put <- function(data_file, ind_file, config_file=options("scipiper.gd_config_
 #' @param indicator character name of the indicator file for which data should
 #'   be downloaded. downloads the Google Drive object whose key equals the
 #'   data_file basename
+#' @param type see `type` argument to `googledrive::drive_download()`
+#' @param overwrite see `overwrite` argument to `googledrive::drive_download()`
+#' @param verbose see `verbose` argument to `googledrive::drive_download()`;
+#'   also used to determine whether to include messages specific to `gd_get()`
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
+#' @md
+#' @examples
+#' \dontrun{
+#' gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)
+#' }
 #' @export
-gd_get <- function(indicator, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_get <- function(indicator, type=NULL, overwrite=TRUE, verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
   
   # infer the data file name from the indicator. gd_get always downloads to that
   # location if it downloads at all
@@ -87,15 +148,71 @@ gd_get <- function(indicator, config_file=options("scipiper.gd_config_file")[[1]
   
   require_libs('googledrive')
   
+  # figure out whether and where the file exists on gdrive
+  remote_path <- gd_locate_file(data_file, config_file)
+  remote_id <- tail(remote_path$id, 1)
+  
   # download the file from Google Drive to the local data_file
-  message("Downloading ", data_file, " from Google Drive")
+  if(!is.na(remote_id)) {
+    if(verbose) message("Downloading ", data_file, " from Google Drive")
+    if(!dir.exists(dirname(data_file))) dir.create(dirname(data_file), recursive = TRUE)
+    googledrive::drive_download(
+      file=as_id(remote_id), path=data_file,
+      type=type, overwrite=overwrite, verbose=verbose)
+  } else {
+    stop(paste0("Could not locate ", data_file, " for download from Google Drive"))
+  }
+}
+
+# Locate a file along a path relative to the gd_config project_folder, or return NA if not found
+gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[[1]]) {
+  # load the project's googledrive configuration
   gd_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = gd_config$profile)
-  key <- file.path(gd_config$path, basename(data_file))
-  aws.gd::save_object(
-    object = key, 
-    bucket = gd_config$bucket,
-    file = data_file)
+  
+  # normalize the relative path for this file so we can use in confidently as a
+  # relative path from both the local working directory and the google drive
+  # parent folder
+  relative_path <- get_relative_path(file)
+  
+  # query google drive for all possibly relevant files and add their parents as
+  # a simple column
+  relevant_files <- bind_rows(
+    drive_get(
+      id=as_id(gd_config$project_folder)),
+    drive_ls(
+      path=as_id(gd_config$project_folder), 
+      pattern=gsub('.', '\\.', fixed=TRUE, x=gsub('/', '|', relative_path)),
+      recursive=TRUE)
+  ) %>%
+    dplyr::mutate(parents=lapply(drive_resource, function(dr) unlist(dr$parents))) %>%
+    tidyr::unnest(parents) # make it a single row per item-parent combination
+  
+  # navigate from the outermost directory down to the file to identify the file
+  # by both its name and its directory location
+  path_elements <- strsplit(relative_path, split='/')[[1]]
+  path_df <- filter(relevant_files, id==as_id(gd_config$project_folder))
+  for(i in seq_along(path_elements)) {
+    elem <- path_elements[i]
+    parent <- path_df[[i,'id']]
+    elem_row <- filter(relevant_files, name==elem, parents==parent)
+    if(nrow(elem_row) == 1) {
+      path_exists <- TRUE
+      path_df <- bind_rows(path_df, elem_row)
+    } else {
+      path_exists <- FALSE
+      path_df <- bind_rows(path_df, data_frame(id=NA))
+      break
+    }
+  }
+  
+ return(path_df)
+}
+
+get_relative_path <- function(file) {
+  file %>% 
+    normalizePath(winslash='/', mustWork=FALSE) %>%
+    gsub(normalizePath(getwd(), winslash='/'), '', .) %>% # remove the working directory if present
+    gsub('^/', '', .) # remove the leading slash if present
 }
 
 #' List the Google Drive objects for this project
@@ -112,7 +229,7 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
   
   message("Listing project files on Google Drive")
   gd_config <- yaml::yaml.load_file(config_file)
-  folder_df <- googledrive::drive_ls(path=gd_config$folder, ...)
+  folder_df <- googledrive::drive_ls(path=as_id(gd_config$project_folder), ...)
 
   return(folder_df)  
 }

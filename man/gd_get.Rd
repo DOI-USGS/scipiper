@@ -4,15 +4,31 @@
 \alias{gd_get}
 \title{Download a file from Google Drive}
 \usage{
-gd_get(indicator, config_file = options("scipiper.gd_config_file")[[1]])
+gd_get(indicator, type = NULL, overwrite = TRUE, verbose = FALSE,
+  config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
+\item{indicator}{character name of the indicator file for which data should
+be downloaded. downloads the Google Drive object whose key equals the
+data_file basename}
+
+\item{type}{see \code{type} argument to \code{googledrive::drive_download()}}
+
+\item{overwrite}{see \code{overwrite} argument to \code{googledrive::drive_download()}}
+
+\item{verbose}{see \code{verbose} argument to \code{googledrive::drive_download()};
+also used to determine whether to include messages specific to \code{gd_get()}}
+
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}
-
-\item{data_file}{character name of the data file to download (downloads the
-Google Drive object whose key equals the data_file basename)}
 }
 \description{
-Download a file from Google Drive to the local project
+Download a file from Google Drive to the local project based on the
+information implied by the indicator file (including the location on google
+drive and the local destination location)
+}
+\examples{
+\dontrun{
+gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)
+}
 }

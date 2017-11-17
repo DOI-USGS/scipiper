@@ -4,15 +4,23 @@
 \alias{gd_put}
 \title{Upload a file to Google Drive}
 \usage{
-gd_put(data_file, ind_file,
-  config_file = options("scipiper.gd_config_file")[[1]])
+gd_put(data_file, ind_file, on_exists = c("update", "replace", "stop"),
+  verbose = FALSE, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
 \item{data_file}{character name of the data file to upload. The basename will
-be used as the Google Drive key and must be unique within the project (bucket & path)}
+be used as the Google Drive key and must be unique within the project
+(bucket & path)}
 
 \item{ind_file}{character name of the indicator file to write locally once
 the file has been uploaded}
+
+\item{on_exists}{what to do if the file already exists - update, replace, or
+throw an error? the default is to update (using google drive's versioning
+functionality)}
+
+\item{verbose}{logical, used in gd_put and passed onto
+googledrive::drive_update, drive_upload, and/or drive_rm}
 
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}

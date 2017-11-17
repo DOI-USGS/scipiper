@@ -53,7 +53,7 @@ s3_put <- function(data_file, ind_file, config_file="lib/cfg/s3_config.yml") {
     success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file)
   }
   if(!success) {
-    warning(paste0("Data file could not be posted to S3: ", data_file))
+    stop(paste0("Data file could not be posted to S3: ", data_file))
   }
   return(success)
 }
