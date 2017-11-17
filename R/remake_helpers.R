@@ -16,6 +16,7 @@
 #'     log=I('1_wqdata/log/wqp'))
 #' # wqp_pull_folders can be passed to other remake commands, in whose
 #' # functions paths can be referenced as wqp_pull_folders$log, etc.
+#' @export
 create_dirs <- function(...) {
   dirs <- list(...)
   lapply(dirs, function(dirname) {
