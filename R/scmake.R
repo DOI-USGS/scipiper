@@ -16,27 +16,27 @@ scmake <- function(
   verbose = TRUE, allow_missing_packages = FALSE) {
   
   # update .remake with any new build/status info
-  RDSify_build_status()
+  RDSify_build_status(remake_file=remake_file)
   
   # record status before running make
-  status_pre <- get_remake_status(target_names)
+  status_pre <- get_remake_status(target_names, remake_file=remake_file)
   
   # run remake::make
-  message('Starting build at ', Sys.time())
+  if(verbose) message('Starting build at ', Sys.time())
   out <- remake::make(
     target_names=target_names, ..., verbose=verbose,
     allow_missing_packages=allow_missing_packages, remake_file=remake_file)
-  message('Finished build at ', Sys.time())
+  if(verbose) message('Finished build at ', Sys.time())
   
   # record status after running make
-  status_post <- get_remake_status(target_names)
+  status_post <- get_remake_status(target_names, remake_file=remake_file)
   
   # for every target that (1) changed status and (2) is a status indicator file,
   # make a text (YAML) copy of the build status file from the remake db storr;
   # put it in build/status
   tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
   tdiffs <- tdiffs[grepl('\\.ind$', tdiffs$target),]
-  YAMLify_build_status(tdiffs$target)
+  YAMLify_build_status(tdiffs$target, remake_file=remake_file)
   
   invisible(out)
 }
@@ -218,11 +218,11 @@ as_indicator <- function(data_file) {
 #' @param ind_file the indicator name (with path as needed) whose corresponding
 #'   data file name should be returned
 #' @export
-as_data_file <- function(indicator) {
-  if(!is_indicator(indicator)) {
-    stop('indicator is not an indicator file')
+as_data_file <- function(ind_file) {
+  if(!is_indicator(ind_file)) {
+    stop('ind_file is not an indicator file')
   }
-  tools::file_path_sans_ext(indicator)
+  tools::file_path_sans_ext(ind_file)
 }
 
 #' Produce a table describing the remake build status relative to 1+ targets

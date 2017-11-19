@@ -4,7 +4,7 @@
 \alias{as_data_file}
 \title{Return the data file name corresponding to the given indicator name}
 \usage{
-as_data_file(indicator)
+as_data_file(ind_file)
 }
 \arguments{
 \item{ind_file}{the indicator name (with path as needed) whose corresponding
