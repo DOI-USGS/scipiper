@@ -2,14 +2,14 @@
 % Please edit documentation in R/google_drive.R
 \name{gd_get}
 \alias{gd_get}
-\title{Download a file from Google Drive}
+\title{Download a file from Google Drive if needed}
 \usage{
 gd_get(ind_file, type = NULL, overwrite = TRUE, verbose = FALSE,
   config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{ind_file}{character name of the indicator file for which data should
-be downloaded. downloads the Google Drive object whose key equals the
+\item{ind_file}{character name of the indicator file for which data should be
+downloaded. downloads the Google Drive object whose key equals the
 data_file basename}
 
 \item{type}{see \code{type} argument to \code{googledrive::drive_download()}}
@@ -19,13 +19,14 @@ data_file basename}
 \item{verbose}{see \code{verbose} argument to \code{googledrive::drive_download()};
 also used to determine whether to include messages specific to \code{gd_get()}}
 
-\item{config_file}{character name of the yml file containing project-specific
-configuration information}
+\item{config_file}{character name of the YAML file containing
+project-specific configuration information}
 }
 \description{
 Download a file from Google Drive to the local project based on the
 information implied by the indicator file (including the location on google
-drive and the local destination location)
+drive and the local destination location). Skips the download if the local
+file already exists and the remote and local hashes are identical.
 }
 \examples{
 \dontrun{

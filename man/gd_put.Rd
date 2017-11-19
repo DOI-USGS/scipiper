@@ -4,9 +4,9 @@
 \alias{gd_put}
 \title{Upload a file to Google Drive}
 \usage{
-gd_put(remote_ind, local_source, on_exists = c("update", "replace", "stop"),
-  type = NULL, verbose = FALSE,
-  config_file = options("scipiper.gd_config_file")[[1]])
+gd_put(remote_ind, local_source, mock_get = c("copy", "move", "none"),
+  on_exists = c("update", "replace", "stop"), type = NULL,
+  verbose = FALSE, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
 \item{remote_ind}{character name of the indicator file to write locally, but
@@ -28,6 +28,15 @@ the target of the 'a' recipe while this function's remote_ind argument
 should match the target of this recipe (=='b') and the data_file target of
 the 'c' recipe. See the examples.}
 
+\item{mock_get}{character. if remote_ind and local_source imply different
+local file locations, should the current local file (implied by
+local_source) be left alone ('none'), or copied ('copy') or moved ('move')
+to the location implied by remote_ind? If 'copy' or 'move' are used, and if
+gd_get will be called in an upcoming command, this argument may help to
+avoid an unnecessary download from Google Drive back to this computer
+because \code{gd_get} skips the download if there's already a local file in the
+right place with the right contents (MD5 hash).}
+
 \item{on_exists}{what to do if the file already exists - update, replace, or
 throw an error? the default is to update (using google drive's versioning
 functionality)}
@@ -37,11 +46,56 @@ functionality)}
 \item{verbose}{logical, used in gd_put and passed onto
 googledrive::drive_update, drive_upload, and/or drive_rm}
 
-\item{config_file}{character name of the yml file containing project-specific
-configuration information}
+\item{config_file}{character name of the YAML file containing
+project-specific configuration information}
 }
 \description{
 Upload (create or overwrite) a file to the project bucket and path. Writes an
 indicator file exactly corresponding to the data_file path and name (but with
 indicator file extension).
+}
+\examples{
+\dontrun{
+#### using 2 recipes
+
+## remake file
+# create and post 1_data/out/mydata.rds (and an indicator for it) at once
+1_data/out/mydata.rds.ind:
+  command: create_and_post_mydata(target_name)
+# retrieve data file on demand
+1_data/out/mydata.rds:
+  command: gd_get('1_data/out/mydata.rds.ind')
+
+## function definitions
+create_and_post_mydata <- function(ind_file) {
+  # create data file (no need to make indicator yet)
+  data_file <- as_data_file(ind_file)
+  mydata # <- ...compute mydata here...
+  write.csv(mydata, data_file)
+  # post and create indicator file
+  gd_put(remote_ind=ind_file, local_source=data_file)
+}
+
+#### using 3 recipes
+
+## remake file
+# create 1_data/cache/mydata.rds (and an indicator for it) locally
+1_data/tmp/mydata.rds.ind:
+  command: create_mydata(target_name)
+# post 1_data/cache/mydata.rds to 1_data/out/mydata.rds on Drive
+1_data/out/mydata.rds.ind:
+  command: gd_put(remote_ind=target_name, local_source='1_data/tmp/mydata.rds.ind')
+# retrieve data file on demand
+1_data/out/mydata.rds:
+  command: gd_get('1_data/out/mydata.rds.ind')
+
+## function definitions
+create_mydata <- function(ind_file) {
+  data_file <- as_data_file(ind_file)
+  mydata # <- ...compute mydata here...
+  write.csv(mydata, data_file)
+  sc_indicate(ind_file, data_file=data_file)
+}
+
+}
 }

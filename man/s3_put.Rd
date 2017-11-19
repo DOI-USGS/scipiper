@@ -4,14 +4,11 @@
 \alias{s3_put}
 \title{Upload a file to S3}
 \usage{
-s3_put(data_file, ind_file, config_file = "lib/cfg/s3_config.yml")
+s3_put(data_file, config_file = "lib/cfg/s3_config.yml")
 }
 \arguments{
 \item{data_file}{character name of the data file to upload. The basename will
 be used as the S3 key and must be unique within the project (bucket & path)}
-
-\item{ind_file}{character name of the indicator file to write locally once
-the file has been uploaded}
 
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}

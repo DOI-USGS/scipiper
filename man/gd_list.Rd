@@ -9,7 +9,7 @@ gd_list(..., config_file = options("scipiper.gd_config_file")[[1]])
 \arguments{
 \item{...}{arguments passed to googledrive::drive_ls}
 
-\item{config_file}{character name of the yml file containing project-specific
+\item{config_file}{character name of the YAML file containing project-specific
 configuration information}
 }
 \description{

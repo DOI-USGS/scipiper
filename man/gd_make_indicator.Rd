@@ -10,7 +10,7 @@ gd_make_indicator(ind_file, md5_checksum)
 \item{ind_file}{character name of the indicator file to write locally once
 the file has been uploaded}
 
-\item{config_file}{character name of the yml file containing project-specific
+\item{config_file}{character name of the YAML file containing project-specific
 configuration information}
 }
 \description{

@@ -29,14 +29,13 @@ s3_config <- function(path, bucket, profile='default', config_file="lib/cfg/s3_c
 #'
 #' @param data_file character name of the data file to upload. The basename will
 #'   be used as the S3 key and must be unique within the project (bucket & path)
-#' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-s3_put <- function(data_file, ind_file, config_file="lib/cfg/s3_config.yml") {
+s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
   
   require_libs('aws.signature', 'aws.s3')
+  ind_file <- as_indicator(data_file)
   
   # post the file from the local data_file to S3
   s3_config <- yaml::yaml.load_file(config_file)

@@ -5,7 +5,7 @@
 #'
 #' @param folder character name of the Google Drive folder where all files for
 #'   this project are to be stored
-#' @param config_file character name of the yml file where this configuration
+#' @param config_file character name of the YAML file where this configuration
 #'   information should be written
 #' @export
 gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]]) {
@@ -44,37 +44,46 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #'   the target of the 'a' recipe while this function's remote_ind argument
 #'   should match the target of this recipe (=='b') and the data_file target of
 #'   the 'c' recipe. See the examples.
+#' @param mock_get character. if remote_ind and local_source imply different
+#'   local file locations, should the current local file (implied by
+#'   local_source) be left alone ('none'), or copied ('copy') or moved ('move')
+#'   to the location implied by remote_ind? If 'copy' or 'move' are used, and if
+#'   gd_get will be called in an upcoming command, this argument may help to
+#'   avoid an unnecessary download from Google Drive back to this computer
+#'   because `gd_get` skips the download if there's already a local file in the
+#'   right place with the right contents (MD5 hash).
 #' @param on_exists what to do if the file already exists - update, replace, or
 #'   throw an error? the default is to update (using google drive's versioning
 #'   functionality)
 #' @param type media type as passed to drive_upload or drive_update
 #' @param verbose logical, used in gd_put and passed onto
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
+#' @param config_file character name of the YAML file containing
+#'   project-specific configuration information
 #' @md
 #' @export
 #' @examples
 #' \dontrun{
 #' #### using 2 recipes
-#' 
+#'
 #' ## remake file
 #' # create and post 1_data/out/mydata.rds (and an indicator for it) at once
 #' 1_data/out/mydata.rds.ind:
 #'   command: create_and_post_mydata(target_name)
+#' # retrieve data file on demand
 #' 1_data/out/mydata.rds:
 #'   command: gd_get('1_data/out/mydata.rds.ind')
-#' }
 #'
 #' ## function definitions
 #' create_and_post_mydata <- function(ind_file) {
+#'   # create data file (no need to make indicator yet)
 #'   data_file <- as_data_file(ind_file)
 #'   mydata # <- ...compute mydata here...
 #'   write.csv(mydata, data_file)
+#'   # post and create indicator file
 #'   gd_put(remote_ind=ind_file, local_source=data_file)
-#'   sc_indicate(ind_file, data_file=data_file)
 #' }
-#' 
+#'
 #' #### using 3 recipes
 #'
 #' ## remake file
@@ -84,24 +93,41 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #' # post 1_data/cache/mydata.rds to 1_data/out/mydata.rds on Drive
 #' 1_data/out/mydata.rds.ind:
 #'   command: gd_put(remote_ind=target_name, local_source='1_data/tmp/mydata.rds.ind')
+#' # retrieve data file on demand
 #' 1_data/out/mydata.rds:
 #'   command: gd_get('1_data/out/mydata.rds.ind')
 #'
+#' ## function definitions
+#' create_mydata <- function(ind_file) {
+#'   data_file <- as_data_file(ind_file)
+#'   mydata # <- ...compute mydata here...
+#'   write.csv(mydata, data_file)
+#'   sc_indicate(ind_file, data_file=data_file)
+#' }
+#'
 #' }
 gd_put <- function(
-  remote_ind, local_source,
+  remote_ind, local_source, mock_get=c('copy','move','none'),
   on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
   config_file=options("scipiper.gd_config_file")[[1]]) {
   
-  # decide whether local_source is an indicator or data_file and find the data_file
+  # check arguments
+  mock_get <- match.arg(mock_get)
+  
+  # decide whether local_source is an indicator or data file and find the data file
   if(is_indicator(local_source)) {
     local_file <- as_data_file(local_source)
   } else {
     local_file <- local_source
   }
-  on_exists <- match.arg(on_exists)
-  if(!file.exists(data_file)) stop('data_file does not exist')
+  if(!file.exists(local_file)) {
+    stop(paste('data file matching local_source does not exist:', local_file))
+  }
   
+  # identify the remote data file to be indicated by remote_ind
+  data_file <- as_data_file(remote_ind)
+  
+  # prepare to use google drive
   require_libs('googledrive')
   gd_config <- yaml::yaml.load_file(config_file)
   
@@ -124,7 +150,6 @@ gd_put <- function(
     # double-check that any overlapping path elements agree
     stopifnot(all.equal(final_dirs[seq_along(remote_dirs)], remote_dirs))
     
-    
     # create any needed directories on google drive, updating the parent until
     # it's the proximate parent
     if(length(final_dirs) > length(remote_dirs)) {
@@ -140,51 +165,63 @@ gd_put <- function(
     }
   }
   
-  # post the file (create or update) from the local data_file to Google Drive
+  # post the file (create or update) from the local data file to Google Drive
   if(is.na(remote_id)) {
-    if(verbose) message("Uploading ", data_file, " to Google Drive")
-    remote_id <- googledrive::drive_upload(media=data_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
+    if(verbose) message("Uploading ", local_file, " to Google Drive")
+    remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
   } else {
+    on_exists <- match.arg(on_exists)
     switch(
       on_exists,
       update={
-        if(verbose) message("Updating ", data_file, " on Google Drive")
-        remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=data_file, verbose=verbose)$id
+        if(verbose) message("Updating ", local_file, " on Google Drive")
+        remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=local_file, verbose=verbose)$id
       },
       replace={
-        if(verbose) message("Replacing ", data_file, " on Google Drive")
+        if(verbose) message("Replacing ", local_file, " on Google Drive")
         googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
-        remote_id <- googledrive::drive_upload(media=data_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
+        remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
       },
       stop={
-        stop('file already exists and on_exists==stop')
+        stop('File already exists and on_exists==stop')
       }
     )
   }
   
-  # write the indicator file (involves another check on Google Drive to get the timestamp)
-  success <- gd_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file)
-  if(!success) {
-    stop(paste0("Data file could not be posted to Google Drive: ", data_file))
+  # write the indicator file (involves another check on Google Drive)
+  gd_confirm_posted(ind_file=remote_ind, config_file=config_file)
+  
+  # if posting was successful, potentially bypass a superfluous download from
+  # google drive by copying or moving local_file to data_file (the gd_get
+  # destination)
+  if(mock_get %in% c('copy','move')) {
+    if(data_file != local_file) {
+      file.copy(from=local_file, to=data_file, overwrite=TRUE)
+      if(mock_get == 'move') {
+        file.remove(local_file)
+      }
+    }
   }
-  return(success)
+  
+  invisible()
 }
 
-#' Download a file from Google Drive
+#' Download a file from Google Drive if needed
 #'
 #' Download a file from Google Drive to the local project based on the
 #' information implied by the indicator file (including the location on google
-#' drive and the local destination location)
+#' drive and the local destination location). Skips the download if the local
+#' file already exists and the remote and local hashes are identical.
 #'
-#' @param ind_file character name of the indicator file for which data should
-#'   be downloaded. downloads the Google Drive object whose key equals the
+#' @param ind_file character name of the indicator file for which data should be
+#'   downloaded. downloads the Google Drive object whose key equals the
 #'   data_file basename
 #' @param type see `type` argument to `googledrive::drive_download()`
 #' @param overwrite see `overwrite` argument to `googledrive::drive_download()`
 #' @param verbose see `verbose` argument to `googledrive::drive_download()`;
 #'   also used to determine whether to include messages specific to `gd_get()`
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
+#' @param config_file character name of the YAML file containing
+#'   project-specific configuration information
 #' @md
 #' @examples
 #' \dontrun{
@@ -197,13 +234,11 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_fi
   # location if it downloads at all
   data_file <- as_data_file(ind_file)
   
-  # if this function is being called from gd_put and the data file exists, then
-  # gd_put is trying to bypass a superfluous download from google drive. don't
-  # re-pull the data right now, just return smoothly so remake understands that
-  # what we have is already up to date.
-  gd_put_is_ancestor <- any(sapply(sys.calls(), function(sc) { isTRUE(sc[[1]] == 'gd_put') }))
-  if(file.exists(data_file) && gd_put_is_ancestor) {
-    invisible()
+  # bypass the download from google drive if the right local file already exists
+  if(file.exists(data_file)) {
+    remote_hash <- yaml::yaml.load_file(ind_file)$hash
+    local_hash <- unname(tools::md5sum(data_file))
+    if(remote_hash == local_hash) return(invisible())
   }
   
   require_libs('googledrive')
@@ -280,7 +315,7 @@ get_relative_path <- function(file) {
 #' List the Google Drive objects in the project bucket/path as given in config_file
 #' 
 #' @param ... arguments passed to googledrive::drive_ls
-#' @param config_file character name of the yml file containing project-specific
+#' @param config_file character name of the YAML file containing project-specific
 #'   configuration information
 #' @export
 gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
@@ -295,24 +330,23 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
 }
 
 #' Check whether a file is on Google Drive, and if so, write an indicator file
-#' 
-#' @param data_file character name of the data file to download (downloads the
-#'   Google Drive object whose key equals the data_file basename)
+#'
 #' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
+#'   the file has been uploaded; will exactly correspond to the data_file on GD
+#' @param config_file character name of the YAML file containing
+#'   project-specific configuration information
 #' @export
-gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_confirm_posted <- function(ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
   
   # look on Google Drive for the specified file
   # figure out whether and where the file exists on gdrive
+  data_file <- as_data_file(ind_file)
   remote_path <- gd_locate_file(data_file, config_file)
   remote_id <- tail(remote_path$id, 1)
-  if(is.na(remote_id)) stop('file was not posted to googledrive')
+  if(is.na(remote_id)) stop(paste('File was not found on Google Drive:', data_file))
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
-  # we could prepare a timestamp...but checksum is even better. remote_time=remote_info$modifiedTime
+  # we could prepare a timestamp from modifiedTime...but checksum is even better
   gd_make_indicator(ind_file, md5_checksum=remote_info$md5Checksum)
   
   return(TRUE)
@@ -324,17 +358,17 @@ gd_confirm_posted <- function(data_file, ind_file, config_file=options("scipiper
 #' 
 #' @param ind_file character name of the indicator file to write locally once
 #'   the file has been uploaded
-#' @param config_file character name of the yml file containing project-specific
+#' @param config_file character name of the YAML file containing project-specific
 #'   configuration information
 #' @keywords internal
-gd_make_indicator <- function(ind_file, md5_checksum) { # , remote_time
+gd_make_indicator <- function(ind_file, md5_checksum) {
   
   # we could prepare a timestamp...but checksum is even better
   # if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
   
-  # write the cache file
+  # write the indicator file
   if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
-  writeLines(md5_checksum, con=ind_file)
+  sc_indicate(indicator=ind_file, hash=md5_checksum)
   
 }
 

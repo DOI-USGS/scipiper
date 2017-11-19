@@ -4,18 +4,15 @@
 \alias{gd_confirm_posted}
 \title{Check whether a file is on Google Drive, and if so, write an indicator file}
 \usage{
-gd_confirm_posted(data_file, ind_file,
+gd_confirm_posted(ind_file,
   config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{data_file}{character name of the data file to download (downloads the
-Google Drive object whose key equals the data_file basename)}
-
 \item{ind_file}{character name of the indicator file to write locally once
-the file has been uploaded}
+the file has been uploaded; will exactly correspond to the data_file on GD}
 
-\item{config_file}{character name of the yml file containing project-specific
-configuration information}
+\item{config_file}{character name of the YAML file containing
+project-specific configuration information}
 }
 \description{
 Check whether a file is on Google Drive, and if so, write an indicator file
