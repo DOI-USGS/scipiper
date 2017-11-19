@@ -35,7 +35,7 @@ scmake <- function(
   # make a text (YAML) copy of the build status file from the remake db storr;
   # put it in build/status
   tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
-  tdiffs <- tdiffs[grepl('\\.ind$', tdiffs$target),]
+  tdiffs <- tdiffs[is_indicator(tdiffs$target),]
   YAMLify_build_status(tdiffs$target, remake_file=remake_file)
   
   invisible(out)
@@ -288,7 +288,7 @@ YAMLify_build_status <- function(target_names, remake_file=options('scipiper.rem
   # too, which sounds a lot like writing and sharing files but would require a
   # second system on top of the one we're already supporting. and no sense in
   # trying to export targets for which we have no .remake status
-  rtargs <- remake::list_targets(type='file') # file targets
+  rtargs <- remake::list_targets(remake_file=remake_file, type='file') # file targets
   rstats <- dbstore$list() # exist in db
   to_export <- intersect(intersect(rtargs, rstats), target_names)
   
@@ -335,7 +335,7 @@ RDSify_build_status <- function(new_only=TRUE, remake_file=options('scipiper.rem
   sfiles <- dir('build/status', full.names=TRUE)
   skeys <- gsub('\\.yml$', '', basename(sfiles))
   stargs <- storr::decode64(skeys) # decode=demangle. i think we can leave mangle_key_pad, etc. to defaults...
-  rtargs <- remake::list_targets(type='file') # only import file targets (we don't sync object build status)
+  rtargs <- remake::list_targets(remake_file=remake_file, type='file') # only import file targets (we don't sync object build status)
   # intersect stargs & rtargs, combine mangled/unmangled keys
   to_import <- data.frame(target=stargs, mkey=skeys, yaml=sfiles, stringsAsFactors=FALSE)[stargs %in% rtargs,]
   
