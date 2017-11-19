@@ -1,6 +1,7 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.1
+Version: 0.0.2
+Date: 2017-11-19
 Authors@R: person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre"))
 Description: Functions to organize a data analysis repository and ensure that data flows smoothly.
 Depends:
