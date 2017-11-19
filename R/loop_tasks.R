@@ -142,8 +142,15 @@ loop_tasks <- function(
     # not up to date. there's no need to run non-file targets because we've
     # always attempted them in the loop above (every time through the loop, in
     # fact).
-    for(target in targets[file.exists(targets)]) {
-      scmake(target, task_makefile)
+    file_targets <- targets[file.exists(targets)]
+    num_files <- length(file_targets)
+    for(i in seq_len(num_files)) {
+      target <- file_targets[i]
+      message(sprintf(
+        "Checking file %s of %s: %s",
+        i, num_files, target
+      ))
+      scmake(target, task_makefile, verbose=FALSE)
     }
   }
 }
