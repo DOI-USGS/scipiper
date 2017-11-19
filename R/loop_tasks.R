@@ -103,7 +103,7 @@ loop_tasks <- function(
           i, num_targets, target, target_num_overall, num_targets_overall))
         
         # the main action: run the task-step
-        scmake(target, task_makefile, verbose=TRUE)
+        scmake(target, task_makefile, verbose=FALSE)
         
       }, error=function(e) {
         message(sprintf("  Error in %s: %s", deparse(e$call), e$message))
