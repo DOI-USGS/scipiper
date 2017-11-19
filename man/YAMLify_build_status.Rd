@@ -4,7 +4,8 @@
 \alias{YAMLify_build_status}
 \title{Copy info from .remake/objects to build/status}
 \usage{
-YAMLify_build_status(target_names, remake_file = "remake.yml")
+YAMLify_build_status(target_names,
+  remake_file = options("scipiper.remake_file")[[1]])
 }
 \description{
 Copy status files from .remake folder (binary form) to build/status folder

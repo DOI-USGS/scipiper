@@ -4,7 +4,8 @@
 \alias{RDSify_build_status}
 \title{Copy info from build/status to .remake/objects}
 \usage{
-RDSify_build_status(new_only = TRUE, remake_file = "remake.yml")
+RDSify_build_status(new_only = TRUE,
+  remake_file = options("scipiper.remake_file")[[1]])
 }
 \arguments{
 \item{new_only}{logical. You could corrupt a shared-cache repo by calling

@@ -19,11 +19,6 @@ target_default: models.tsv
 
 targets:
   
-  # settings
-  
-  indicator_file_extensions:
-    command: I("ind")
-
   # project
   
   sites:

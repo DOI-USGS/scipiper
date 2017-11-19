@@ -28,9 +28,8 @@ targets:
 
   # settings
   
-  indicator_file_extensions:
-    packages: yaml
-    command: yaml.load(I("[ind,s3,yeti]"))
+  indicator_extension:
+    command: c(I("ind"))
 
   # project
 

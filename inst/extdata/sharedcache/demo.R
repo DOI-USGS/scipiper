@@ -54,11 +54,8 @@ make_cache_indicator <- function(indfile) {
   if(!file.exists(fnames$cache)) stop(paste(fnames$data, "is missing from the cache"))
   message("note ", fnames$var)
   
-  # get a hash of the file, so we can check if this indicator file has gone bad
-  hash <- get_hash(fnames$cache)
-  
-  # write the hash to the indicator file and get out of here
-  make_file(fnames$indicator, ftext=hash, ftstamp=Sys.time())
+  # write the indicator file
+  sc_indicate(fnames$indicator, data_file=fnames$cache)
   invisible(NULL)
 }
 
@@ -69,7 +66,7 @@ get_cached_file <- function(indfile) {
   # check the integrity of the cache relative to the indicator file
   if(!file.exists(fnames$cache)) stop(paste0("despite ", fnames$indicator, ", missing ", fnames$cache))
   hash_cache <- get_hash(fnames$cache)
-  hash_ind <- readLines(fnames$indicator)
+  hash_ind <- yaml::yaml.load_file(fnames$indicator)$hash
   if(hash_cache != hash_ind) stop(paste0("despite ", fnames$indicator, ", badhash ", fnames$cache))
   
   # update iff the fnames$data needs to be updated. if the cache were remote, we
@@ -93,9 +90,7 @@ cache_file <- function(datafile) {
 pretend_process <- function(in_ind, out_ind) {
   # we'll need a get_cached_file call in any function that [remake]depends on an
   # indicator file (nearly all functions)
-  in_data <- expand_names(in_ind)$data
-  scmake(in_data, verbose=FALSE)
-  in_var <- readLines(in_data)
+  in_var <- readLines(sc_retrieve(in_ind))
   
   # identify the names for the output
   fnames <- expand_names(out_ind)

@@ -4,8 +4,9 @@
 \alias{scmake}
 \title{Wrapper for remake::make that permits cache sharing}
 \usage{
-scmake(target_names = NULL, remake_file = "remake.yml", ...,
-  verbose = TRUE, allow_missing_packages = FALSE)
+scmake(target_names = NULL,
+  remake_file = options("scipiper.remake_file")[[1]], ..., verbose = TRUE,
+  allow_missing_packages = FALSE)
 }
 \arguments{
 \item{target_names}{as in remake::make}

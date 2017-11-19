@@ -78,7 +78,7 @@ create_task_makefile <- function(
     # even though target_name is an object (not file), job_command should write
     # to indicator_file - again so the calling remake file can use
     # indicator_file as its target
-    command = sprintf("write_indicator(I('%s'))", indicator_file),
+    command = sprintf("sc_indicate(I('%s'))", indicator_file),
     # as dependencies of this overall/default job, extract the target_name from
     # every task and all those steps indexed by job_steps. an alternative (or
     # complement) would be to create a dummy target for each task (probably with
