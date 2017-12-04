@@ -39,11 +39,14 @@ loop_tasks <- function(
   num_tries=30, sleep_on_error=0) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
-  if(is.null(task_names)) {
-    job_target <- yaml::yaml.load_file(task_makefile)$target_default
-    task_names <- names(task_plan)
+  target_default <- yaml::yaml.load_file(task_makefile)$target_default
+  if(is.null(task_names) && is.null(step_names)) {
+    job_target <- target_default
   } else {
     job_target <- NA
+  }
+  if(is.null(task_names)) {
+    task_names <- names(task_plan)
   }
   if(is.null(step_names)) {
     step_names <- attr(task_plan, "final_steps")
@@ -152,5 +155,10 @@ loop_tasks <- function(
       ))
       scmake(target, task_makefile, verbose=FALSE)
     }
+    msg <- paste(c(
+      strwrap("Set task_names=NULL, step_names=NULL to build the job target. Until then, expect this error:"),
+      "  'command for [target] did not create file'"),
+      collapse="\n")
+    message(msg)
   }
 }
