@@ -3,8 +3,9 @@
 
 #' Create or overwrite a Google Drive configuration file
 #'
-#' @param folder character name of the Google Drive folder where all files for
-#'   this project are to be stored
+#' @param folder character name of the Google Drive folder where all
+#'   files for this project are to be stored, nested in a file structure
+#'   parallel to the local project file structure
 #' @param config_file character name of the YAML file where this configuration
 #'   information should be written
 #' @export
@@ -259,7 +260,7 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_fi
   }
 }
 
-# Locate a file along a path relative to the gd_config project_folder, or return NA if not found
+# Locate a file along a path relative to the gd_config folder, or return NA if not found
 gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[[1]]) {
   # load the project's googledrive configuration
   gd_config <- yaml::yaml.load_file(config_file)
@@ -273,9 +274,9 @@ gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[
   # a simple column
   relevant_files <- bind_rows(
     googledrive::drive_get(
-      id=googledrive::as_id(gd_config$project_folder)),
+      id=googledrive::as_id(gd_config$folder)),
     googledrive::drive_ls(
-      path=googledrive::as_id(gd_config$project_folder), 
+      path=googledrive::as_id(gd_config$folder), 
       pattern=gsub('.', '\\.', fixed=TRUE, x=gsub('/', '|', relative_path)),
       recursive=TRUE)
   ) %>%
@@ -285,7 +286,7 @@ gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[
   # navigate from the outermost directory down to the file to identify the file
   # by both its name and its directory location
   path_elements <- strsplit(relative_path, split='/')[[1]]
-  path_df <- filter(relevant_files, id==googledrive::as_id(gd_config$project_folder))
+  path_df <- filter(relevant_files, id==googledrive::as_id(gd_config$folder))
   for(i in seq_along(path_elements)) {
     elem <- path_elements[i]
     parent <- path_df[[i,'id']]
@@ -324,7 +325,7 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
   
   message("Listing project files on Google Drive")
   gd_config <- yaml::yaml.load_file(config_file)
-  folder_df <- googledrive::drive_ls(path=googledrive::as_id(gd_config$project_folder), ...)
+  folder_df <- googledrive::drive_ls(path=googledrive::as_id(gd_config$folder), ...)
 
   return(folder_df)  
 }

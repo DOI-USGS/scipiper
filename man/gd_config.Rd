@@ -7,8 +7,9 @@
 gd_config(folder, config_file = options("scipiper.gd_config_file")[[1]])
 }
 \arguments{
-\item{folder}{character name of the Google Drive folder where all files for
-this project are to be stored}
+\item{folder}{character name of the Google Drive folder where all
+files for this project are to be stored, nested in a file structure
+parallel to the local project file structure}
 
 \item{config_file}{character name of the YAML file where this configuration
 information should be written}
