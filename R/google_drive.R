@@ -258,6 +258,8 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_fi
   } else {
     stop(paste0("Could not locate ", data_file, " for download from Google Drive"))
   }
+  
+  return(data_file)
 }
 
 # Locate a file along a path relative to the gd_config folder, or return NA if not found
