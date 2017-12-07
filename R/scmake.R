@@ -140,9 +140,9 @@ sc_indicate <- function(indicator, ..., data_file) {
 #' @md
 #' @param indicator the file path of the indicator
 #' @export
-sc_retrieve <- function(indicator) {
+sc_retrieve <- function(indicator, remake_file=options('scipiper.remake_file')[[1]]) {
   data_file <- as_data_file(indicator)
-  scmake(data_file, verbose=FALSE)
+  scmake(data_file, remake_file=remake_file, verbose=FALSE)
   return(data_file)
 }
 
