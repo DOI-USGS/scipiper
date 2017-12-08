@@ -6,7 +6,8 @@
 \usage{
 create_task_makefile(task_plan, makefile = NULL, include = c(),
   packages = c(), sources = c(), file_extensions = c("ind"),
-  indicator_dir = attr(task_plan, "indicator_dir"),
+  ind_dir = attr(task_plan, "ind_dir"),
+  ind_ext = getOption("scipiper.ind_ext"),
   template_file = system.file("extdata/task_makefile.mustache", package =
   "scipiper"))
 }
@@ -30,10 +31,13 @@ defaults at \code{remake::file_extensions()}. Inclusion of \code{'ind'} is
 recommended because this indicator file extension is commonly used by
 scipiper.}
 
-\item{indicator_dir}{directory path specifing the location where an overall
-job indicator file should be written once all tasks and steps are complete.
-This file will always be named after the makefile, but with '.ind' instead
-of '.yml' as a suffix}
+\item{ind_dir}{directory path specifing the location where an overall job
+indicator file should be written once all tasks and steps are complete.
+This file will always be named after the makefile, but with the indicator
+file extension (ind_ext) instead of '.yml' as a suffix}
+
+\item{ind_ext}{the indicator file extension to use in creating the job
+indicator file}
 
 \item{template_file}{character name of the mustache template to render into
 \code{makefile}. The default is recommended}
@@ -46,10 +50,10 @@ the file name of the makefile that was created (can be displayed with
 Create a .yml makefile (for use with remake or scipiper) for a set of tasks
 that together form a single job.  The default target will be named after
 \code{makefile} (specifically,
-\code{indicator_file=tools::file_path_sans_ext(basename(makefile))}) and can be
+\code{indicatorfile=tools::file_path_sans_ext(basename(makefile))}) and can be
 evoked from another remake file as
-\code{make(I('indicatorfile'),remake_file='thismakefile')} after replacing
-\code{indicatorfile} and \code{thismakefile} with their values.
+\code{make(I('indicatorfile'),remake_file='thismakefile.yml')} after replacing
+\code{indicatorfile} and \code{thismakefile.yml} with their values.
 }
 \examples{
 task_config <- data.frame(
@@ -73,7 +77,7 @@ step2 <- create_task_step(
 )
 step3 <- create_task_step('report')
 task_plan <- create_task_plan(c('AZ','CA','CO'), list(step1, step2, step3),
-  final_steps='report', indicator_dir='states/log')
+  final_steps='report', ind_dir='states/log')
 task_makefile <- create_task_makefile(
   task_plan, makefile=file.path(tempdir(), 'states.yml'),
   file_extensions=c('ind'), packages='mda.streams')

@@ -5,7 +5,8 @@
 \title{Build a job target by looping over the tasks and steps in a task remake file}
 \usage{
 loop_tasks(task_plan, task_makefile, task_names = NULL, step_names = NULL,
-  num_tries = 30, sleep_on_error = 0)
+  num_tries = 30, sleep_on_error = 0,
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{task_plan}{task plan as created by \code{create_task_plan()}}

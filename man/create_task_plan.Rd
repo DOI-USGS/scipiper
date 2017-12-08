@@ -5,7 +5,8 @@
 \title{Define a set of tasks and steps within a single job}
 \usage{
 create_task_plan(task_names, task_steps, final_steps = sapply(task_steps,
-  `[[`, "step_name"), indicator_dir, add_complete = TRUE)
+  `[[`, "step_name"), ind_dir, add_complete = TRUE,
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{task_names}{character vector of IDs for sets of work coordinates, with
@@ -25,15 +26,18 @@ task complete. If one step depends on all previous steps (as indicated by
 its remake `depends:` and `command:` fields) then only that one step need
 be included in `final_steps`.}
 
-\item{indicator_dir}{directory path, only used if `add_complete==TRUE`,
-specifying the location where task-specific indicator files should be
-written. Such files will always be named after their associated tasks, with
-'.ind' as a suffix}
+\item{ind_dir}{directory path, only used if `add_complete==TRUE`, specifying
+the location where task-specific indicator files should be written. Such
+files will always be named after their associated tasks, with '.ind' as a
+suffix}
 
-\item{add_complete}{logical. if TRUE, `indicator_dir` must be supplied and a
-final step named 'complete' will be added to the step list. This step will
-depend on all `final_steps` and will write an indicator file with a
-timestamp when all final steps are complete.}
+\item{add_complete}{logical. if TRUE, `ind_dir` must be supplied and a final
+step named 'complete' will be added to the step list. This step will depend
+on all `final_steps` and will write an indicator file with a timestamp when
+all final steps are complete.}
+
+\item{ind_ext}{the indicator file extension to use in creating indicator
+files for any `complete` steps (only used if `add_complete==TRUE`)}
 }
 \value{
 a structured list that can be passed to `create_task_makefile` or
@@ -65,5 +69,5 @@ step2 <- create_task_step(
 )
 step3 <- create_task_step('report')
 task_plan <- create_task_plan(c('AZ','CA','CO'), list(step1, step2, step3),
-  final_steps='report', indicator_dir='states/log')
+  final_steps='report', ind_dir='states/log')
 }

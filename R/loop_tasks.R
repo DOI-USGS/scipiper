@@ -36,7 +36,8 @@
 loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
-  num_tries=30, sleep_on_error=0) {
+  num_tries=30, sleep_on_error=0,
+  ind_ext = getOption('scipiper.ind_ext')) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
@@ -106,7 +107,7 @@ loop_tasks <- function(
           i, num_targets, target, target_num_overall, num_targets_overall))
         
         # the main action: run the task-step
-        scmake(target, task_makefile, verbose=FALSE)
+        scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
         
       }, error=function(e) {
         message(sprintf("  Error in %s: %s", deparse(e$call), e$message))
@@ -139,7 +140,7 @@ loop_tasks <- function(
   # will check the hashes of every file (the big model files take the longest).
   message(sprintf("\n### Final check for completeness of all targets"))
   if(!is.na(job_target)) {
-    scmake(job_target, task_makefile)
+    scmake(job_target, task_makefile, ind_ext=ind_ext, verbose=TRUE)
   } else {
     # check all file targets, which at this point will all exist even if they're
     # not up to date. there's no need to run non-file targets because we've
@@ -153,7 +154,7 @@ loop_tasks <- function(
         "Checking file %s of %s: %s",
         i, num_files, target
       ))
-      scmake(target, task_makefile, verbose=FALSE)
+      scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
     }
     msg <- paste(c(
       strwrap("Set task_names=NULL, step_names=NULL to build the job target. Until then, expect this error:"),
