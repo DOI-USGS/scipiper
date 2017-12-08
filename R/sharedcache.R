@@ -45,6 +45,5 @@
 #'   reduce the amount of redundant processing that's required on everybody's
 #'   computers.
 #'
-#' @md
 #' @name sharedcache
 NULL

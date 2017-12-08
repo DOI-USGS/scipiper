@@ -4,7 +4,8 @@
 \alias{s3_put}
 \title{Upload a file to S3}
 \usage{
-s3_put(data_file, config_file = "lib/cfg/s3_config.yml")
+s3_put(data_file, config_file = getOption("scipiper.s3_config_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{data_file}{character name of the data file to upload. The basename will
@@ -12,6 +13,9 @@ be used as the S3 key and must be unique within the project (bucket & path)}
 
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}
+
+\item{ind_ext}{the indicator file extension to expect at the end of
+remote_ind}
 }
 \description{
 Upload (create or overwrite) a file to the project bucket and path.

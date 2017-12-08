@@ -27,7 +27,6 @@
 #'   application of this step to a specific task. If a function, should accept
 #'   `...` and other args optionally including `task_name`, `step_name`,
 #'   `target_name`, and `depends`
-#' @md
 #' @export
 #' @examples
 #' create_task_step(

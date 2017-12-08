@@ -10,7 +10,7 @@
 #' @param config_file character name of the yml file where this configuration
 #'   information should be written
 #' @export
-s3_config <- function(path, bucket, profile='default', config_file="lib/cfg/s3_config.yml") {
+s3_config <- function(path, bucket, profile='default', config_file=getOption("scipiper.s3_config_file")) {
   # write the given information to the specified config_file
   cfg <- list(bucket=bucket, path=path, profile=profile)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
@@ -20,6 +20,10 @@ s3_config <- function(path, bucket, profile='default', config_file="lib/cfg/s3_c
   cred_file <- aws.signature::default_credentials_file()
   if(!file.exists(cred_file)) {
     warning(paste0("aws.signature expects credentials at ", cred_file, " - see ??read_credentials to create this file"))
+  }
+  
+  if(config_file != getOption("scipiper.s3_config_file")) {
+    warning("config_file != default; consider setting options('scipiper.s3_config_file') in .Rprofile")
   }
 }
 
@@ -31,11 +35,17 @@ s3_config <- function(path, bucket, profile='default', config_file="lib/cfg/s3_c
 #'   be used as the S3 key and must be unique within the project (bucket & path)
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
+#' @param ind_ext the indicator file extension to expect at the end of
+#'   remote_ind
 #' @export
-s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
+s3_put <- function(
+  data_file, config_file=getOption("scipiper.s3_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
+  
+  warning('s3_put is out of date relative to gd_put') # need to update s3_xx with lessons learned from gd_xx
   
   require_libs('aws.signature', 'aws.s3')
-  ind_file <- as_indicator(data_file)
+  ind_file <- as_ind_file(data_file, ind_ext=ind_ext)
   
   # post the file from the local data_file to S3
   s3_config <- yaml::yaml.load_file(config_file)
@@ -49,7 +59,7 @@ s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
   
   # write the indicator file (involves another check on S3 to get the timestamp)
   if(success) {
-    success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file)
+    success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file, ind_ext=ind_ext)
   }
   if(!success) {
     stop(paste0("Data file could not be posted to S3: ", data_file))
@@ -65,8 +75,14 @@ s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
 #'   S3 object whose key equals the data_file basename)
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
+#' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
-s3_get <- function(data_file, config_file="lib/cfg/s3_config.yml") {
+s3_get <- function(
+  data_file,
+  config_file=getOption("scipiper.s3_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
+  
+  warning('s3_get is out of date relative to gd_get') # need to update s3_xx with lessons learned from gd_xx
   
   require_libs('aws.signature', 'aws.s3')
   
@@ -89,7 +105,9 @@ s3_get <- function(data_file, config_file="lib/cfg/s3_config.yml") {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @export
-s3_list <- function(..., config_file="lib/cfg/s3_config.yml") {
+s3_list <- function(..., config_file=getOption("scipiper.s3_config_file")) {
+  
+  warning('s3_list is out of date relative to gd_list') # need to update s3_xx with lessons learned from gd_xx
   
   require_libs('aws.signature', 'aws.s3')
   
@@ -104,23 +122,28 @@ s3_list <- function(..., config_file="lib/cfg/s3_config.yml") {
 
 #' Check whether a file is on S3, and if so, write an indicator file
 #' 
-#' @param data_file character name of the data file to download (downloads the
-#'   S3 object whose key equals the data_file basename)
 #' @param ind_file character name of the indicator file to write locally once
 #'   the file has been uploaded
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
+#' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
-s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_config.yml") {
+s3_confirm_posted <- function(
+  ind_file,
+  config_file=getOption("scipiper.s3_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
+  
+  warning('s3_confirm_posted is out of date relative to gd_confirm_posted') # need to update s3_xx with lessons learned from gd_xx
   
   # look on S3 for the specified file
+  data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   s3_config <- yaml::yaml.load_file(config_file)
   key <- file.path(s3_config$path, basename(ind_file))
   Key <- '.dplyr.var'
   remote.info <- filter(s3_list(config_file=config_file, prefix=key), Key==key)
   if(nrow(remote.info) != 1) stop(paste0("failed to find exactly 1 S3 file with Key=", key))
   
-  s3_make_indicator(ind_file, remote_time=remote.info$LastModified)
+  s3_indicate(ind_file, remote_time=remote.info$LastModified)
 }
 
 #' Write an S3 indicator file
@@ -132,7 +155,9 @@ s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_confi
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @keywords internal
-s3_make_indicator <- function(ind_file, remote_time) {
+s3_indicate <- function(ind_file, remote_time) {
+  
+  warning('s3_indicate is out of date relative to gd_indicate') # need to update s3_xx with lessons learned from gd_xx
   
   # write the cache file
   if(is.character(remote_time)) remote_time <- s3_read_time(remote_time)

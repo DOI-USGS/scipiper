@@ -17,14 +17,16 @@
 #'   task complete. If one step depends on all previous steps (as indicated by
 #'   its remake `depends:` and `command:` fields) then only that one step need
 #'   be included in `final_steps`.
-#' @param add_complete logical. if TRUE, `indicator_dir` must be supplied and a
-#'   final step named 'complete' will be added to the step list. This step will
-#'   depend on all `final_steps` and will write an indicator file with a
-#'   timestamp when all final steps are complete.
-#' @param indicator_dir directory path, only used if `add_complete==TRUE`,
-#'   specifying the location where task-specific indicator files should be
-#'   written. Such files will always be named after their associated tasks, with
-#'   '.ind' as a suffix
+#' @param add_complete logical. if TRUE, `ind_dir` must be supplied and a final
+#'   step named 'complete' will be added to the step list. This step will depend
+#'   on all `final_steps` and will write an indicator file with a timestamp when
+#'   all final steps are complete.
+#' @param ind_dir directory path, only used if `add_complete==TRUE`, specifying
+#'   the location where task-specific indicator files should be written. Such
+#'   files will always be named after their associated tasks, with '.ind' as a
+#'   suffix
+#' @param ind_ext the indicator file extension to use in creating indicator
+#'   files for any `complete` steps (only used if `add_complete==TRUE`)
 #' @return a structured list that can be passed to `create_task_makefile` or
 #'   `create_task_table`
 #' @export
@@ -50,11 +52,12 @@
 #' )
 #' step3 <- create_task_step('report')
 #' task_plan <- create_task_plan(c('AZ','CA','CO'), list(step1, step2, step3),
-#'   final_steps='report', indicator_dir='states/log')
+#'   final_steps='report', ind_dir='states/log')
 create_task_plan <- function(
   task_names, task_steps, 
   final_steps=sapply(task_steps, `[[`, 'step_name'),
-  indicator_dir, add_complete=TRUE
+  ind_dir, add_complete=TRUE,
+  ind_ext=getOption("scipiper.ind_ext")
 ) {
   
   # munge the task_names from a character vector into the names in a list (the
@@ -96,7 +99,7 @@ create_task_plan <- function(
     complete_task <- create_task_step(
       step_name = 'complete',
       target_name = function(task_name, ...) {
-        as_indicator(file.path(indicator_dir, task_name))
+        as_ind_file(file.path(ind_dir, task_name), ind_ext=ind_ext)
       },
       depends = function(steps, ...) {
         # when this final step is evaluated, steps will contain all preceding
@@ -144,9 +147,9 @@ create_task_plan <- function(
   if(add_complete) final_steps <- 'complete'
   attr(tasks, 'final_steps') <- final_steps
   
-  # attach the indicator_dir to use as the default indicator_dir in
+  # attach the ind_dir to use as the default ind_dir in
   # create_task_makefile
-  attr(tasks, 'indicator_dir') <- indicator_dir
+  attr(tasks, 'ind_dir') <- ind_dir
   
   return(tasks)
 }

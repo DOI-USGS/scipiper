@@ -5,13 +5,14 @@
 \title{Produce a table describing the remake build status relative to 1+ targets}
 \usage{
 get_remake_status(target_names,
-  remake_file = options("scipiper.remake_file")[[1]])
+  remake_file = getOption("scipiper.remake_file"))
 }
 \arguments{
 \item{target_names}{character vector of targets for which to determine build
 status (complete status will include dependencies of these targets)}
 
-\item{remake_file}{filename of the remake YAML file}
+\item{remake_file}{filename of the remake YAML file from which status should
+be determined}
 }
 \description{
 Produce a table describing the remake build status relative to 1+ targets

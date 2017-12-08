@@ -5,7 +5,8 @@
 \title{Download a file from Google Drive if needed}
 \usage{
 gd_get(ind_file, type = NULL, overwrite = TRUE, verbose = FALSE,
-  config_file = options("scipiper.gd_config_file")[[1]])
+  config_file = getOption("scipiper.gd_config_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{ind_file}{character name of the indicator file for which data should be
@@ -20,7 +21,9 @@ data_file basename}
 also used to determine whether to include messages specific to \code{gd_get()}}
 
 \item{config_file}{character name of the YAML file containing
-project-specific configuration information}
+project-specific configuration information for Google Drive}
+
+\item{ind_ext}{the indicator file extension to expect at the end of ind_file}
 }
 \description{
 Download a file from Google Drive to the local project based on the

@@ -4,7 +4,7 @@
 \alias{s3_list}
 \title{List the S3 objects for this project}
 \usage{
-s3_list(..., config_file = "lib/cfg/s3_config.yml")
+s3_list(..., config_file = getOption("scipiper.s3_config_file"))
 }
 \arguments{
 \item{...}{arguments passed to aws.s3::get_bucket_df}

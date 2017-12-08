@@ -4,10 +4,10 @@
 \alias{sc_indicate}
 \title{Create an indicator file}
 \usage{
-sc_indicate(indicator, ..., data_file)
+sc_indicate(ind_file, ..., data_file)
 }
 \arguments{
-\item{indicator}{file name of the indicator file to write}
+\item{ind_file}{file name of the indicator file to write}
 
 \item{...}{optional. named character strings/vectors to be written to the
 indicator file. one good option is a pre-computed hash of the actual data
@@ -20,7 +20,7 @@ indicated. if given, the hash of the data file will be included in the
 indicator file as the \code{hash} element.}
 }
 \description{
-If only the first argument (\code{indicator}) is given, the contents of the
+If only the first argument (\code{ind_file}) is given, the contents of the
 indicator file change every time. To create an indicator file whose contents
 are static, specify a fixed argument in \code{...}.
 }

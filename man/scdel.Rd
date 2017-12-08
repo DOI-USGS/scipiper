@@ -5,7 +5,8 @@
 \title{Wrapper for remake::delete that permits cache sharing}
 \usage{
 scdel(target_names, verbose = TRUE,
-  remake_file = options("scipiper.remake_file")[[1]])
+  remake_file = getOption("scipiper.remake_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{target_names}{vector of targets to delete}
@@ -13,6 +14,11 @@ scdel(target_names, verbose = TRUE,
 \item{verbose}{as in \code{\link[remake:delete]{remake::delete()}}}
 
 \item{remake_file}{as in \code{\link[remake:delete]{remake::delete()}}}
+
+\item{ind_ext}{the indicator file extension identifying those files for which
+build/status information will be deleted if their targets are
+remake::deleted. You should git commit the deletion of any build/status
+files (unless you immediately rebuild them and commit any changes instead).}
 }
 \description{
 \code{\link[remake:delete]{remake::delete()}} claims that for files you can generally just delete the

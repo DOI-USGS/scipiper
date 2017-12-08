@@ -9,7 +9,7 @@
 #' @param config_file character name of the YAML file where this configuration
 #'   information should be written
 #' @export
-gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) {
   # write the given information to the specified config_file
   cfg <- list(folder=folder)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
@@ -19,6 +19,10 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
   cred_file <- '.httr-oauth'
   if(!file.exists(cred_file)) {
     warning(paste0("googledrive expects credentials at ", cred_file, " - see ??drive_auth to create this file"))
+  }
+  
+  if(config_file != getOption("scipiper.gd_config_file")) {
+    warning("config_file != default; consider setting options('scipiper.gd_config_file') in .Rprofile")
   }
 }
 
@@ -60,8 +64,9 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 #' @param verbose logical, used in gd_put and passed onto
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
 #' @param config_file character name of the YAML file containing
-#'   project-specific configuration information
-#' @md
+#'   project-specific configuration information for Google Drive
+#' @param ind_ext the indicator file extension to expect at the end of
+#'   remote_ind
 #' @export
 #' @examples
 #' \dontrun{
@@ -110,14 +115,15 @@ gd_config <- function(folder, config_file=options("scipiper.gd_config_file")[[1]
 gd_put <- function(
   remote_ind, local_source, mock_get=c('copy','move','none'),
   on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
-  config_file=options("scipiper.gd_config_file")[[1]]) {
+  config_file=getOption("scipiper.gd_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
   
   # check arguments
   mock_get <- match.arg(mock_get)
   
   # decide whether local_source is an indicator or data file and find the data file
-  if(is_indicator(local_source)) {
-    local_file <- as_data_file(local_source)
+  if(is_ind_file(local_source)) {
+    local_file <- as_data_file(local_source, ind_ext=ind_ext)
   } else {
     local_file <- local_source
   }
@@ -126,7 +132,7 @@ gd_put <- function(
   }
   
   # identify the remote data file to be indicated by remote_ind
-  data_file <- as_data_file(remote_ind)
+  data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
   
   # prepare to use google drive
   require_libs('googledrive')
@@ -222,18 +228,20 @@ gd_put <- function(
 #' @param verbose see `verbose` argument to `googledrive::drive_download()`;
 #'   also used to determine whether to include messages specific to `gd_get()`
 #' @param config_file character name of the YAML file containing
-#'   project-specific configuration information
-#' @md
+#'   project-specific configuration information for Google Drive
+#' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @examples
 #' \dontrun{
 #' gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)
 #' }
 #' @export
-gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE,
+                   config_file=getOption("scipiper.gd_config_file"),
+                   ind_ext=getOption("scipiper.ind_ext")) {
   
   # infer the data file name from the ind_file. gd_get always downloads to that
   # location if it downloads at all
-  data_file <- as_data_file(ind_file)
+  data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   
   # bypass the download from google drive if the right local file already exists
   if(file.exists(data_file)) {
@@ -263,7 +271,7 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE, config_fi
 }
 
 # Locate a file along a path relative to the gd_config folder, or return NA if not found
-gd_locate_file <- function(file, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file")) {
   # load the project's googledrive configuration
   gd_config <- yaml::yaml.load_file(config_file)
   
@@ -321,7 +329,7 @@ get_relative_path <- function(file) {
 #' @param config_file character name of the YAML file containing project-specific
 #'   configuration information
 #' @export
-gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_list <- function(..., config_file=getOption("scipiper.gd_config_file")) {
   
   require_libs('googledrive')
   
@@ -338,19 +346,24 @@ gd_list <- function(..., config_file=options("scipiper.gd_config_file")[[1]]) {
 #'   the file has been uploaded; will exactly correspond to the data_file on GD
 #' @param config_file character name of the YAML file containing
 #'   project-specific configuration information
+#' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
-gd_confirm_posted <- function(ind_file, config_file=options("scipiper.gd_config_file")[[1]]) {
+gd_confirm_posted <- function(
+  ind_file, config_file=getOption("scipiper.gd_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
+  
+  require_libs('googledrive')
   
   # look on Google Drive for the specified file
   # figure out whether and where the file exists on gdrive
-  data_file <- as_data_file(ind_file)
+  data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   remote_path <- gd_locate_file(data_file, config_file)
   remote_id <- tail(remote_path$id, 1)
   if(is.na(remote_id)) stop(paste('File was not found on Google Drive:', data_file))
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
   # we could prepare a timestamp from modifiedTime...but checksum is even better
-  gd_make_indicator(ind_file, md5_checksum=remote_info$md5Checksum)
+  gd_indicate(ind_file, md5_checksum=remote_info$md5Checksum)
   
   return(TRUE)
 }
@@ -364,14 +377,14 @@ gd_confirm_posted <- function(ind_file, config_file=options("scipiper.gd_config_
 #' @param config_file character name of the YAML file containing project-specific
 #'   configuration information
 #' @keywords internal
-gd_make_indicator <- function(ind_file, md5_checksum) {
+gd_indicate <- function(ind_file, md5_checksum) {
   
   # we could prepare a timestamp...but checksum is even better
   # if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
   
   # write the indicator file
   if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
-  sc_indicate(indicator=ind_file, hash=md5_checksum)
+  sc_indicate(ind_file, hash=md5_checksum)
   
 }
 

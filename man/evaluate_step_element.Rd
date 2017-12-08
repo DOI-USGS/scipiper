@@ -7,7 +7,7 @@
 evaluate_step_element(task_step, element, task, step)
 }
 \arguments{
-\item{task_step}{a task_step as created by `create_task_step()`}
+\item{task_step}{a task_step as created by \code{create_task_step()}}
 
 \item{element}{character naming a task_step element ('target_name',
 'depends', or 'command') to evaluate}

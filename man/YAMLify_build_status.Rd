@@ -5,7 +5,13 @@
 \title{Copy info from .remake/objects to build/status}
 \usage{
 YAMLify_build_status(target_names,
-  remake_file = options("scipiper.remake_file")[[1]])
+  remake_file = getOption("scipiper.remake_file"))
+}
+\arguments{
+\item{target_names}{as in remake::make, vector of specific targets}
+
+\item{remake_file}{filename of the remake YAML file for which the status of
+target_names should be YAMLified}
 }
 \description{
 Copy status files from .remake folder (binary form) to build/status folder

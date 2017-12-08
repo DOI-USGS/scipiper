@@ -4,7 +4,8 @@
 \alias{s3_get}
 \title{Download a file from S3}
 \usage{
-s3_get(data_file, config_file = "lib/cfg/s3_config.yml")
+s3_get(data_file, config_file = getOption("scipiper.s3_config_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{data_file}{character name of the data file to download (downloads the
@@ -12,6 +13,8 @@ S3 object whose key equals the data_file basename)}
 
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}
+
+\item{ind_ext}{the indicator file extension to expect at the end of ind_file}
 }
 \description{
 Download a file from S3 to the local project
