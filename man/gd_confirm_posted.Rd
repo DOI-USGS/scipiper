@@ -5,7 +5,8 @@
 \title{Check whether a file is on Google Drive, and if so, write an indicator file}
 \usage{
 gd_confirm_posted(ind_file,
-  config_file = options("scipiper.gd_config_file")[[1]])
+  config_file = getOption("scipiper.gd_config_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{ind_file}{character name of the indicator file to write locally once
@@ -13,6 +14,8 @@ the file has been uploaded; will exactly correspond to the data_file on GD}
 
 \item{config_file}{character name of the YAML file containing
 project-specific configuration information}
+
+\item{ind_ext}{the indicator file extension to expect at the end of ind_file}
 }
 \description{
 Check whether a file is on Google Drive, and if so, write an indicator file

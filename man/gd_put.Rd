@@ -6,7 +6,8 @@
 \usage{
 gd_put(remote_ind, local_source, mock_get = c("copy", "move", "none"),
   on_exists = c("update", "replace", "stop"), type = NULL,
-  verbose = FALSE, config_file = options("scipiper.gd_config_file")[[1]])
+  verbose = FALSE, config_file = getOption("scipiper.gd_config_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{remote_ind}{character name of the indicator file to write locally, but
@@ -47,7 +48,10 @@ functionality)}
 googledrive::drive_update, drive_upload, and/or drive_rm}
 
 \item{config_file}{character name of the YAML file containing
-project-specific configuration information}
+project-specific configuration information for Google Drive}
+
+\item{ind_ext}{the indicator file extension to expect at the end of
+remote_ind}
 }
 \description{
 Upload (create or overwrite) a file to the project bucket and path. Writes an
