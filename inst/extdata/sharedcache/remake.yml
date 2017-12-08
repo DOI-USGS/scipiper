@@ -26,11 +26,6 @@ target_default: B.rds
 
 targets:
 
-  # settings
-  
-  indicator_extension:
-    command: c(I("ind"))
-
   # project
 
   A.txt.ind :
