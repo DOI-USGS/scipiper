@@ -120,7 +120,7 @@ s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_confi
   remote.info <- filter(s3_list(config_file=config_file, prefix=key), Key==key)
   if(nrow(remote.info) != 1) stop(paste0("failed to find exactly 1 S3 file with Key=", key))
   
-  s3_make_indicator(ind_file, remote_time=remote.info$LastModified)
+  s3_indicate(ind_file, remote_time=remote.info$LastModified)
 }
 
 #' Write an S3 indicator file
@@ -132,7 +132,7 @@ s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_confi
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @keywords internal
-s3_make_indicator <- function(ind_file, remote_time) {
+s3_indicate <- function(ind_file, remote_time) {
   
   # write the cache file
   if(is.character(remote_time)) remote_time <- s3_read_time(remote_time)
