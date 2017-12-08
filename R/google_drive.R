@@ -247,7 +247,7 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE,
   if(file.exists(data_file)) {
     remote_hash <- yaml::yaml.load_file(ind_file)$hash
     local_hash <- unname(tools::md5sum(data_file))
-    if(remote_hash == local_hash) return(invisible())
+    if(remote_hash == local_hash) return(data_file)
   }
   
   require_libs('googledrive')
