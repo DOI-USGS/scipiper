@@ -4,13 +4,20 @@
 \alias{as_data_file}
 \title{Return the data file name corresponding to the given indicator name}
 \usage{
-as_data_file(ind_file)
+as_data_file(ind_file, ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{ind_file}{the indicator name (with path as needed) whose corresponding
 data file name should be returned}
+
+\item{ind_ext}{the indicator file extension to expect at the end of ind_file}
 }
 \description{
 If `ind_file` does not have the indicator extension, an error will be
 generated.
+}
+\examples{
+as_data_file('mydata.rds.ind') # 'mydata.rds'
+as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
+as_data_file('mydata.rds.st', ind_ext='st') # 'mydata.rds'
 }

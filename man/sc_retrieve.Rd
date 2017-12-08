@@ -4,10 +4,22 @@
 \alias{sc_retrieve}
 \title{Retrieve the data file declared by an indicator}
 \usage{
-sc_retrieve(indicator)
+sc_retrieve(ind_file, remake_file = getOption("scipiper.remake_file"),
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
-\item{indicator}{the file path of the indicator}
+\item{ind_file}{the file path of the indicator for which the corresponding
+data_file will be retrieved}
+
+\item{remake_file}{the file path+name of the remake file to use in retrieving
+the data file}
+
+\item{ind_ext}{the indicator file extension to expect at the end of ind_file,
+and for which any altered targets should have their build/status files
+updated}
+}
+\value{
+the name of the retrieved data file
 }
 \description{
 Identifies the data file's name by removing the indicator extension, then
