@@ -5,7 +5,7 @@
 \title{Create or overwrite an S3 configuration file}
 \usage{
 s3_config(path, bucket, profile = "default",
-  config_file = "lib/cfg/s3_config.yml")
+  config_file = getOption("scipiper.s3_config_file"))
 }
 \arguments{
 \item{path}{character name of a path (prefix) within the bucket where all
