@@ -34,6 +34,8 @@ s3_config <- function(path, bucket, profile='default', config_file="lib/cfg/s3_c
 #' @export
 s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
   
+  warning('s3_put is out of date relative to gd_put') # need to update s3_xx with lessons learned from gd_xx
+  
   require_libs('aws.signature', 'aws.s3')
   ind_file <- as_indicator(data_file)
   
@@ -68,6 +70,8 @@ s3_put <- function(data_file, config_file="lib/cfg/s3_config.yml") {
 #' @export
 s3_get <- function(data_file, config_file="lib/cfg/s3_config.yml") {
   
+  warning('s3_get is out of date relative to gd_get') # need to update s3_xx with lessons learned from gd_xx
+  
   require_libs('aws.signature', 'aws.s3')
   
   # download the file from S3 to the local data_file
@@ -91,6 +95,8 @@ s3_get <- function(data_file, config_file="lib/cfg/s3_config.yml") {
 #' @export
 s3_list <- function(..., config_file="lib/cfg/s3_config.yml") {
   
+  warning('s3_list is out of date relative to gd_list') # need to update s3_xx with lessons learned from gd_xx
+  
   require_libs('aws.signature', 'aws.s3')
   
   message("Listing project files on S3")
@@ -113,6 +119,8 @@ s3_list <- function(..., config_file="lib/cfg/s3_config.yml") {
 #' @export
 s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_config.yml") {
   
+  warning('s3_confirm_posted is out of date relative to gd_confirm_posted') # need to update s3_xx with lessons learned from gd_xx
+  
   # look on S3 for the specified file
   s3_config <- yaml::yaml.load_file(config_file)
   key <- file.path(s3_config$path, basename(ind_file))
@@ -133,6 +141,8 @@ s3_confirm_posted <- function(data_file, ind_file, config_file="lib/cfg/s3_confi
 #'   configuration information
 #' @keywords internal
 s3_indicate <- function(ind_file, remote_time) {
+  
+  warning('s3_indicate is out of date relative to gd_indicate') # need to update s3_xx with lessons learned from gd_xx
   
   # write the cache file
   if(is.character(remote_time)) remote_time <- s3_read_time(remote_time)
