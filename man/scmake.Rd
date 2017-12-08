@@ -4,22 +4,28 @@
 \alias{scmake}
 \title{Wrapper for remake::make that permits cache sharing}
 \usage{
-scmake(target_names = NULL,
-  remake_file = options("scipiper.remake_file")[[1]], ..., verbose = TRUE,
-  allow_missing_packages = FALSE)
+scmake(target_names = NULL, remake_file = getOption("scipiper.remake_file"),
+  ..., verbose = TRUE, allow_missing_packages = FALSE,
+  ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{target_names}{as in remake::make}
 
-\item{remake_file}{as in remake::make, except that for scmake this param
-comes before ... and second in line, so it can be easily specified without
-naming the argument}
+\item{remake_file}{the file path+name of the remake file to use in building
+the targets. As in remake::make, except that for scmake this param comes
+before ... and second in line, so it can be easily specified without naming
+the argument}
 
 \item{...}{as in remake::make}
 
 \item{verbose}{as in remake::make}
 
 \item{allow_missing_packages}{as in remake::make}
+
+\item{ind_ext}{the indicator file extension identifying those files for which
+build/status information will be shared via git-committable files in the
+build/status folder. You should git commit the resulting build/status
+files.}
 }
 \description{
 The name: sc=scipiper, sc=shared cache. This wrapper could eventually involve

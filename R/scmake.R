@@ -101,11 +101,11 @@ scdel <- function(
 
 #' Create an indicator file
 #'
-#' If only the first argument (`indicator`) is given, the contents of the
+#' If only the first argument (`ind_file`) is given, the contents of the
 #' indicator file change every time. To create an indicator file whose contents
 #' are static, specify a fixed argument in `...`.
 #'
-#' @param indicator file name of the indicator file to write
+#' @param ind_file file name of the indicator file to write
 #' @param ... optional. named character strings/vectors to be written to the
 #'   indicator file. one good option is a pre-computed hash of the actual data
 #'   file (possibly retrieved as a hash from the remote cache). If you have the
@@ -116,7 +116,7 @@ scdel <- function(
 #'   indicator file as the `hash` element.
 #' @md
 #' @export
-sc_indicate <- function(indicator, ..., data_file) {
+sc_indicate <- function(ind_file, ..., data_file) {
   
   info_list <- list(...)
   
@@ -138,7 +138,7 @@ sc_indicate <- function(indicator, ..., data_file) {
   }
   
   # write the info to the indicator file
-  writeLines(yaml::as.yaml(info_list), con=indicator)
+  writeLines(yaml::as.yaml(info_list), con=ind_file)
   
   invisible(NULL)
 }
@@ -148,7 +148,8 @@ sc_indicate <- function(indicator, ..., data_file) {
 #' calls `scmake` to retrieve that file using a recipe given in the remake.yml
 #'
 #' @md
-#' @param indicator the file path of the indicator
+#' @param ind_file the file path of the indicator for which the corresponding
+#'   data_file will be retrieved
 #' @param remake_file the file path+name of the remake file to use in retrieving
 #'   the data file
 #' @param ind_ext the indicator file extension to expect at the end of ind_file,
@@ -156,39 +157,36 @@ sc_indicate <- function(indicator, ..., data_file) {
 #'   updated
 #' @return the name of the retrieved data file
 #' @export
-  data_file <- as_data_file(indicator)
 sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.remake_file'), ind_ext=getOption('scipiper.ind_ext')) {
+  data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   scmake(data_file, remake_file=remake_file, ind_ext=ind_ext, verbose=FALSE)
   return(data_file)
 }
 
 
-#' Determine whether target_names are status indicator files
+#' Determine whether target_names are indicator files
 #'
-#' Status indicator files are those files (or maybe someday objects?) included
-#' in the remake yml whose final extension is the accepted indicator extension
-#' ('ind' by default, but see `indicator_extension`). If the target does not
-#' have the indicator extension, FALSE is returned; no warnings or errors are
-#' given if the target is not in the remake yml.
+#' Indicator files are those files (or maybe someday objects?) included in the
+#' remake yml whose final extension is the accepted indicator extension ('ind'
+#' by default, but see `?scipiper::options`). If the target does not have the
+#' indicator extension, FALSE is returned; no warnings or errors are given if
+#' the target is not in the remake yml.
 #'
 #' By default, the only accepted indicator extension is 'ind'. If you want other
 #' extensions to be used, add a object target to your remake.yml that contains a
 #' character vector of the accepted extensions. See below for an example.
 #'
 #' @param target_names character vector of remake target names
-#' @param remake_file filename of the remake YAML file
 #' @param ind_ext the indicator file extension to recognize, i.e., the final
 #'   file extension of files for which `is_ind_file()` should return `TRUE`
 #' @examples
-#' \dontrun{
-#' # example remake.yml target to define extensions
-#' targets:
-#'   indicator_extensions:
-#'     command: c(I("ind"))
-#' }
+#' is_ind_file('mydata.rds') # FALSE
+#' is_ind_file('mydata.rds.ind') # TRUE
+#' is_ind_file('mydata.rds.st', ind_ext='st') # TRUE
+#' is_ind_file('mydata.rds', ind_ext='rds') # TRUE but you shouldn't do this
 #' @md
 #' @export
-is_indicator <- function(target_names) {
+is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
   tools::file_ext(target_names) == ind_ext
 }
 
@@ -202,11 +200,11 @@ is_indicator <- function(target_names) {
 #' @param ind_ext the indicator file extension to apply
 #' @md
 #' @export
-as_indicator <- function(data_file) {
 #' @examples 
 #' as_ind_file('mydata.rds') # 'mydata.rds.ind'
 #' as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
 #' as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
+as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
   if(is_ind_file(data_file, ind_ext=ind_ext)) {
     stop('data_file is an indicator file already')
   }
