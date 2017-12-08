@@ -72,7 +72,6 @@ scmake <- function(
 #'   build/status information will be deleted if their targets are
 #'   remake::deleted. You should git commit the deletion of any build/status
 #'   files (unless you immediately rebuild them and commit any changes instead).
-#' @md
 #' @export
 scdel <- function(
   target_names, verbose = TRUE,
@@ -114,7 +113,6 @@ scdel <- function(
 #' @param data_file optional. file name of the data file whose presence is being
 #'   indicated. if given, the hash of the data file will be included in the
 #'   indicator file as the `hash` element.
-#' @md
 #' @export
 sc_indicate <- function(ind_file, ..., data_file) {
   
@@ -147,7 +145,6 @@ sc_indicate <- function(ind_file, ..., data_file) {
 #' Identifies the data file's name by removing the indicator extension, then
 #' calls `scmake` to retrieve that file using a recipe given in the remake.yml
 #'
-#' @md
 #' @param ind_file the file path of the indicator for which the corresponding
 #'   data_file will be retrieved
 #' @param remake_file the file path+name of the remake file to use in retrieving
@@ -184,7 +181,6 @@ sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.remake_file'),
 #' is_ind_file('mydata.rds.ind') # TRUE
 #' is_ind_file('mydata.rds.st', ind_ext='st') # TRUE
 #' is_ind_file('mydata.rds', ind_ext='rds') # TRUE but you shouldn't do this
-#' @md
 #' @export
 is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
   tools::file_ext(target_names) == ind_ext
@@ -198,7 +194,6 @@ is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
 #' @param data_file the data file name (with path as needed) whose corresponding
 #'   indicator name should be returned
 #' @param ind_ext the indicator file extension to apply
-#' @md
 #' @export
 #' @examples 
 #' as_ind_file('mydata.rds') # 'mydata.rds.ind'
@@ -237,7 +232,6 @@ as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
 #'   status (complete status will include dependencies of these targets)
 #' @param remake_file filename of the remake YAML file from which status should
 #'   be determined
-#' @md
 #' @export
 get_remake_status <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
   # collect information about the current remake database. do load sources to get the dependencies right
@@ -386,9 +380,9 @@ RDSify_build_status <- function(new_only=TRUE, remake_file=getOption('scipiper.r
 #' Whereas file and object names might be invalid or confusing as key file
 #' names, mangled keys are always good as file names - no punctuation or
 #' misleading suffixes
-#' @param key character vector of key[s] to convert
+#' @param key character vector of key(s) to convert
 #' @param dbstore a storr containing the remake build status, as from
-#'   remake:::remake(load_sources=FALSE)$store$db
+#'   `remake:::remake(load_sources=FALSE)$store$db`
 #' @keywords internal
 get_mangled_key <- function(key, dbstore) {
   basename(dbstore$driver$name_key(key, ''))

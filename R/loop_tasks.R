@@ -31,7 +31,6 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
-#' @md
 #' @export
 loop_tasks <- function(
   task_plan, task_makefile,

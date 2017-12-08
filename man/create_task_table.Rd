@@ -7,7 +7,7 @@
 create_task_table(task_plan, table_file)
 }
 \arguments{
-\item{task_plan}{a task plan as produced by `create_task_plan()`}
+\item{task_plan}{a task plan as produced by \code{create_task_plan()}}
 
 \item{table_file}{a file name to write a tab-separated table to (as .tsv), or
 NULL to return as a data.frame}

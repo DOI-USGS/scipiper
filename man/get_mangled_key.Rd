@@ -7,10 +7,10 @@
 get_mangled_key(key, dbstore)
 }
 \arguments{
-\item{key}{character vector of key[s] to convert}
+\item{key}{character vector of key(s) to convert}
 
 \item{dbstore}{a storr containing the remake build status, as from
-remake:::remake(load_sources=FALSE)$store$db}
+\code{remake:::remake(load_sources=FALSE)$store$db}}
 }
 \description{
 Whereas file and object names might be invalid or confusing as key file

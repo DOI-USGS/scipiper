@@ -47,7 +47,6 @@
 #'
 #' @docType package
 #' @name options
-#' @md
 #' @examples
 #' # see what's already there
 #' getOption('scipiper.remake_file') # 'remake.yml'
@@ -84,5 +83,4 @@ NULL
 #'
 #' @docType package
 #' @name scipiper
-#' @md
 NULL

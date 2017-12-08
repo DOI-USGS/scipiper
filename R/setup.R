@@ -13,7 +13,6 @@
 #' @import tidyr
 #' @import dplyr
 #' @export
-#' @md
 #' @examples
 #' # prep
 #' dir.create('example_project')
@@ -75,7 +74,6 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
 #' @param .list as an alternative to ..., use .list to specify files in a single
 #'   list argument
 #' @export
-#' @md
 #' @examples
 #' # prep
 #' dir.create('example_project')

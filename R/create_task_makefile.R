@@ -31,7 +31,6 @@
 #'   `makefile`. The default is recommended
 #' @return the file name of the makefile that was created (can be displayed with
 #'   `cat(readLines(makefile), sep="\n")`).
-#' @md
 #' @export
 #' @examples
 #' task_config <- data.frame(

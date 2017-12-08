@@ -67,7 +67,6 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 #'   project-specific configuration information for Google Drive
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
-#' @md
 #' @export
 #' @examples
 #' \dontrun{
@@ -231,7 +230,6 @@ gd_put <- function(
 #' @param config_file character name of the YAML file containing
 #'   project-specific configuration information for Google Drive
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
-#' @md
 #' @examples
 #' \dontrun{
 #' gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)

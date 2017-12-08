@@ -13,7 +13,7 @@ data file name should be returned}
 \item{ind_ext}{the indicator file extension to expect at the end of ind_file}
 }
 \description{
-If `ind_file` does not have the indicator extension, an error will be
+If \code{ind_file} does not have the indicator extension, an error will be
 generated.
 }
 \examples{
