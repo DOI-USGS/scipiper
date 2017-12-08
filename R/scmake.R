@@ -4,16 +4,21 @@
 #' other custom hooks for things to do before or after building a target
 #'
 #' @param target_names as in remake::make
+#' @param remake_file the file path+name of the remake file to use in building
+#'   the targets. As in remake::make, except that for scmake this param comes
+#'   before ... and second in line, so it can be easily specified without naming
+#'   the argument
 #' @param ... as in remake::make
 #' @param verbose as in remake::make
 #' @param allow_missing_packages as in remake::make
-#' @param remake_file as in remake::make, except that for scmake this param
-#'   comes before ... and second in line, so it can be easily specified without
-#'   naming the argument
+#' @param ind_ext the indicator file extension identifying those files for which
+#'   build/status information will be shared via git-committable files in the
+#'   build/status folder. You should git commit the resulting build/status
+#'   files.
 #' @export
 scmake <- function(
-  target_names = NULL, remake_file = options('scipiper.remake_file')[[1]], ..., 
-  verbose = TRUE, allow_missing_packages = FALSE) {
+  target_names = NULL, remake_file = getOption('scipiper.remake_file'), ..., 
+  verbose = TRUE, allow_missing_packages = FALSE, ind_ext = getOption("scipiper.ind_ext")) {
   
   # update .remake with any new build/status info
   RDSify_build_status(remake_file=remake_file)
@@ -40,7 +45,7 @@ scmake <- function(
   # make a text (YAML) copy of the build status file from the remake db storr;
   # put it in build/status
   tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
-  tdiffs <- tdiffs[is_indicator(tdiffs$target),]
+  tdiffs <- tdiffs[is_ind_file(tdiffs$target, ind_ext=ind_ext),]
   YAMLify_build_status(tdiffs$target, remake_file=remake_file)
   
   invisible(out)
@@ -63,11 +68,16 @@ scmake <- function(
 #' @param target_names vector of targets to delete
 #' @param verbose as in [remake::delete()]
 #' @param remake_file as in [remake::delete()]
+#' @param ind_ext the indicator file extension identifying those files for which
+#'   build/status information will be deleted if their targets are
+#'   remake::deleted. You should git commit the deletion of any build/status
+#'   files (unless you immediately rebuild them and commit any changes instead).
 #' @md
 #' @export
 scdel <- function(
   target_names, verbose = TRUE,
-  remake_file = options('scipiper.remake_file')[[1]]) {
+  remake_file = getOption('scipiper.remake_file'),
+  ind_ext = getOption('scipiper.ind_ext')) {
   
   # run remake::delete, which takes care of the file itself and the RDS status
   # file, leaving us with just the YAML file to deal with below. Lock in
@@ -82,7 +92,7 @@ scdel <- function(
   # for every deleted target that is a status indicator file,
   # delete or confirm the absence of the corresponding text (YAML) version of
   # the build status file in build/status
-  status_targets <- target_names[is_indicator(target_names)]
+  status_targets <- target_names[is_ind_file(target_names, ind_ext=ind_ext)]
   status_keys <- get_mangled_key(status_targets, dbstore)
   status_files <- file.path('build/status', paste0(status_keys, '.yml'))
   status_exists <- status_files[file.exists(status_files)]
@@ -139,10 +149,16 @@ sc_indicate <- function(indicator, ..., data_file) {
 #'
 #' @md
 #' @param indicator the file path of the indicator
+#' @param remake_file the file path+name of the remake file to use in retrieving
+#'   the data file
+#' @param ind_ext the indicator file extension to expect at the end of ind_file,
+#'   and for which any altered targets should have their build/status files
+#'   updated
+#' @return the name of the retrieved data file
 #' @export
-sc_retrieve <- function(indicator, remake_file=options('scipiper.remake_file')[[1]]) {
   data_file <- as_data_file(indicator)
-  scmake(data_file, remake_file=remake_file, verbose=FALSE)
+sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.remake_file'), ind_ext=getOption('scipiper.ind_ext')) {
+  scmake(data_file, remake_file=remake_file, ind_ext=ind_ext, verbose=FALSE)
   return(data_file)
 }
 
@@ -161,6 +177,8 @@ sc_retrieve <- function(indicator, remake_file=options('scipiper.remake_file')[[
 #'
 #' @param target_names character vector of remake target names
 #' @param remake_file filename of the remake YAML file
+#' @param ind_ext the indicator file extension to recognize, i.e., the final
+#'   file extension of files for which `is_ind_file()` should return `TRUE`
 #' @examples
 #' \dontrun{
 #' # example remake.yml target to define extensions
@@ -171,32 +189,7 @@ sc_retrieve <- function(indicator, remake_file=options('scipiper.remake_file')[[
 #' @md
 #' @export
 is_indicator <- function(target_names) {
-  tools::file_ext(target_names) == indicator_extension()
-}
-
-#' Returns the indicator file extension for this project
-#'
-#' The default extension is 'ind', but you can override this by defining a
-#' remake recipe for `indicator_extension` in your remake_file, where the result
-#' of that recipe is a length-1 character extension (with no leading period)
-#'
-#' @param remake_file name of the remake YAML file
-#' @md
-#' @export
-indicator_extension <- function(remake_file=options('scipiper.remake_file')[[1]]) {
-  all_targets <- remake::list_targets(remake_file=remake_file)
-  if('indicator_extension' %in% all_targets) {
-    ext <- remake::make('indicator_extension', remake_file=remake_file, verbose=FALSE)
-    if(length(ext) != 1) {
-      stop("expecting exactly 1 extension in indicator_extension in remake_file")
-    }
-    if(grepl('^\\.', ext)) {
-      stop("indicator_extension should not begin with '.'")
-    }
-  } else {
-    ext <- 'ind' # the default is to recognize only the .ind extension
-  }
-  return(ext)
+  tools::file_ext(target_names) == ind_ext
 }
 
 #' Returns the indicator name corresponding to the given data file name
@@ -206,13 +199,18 @@ indicator_extension <- function(remake_file=options('scipiper.remake_file')[[1]]
 #'
 #' @param data_file the data file name (with path as needed) whose corresponding
 #'   indicator name should be returned
+#' @param ind_ext the indicator file extension to apply
 #' @md
 #' @export
 as_indicator <- function(data_file) {
-  if(is_indicator(data_file)) {
+#' @examples 
+#' as_ind_file('mydata.rds') # 'mydata.rds.ind'
+#' as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
+#' as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
+  if(is_ind_file(data_file, ind_ext=ind_ext)) {
     stop('data_file is an indicator file already')
   }
-  paste0(data_file, '.', indicator_extension())
+  paste0(data_file, '.', ind_ext)
 }
 
 #' Return the data file name corresponding to the given indicator name
@@ -222,9 +220,14 @@ as_indicator <- function(data_file) {
 #'
 #' @param ind_file the indicator name (with path as needed) whose corresponding
 #'   data file name should be returned
+#' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
-as_data_file <- function(ind_file) {
-  if(!is_indicator(ind_file)) {
+#' @examples
+#' as_data_file('mydata.rds.ind') # 'mydata.rds'
+#' as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
+#' as_data_file('mydata.rds.st', ind_ext='st') # 'mydata.rds'
+as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
+  if(!is_ind_file(ind_file, ind_ext=ind_ext)) {
     stop('ind_file is not an indicator file')
   }
   tools::file_path_sans_ext(ind_file)
@@ -234,10 +237,11 @@ as_data_file <- function(ind_file) {
 #'
 #' @param target_names character vector of targets for which to determine build
 #'   status (complete status will include dependencies of these targets)
-#' @param remake_file filename of the remake YAML file
+#' @param remake_file filename of the remake YAML file from which status should
+#'   be determined
 #' @md
 #' @export
-get_remake_status <- function(target_names, remake_file=options('scipiper.remake_file')[[1]]) {
+get_remake_status <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
@@ -274,12 +278,15 @@ get_remake_status <- function(target_names, remake_file=options('scipiper.remake
 }
 
 #' Copy info from .remake/objects to build/status
-#' 
+#'
 #' Copy status files from .remake folder (binary form) to build/status folder
 #' (versionable text)
-#'  
+#'
+#' @param target_names as in remake::make, vector of specific targets
+#' @param remake_file filename of the remake YAML file for which the status of
+#'   target_names should be YAMLified
 #' @keywords internal
-YAMLify_build_status <- function(target_names, remake_file=options('scipiper.remake_file')[[1]]) {
+YAMLify_build_status <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
   # ensure there's a directory to receive the export
   if(!dir.exists('build/status')) dir.create('build/status', recursive=TRUE)
   
@@ -314,17 +321,19 @@ YAMLify_build_status <- function(target_names, remake_file=options('scipiper.rem
 }
 
 #' Copy info from build/status to .remake/objects
-#' 
+#'
 #' Copy build status files from versionable text to .remake binary (.rds file)
-#' 
+#'
 #' @param new_only logical. You could corrupt a shared-cache repo by calling
 #'   remake::make after git pulling new build/status files and before calling
 #'   scmake. Therefore, (1) you should avoid calling remake::make in a
 #'   shared-cache repo; call scmake instead, and (2) this flag provides
 #'   recourse; set new_only=FALSE to overwrite all .remake files for which we
 #'   have build/status files
+#' @param remake_file filename of the remake YAML file for which build/status
+#'   files should be RDSified
 #' @keywords internal
-RDSify_build_status <- function(new_only=TRUE, remake_file=options('scipiper.remake_file')[[1]]) {
+RDSify_build_status <- function(new_only=TRUE, remake_file=getOption('scipiper.remake_file')) {
   # get info about the remake project. calling remake:::remake gives us info and
   # simultaneously ensures there's a directory to receive the export (creates
   # the .remake dir as a storr)
