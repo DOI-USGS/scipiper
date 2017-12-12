@@ -237,6 +237,9 @@ get_remake_status <- function(target_names, remake_file=getOption('scipiper.rema
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
+  # make sure target_names is concrete
+  if(is.null(target_names)) target_names <- remake_object$default_target
+  
   unknown_targets <- setdiff(target_names, names(remake_object$targets))
   if(length(unknown_targets) > 0) stop('unknown targets: ', paste(unknown_targets, collapse=', '))
   
