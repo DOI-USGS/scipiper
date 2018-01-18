@@ -24,8 +24,8 @@ Copyright: This software is in the public domain because it contains materials
     the United States Department of Interior. For more information, see the
     official USGS copyright policy at
     https://www.usgs.gov/visual-id/credit_usgs.html#copyright
-URL: https://github.com/USGS-R/streamMetabolizer
-BugReports: https://github.com/USGS-R/streamMetabolizer/issues
+URL: https://github.com/USGS-R/scipiper
+BugReports: https://github.com/USGS-R/scipiper/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
