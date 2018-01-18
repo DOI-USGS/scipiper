@@ -200,7 +200,7 @@ is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
 #' as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
 #' as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
 as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
-  if(is_ind_file(data_file, ind_ext=ind_ext)) {
+  if(any(is_ind_file(data_file, ind_ext=ind_ext))) {
     stop('data_file is an indicator file already')
   }
   paste0(data_file, '.', ind_ext)
