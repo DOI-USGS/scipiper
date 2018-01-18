@@ -202,7 +202,7 @@ is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
 as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
   are_ind_files <- is_ind_file(data_file, ind_ext=ind_ext)
   if(any(are_ind_files)) {
-    stop(paste(data_file[are_ind_files], 'are/is already an indicator file(s)'))
+    stop(paste(paste(data_file[are_ind_files], collapse = ","), 'are/is already an indicator file(s)'))
   }
   paste0(data_file, '.', ind_ext)
 }
