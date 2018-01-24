@@ -131,28 +131,36 @@ check_local_source <- function(local_source, ind_ext) {
 #'
 #' Download a file from S3 to the local project
 #'
-#' @param data_file character name of the data file to download (downloads the
-#'   S3 object whose key equals the data_file basename)
+#' @param ind_file character name of the indicator file for which data should be
+#'   downloaded. downloads the S3 object whose key equals the data_file basename
+#' @param verbose logical  used to determine whether to include messages specific to `s3_get()`
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
-s3_get <- function(
-  data_file,
-  config_file=getOption("scipiper.s3_config_file"),
-  ind_ext=getOption("scipiper.ind_ext")) {
-  
+s3_get <- function(ind_file, verbose = FALSE,
+                   config_file=getOption("scipiper.s3_config_file"),
+                   ind_ext=getOption("scipiper.ind_ext")) {
   require_libs('aws.signature', 'aws.s3')
+  # infer the data file name from the ind_file. gd_get always downloads to that
+  # location if it downloads at all
+  data_file <- as_data_file(ind_file, ind_ext=ind_ext)
+  
+  # bypass the download from s3 if the right local file already exists
+  if(file.exists(data_file)) {
+    remote_hash <- yaml::yaml.load_file(ind_file)$hash
+    local_hash <- unname(tools::md5sum(data_file))
+    if(remote_hash == local_hash) return(data_file)
+  }
   
   # download the file from S3 to the local data_file
-  message("Downloading ", data_file, " from S3")
+  # will fail if it doesn't exist
+  if(verbose) {message("Downloading ", data_file, " from S3")}
+  
   s3_config <- yaml::yaml.load_file(config_file)
   aws.signature::use_credentials(profile = s3_config$profile)
-  key <- file.path(s3_config$path, basename(data_file))
-  aws.s3::save_object(
-    object = key, 
-    bucket = s3_config$bucket,
-    file = data_file)
+  aws.s3::save_object(object = data_file, bucket = s3_config$bucket,
+                      file = data_file)
 }
 
 #' Check whether a file is on S3, and if so, write an indicator file
