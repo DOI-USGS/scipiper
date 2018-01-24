@@ -29,33 +29,83 @@ s3_config <- function(path, bucket, profile='default', config_file=getOption("sc
 
 #' Upload a file to S3
 #'
-#' Upload (create or overwrite) a file to the project bucket and path.
+#' Upload (create or overwrite) a file to the project bucket and path. Writes an
+#' indicator file exactly corresponding to the data_file path and name (but with
+#' indicator file extension).
 #'
-#' @param data_file character name of the data file to upload. The basename will
-#'   be used as the S3 key and must be unique within the project (bucket & path)
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
+#' @param remote_ind character name of the indicator file to write locally, but
+#'   which describes the status of the remote file once the file has been
+#'   uploaded by this function. The remote data file will have a name
+#'   corresponding to this ind_file (without the indicator extension, but with
+#'   same path and basename).
+#' @param local_source character name of EITHER a data file to upload OR the
+#'   indicator file of a data file to upload. Using the same value for both
+#'   remote_ind and local_source (or setting local_source to the data file name
+#'   corresponding to the indicator in remote_ind) will only work (in remake) if
+#'   you are calling `s3_put` from within the same function that created the
+#'   data_file. If instead you have separate recipes for (a) creating the
+#'   original data_file, (b) posting the data_file, and (c) retrieving the
+#'   data_file from S3, then the 'a' and 'c' recipes must have
+#'   different targets and this function's local_source argument should match
+#'   the target of the 'a' recipe while this function's remote_ind argument
+#'   should match the target of this recipe (=='b') and the data_file target of
+#'   the 'c' recipe. See the examples.
+#' @param mock_get character. if remote_ind and local_source imply different
+#'   local file locations, should the current local file (implied by
+#'   local_source) be left alone ('none'), or copied ('copy') or moved ('move')
+#'   to the location implied by remote_ind? If 'copy' or 'move' are used, and if
+#'   gd_get will be called in an upcoming command, this argument may help to
+#'   avoid an unnecessary download from S3 back to this computer
+#'   because `s3_get` skips the download if there's already a local file in the
+#'   right place with the right contents (MD5 hash).
+#' @param on_exists what to do if the file already exists - replace, or
+#'   throw an error? the default is to replace
+#' @param verbose logical Used in this function and passed through aws.s3::put_object to
+#'   aws.s3::s3HTTP
+#' @param config_file character name of the YAML file containing
+#'   project-specific configuration information for S3
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
 #' @export
-s3_put <- function(
-  data_file, config_file=getOption("scipiper.s3_config_file"),
-  ind_ext=getOption("scipiper.ind_ext")) {
+s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
+                   on_exists=c('replace','stop'), verbose = FALSE,
+                  config_file=getOption("scipiper.s3_config_file"),
+                  ind_ext=getOption("scipiper.ind_ext")) {
   
   warning('s3_put is out of date relative to gd_put') # need to update s3_xx with lessons learned from gd_xx
   
-  require_libs('aws.signature', 'aws.s3')
+  # check arguments
+  mock_get <- match.arg(mock_get)
   ind_file <- as_ind_file(data_file, ind_ext=ind_ext)
   
-  # post the file from the local data_file to S3
+  # decide whether local_source is an indicator or data file and find the data file 
+  # if it is an indicator
+  local_file <- check_local_source(local_source, ind_ext)
+  
+  # identify the remote data file to be indicated by remote_ind
+  data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
+  
+  # prepare to use S3
+  require_libs('aws.signature', 'aws.s3')
   s3_config <- yaml::yaml.load_file(config_file)
-  message("Uploading ", data_file, " to S3")
   aws.signature::use_credentials(profile = s3_config$profile)
-  key <- file.path(s3_config$path, basename(data_file))
-  success <- aws.s3::put_object(
-    file = data_file,
-    object = key, 
-    bucket = s3_config$bucket)
+  
+  # determine whether and where the remote file exists
+  bucket_contents <- get_bucket_df(bucket = s3_config$bucket)
+  exists_on_s3 <- local_file %in% bucket_contents$Key
+  
+  #upload to S3 - note that S3 is a flat file system, so folders don't need
+  #to be created.  paths are just part of object keys
+  if(!exists_on_s3) {
+    if(verbose) message("Uploading ", local_file, " to S3")
+    success <- aws.s3::put_object(file = local_file, object = local_file, 
+                                  bucket = s3_config$bucket)
+  }
+  
+  message("Uploading ", data_file, " to S3")
+  
+  
+  
   
   # write the indicator file (involves another check on S3 to get the timestamp)
   if(success) {
@@ -66,6 +116,24 @@ s3_put <- function(
   }
   return(success)
 }
+
+#' decide whether local_source is an indicator or data file and find the data file 
+#' if it is an indicator
+#' @keywords internals
+check_local_source <- function(local_source, ind_ext) {
+  if(is_ind_file(local_source)) {
+    local_file <- as_data_file(local_source, ind_ext=ind_ext)
+  } else {
+    local_file <- local_source
+  }
+  if(!file.exists(local_file)) {
+    stop(paste('data file matching local_source does not exist:', local_file))
+  }
+  return(local_file)
+}
+
+
+
 
 #' Download a file from S3
 #'

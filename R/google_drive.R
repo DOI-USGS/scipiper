@@ -122,14 +122,7 @@ gd_put <- function(
   mock_get <- match.arg(mock_get)
   
   # decide whether local_source is an indicator or data file and find the data file
-  if(is_ind_file(local_source)) {
-    local_file <- as_data_file(local_source, ind_ext=ind_ext)
-  } else {
-    local_file <- local_source
-  }
-  if(!file.exists(local_file)) {
-    stop(paste('data file matching local_source does not exist:', local_file))
-  }
+  local_file <- check_local_source(local_source, ind_ext)
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
