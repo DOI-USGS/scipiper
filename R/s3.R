@@ -2,17 +2,19 @@
 # project-specific configuration for an S3 bucket and subfolder
 
 #' Create or overwrite an S3 configuration file
-#'
+#' 
+#' It is assumed that the bucket corresponds 1:1 with the local project directory
+#' structure, so all object keys will be the same as the local file path from the
+#' root of the project directory.
+#' 
 #' @param bucket character name of an S3 bucket
-#' @param path character name of a path (prefix) within the bucket where all
-#'   files for this project are to be stored
 #' @param profile character name of an S3 profile to use
 #' @param config_file character name of the yml file where this configuration
 #'   information should be written
 #' @export
-s3_config <- function(path, bucket, profile='default', config_file=getOption("scipiper.s3_config_file")) {
+s3_config <- function(bucket, profile='default', config_file=getOption("scipiper.s3_config_file")) {
   # write the given information to the specified config_file
-  cfg <- list(bucket=bucket, path=path, profile=profile)
+  cfg <- list(bucket=bucket, profile=profile)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
   writeLines(yaml::as.yaml(cfg), config_file)
   
@@ -29,7 +31,7 @@ s3_config <- function(path, bucket, profile='default', config_file=getOption("sc
 
 #' Upload a file to S3
 #'
-#' Upload (create or overwrite) a file to the project bucket and path. Writes an
+#' Upload (create or overwrite) a file to the project bucket. Writes an
 #' indicator file exactly corresponding to the data_file path and name (but with
 #' indicator file extension).
 #'
@@ -95,7 +97,7 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   exists_on_s3 <- local_file %in% bucket_contents$Key
   
   #upload to S3 - note that S3 is a flat file system, so folders don't need
-  #to be created.  paths are just part of object keys
+  #to be created.  'Directories' are just part of object keys
   match.arg(on_exists)
   if(exists_on_s3 && on_exists == "stop") {
     stop('File already exists and on_exists==stop')
