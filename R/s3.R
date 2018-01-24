@@ -96,30 +96,24 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   
   #upload to S3 - note that S3 is a flat file system, so folders don't need
   #to be created.  paths are just part of object keys
-  if(!exists_on_s3) {
+  match.arg(on_exists)
+  if(exists_on_s3 && on_exists == "stop") {
+    stop('File already exists and on_exists==stop')
+  } else {
     if(verbose) message("Uploading ", local_file, " to S3")
-    success <- aws.s3::put_object(file = local_file, object = local_file, 
-                                  bucket = s3_config$bucket)
+    status <- aws.s3::put_object(file = local_file, object = local_file, 
+                                 bucket = s3_config$bucket)
   }
-  
-  message("Uploading ", data_file, " to S3")
-  
-  
-  
   
   # write the indicator file (involves another check on S3 to get the timestamp)
-  if(success) {
-    success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, config_file=config_file, ind_ext=ind_ext)
-  }
-  if(!success) {
-    stop(paste0("Data file could not be posted to S3: ", data_file))
-  }
+  success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, 
+                               config_file=config_file, ind_ext=ind_ext)
   return(success)
 }
 
 #' decide whether local_source is an indicator or data file and find the data file 
 #' if it is an indicator
-#' @keywords internals
+#' @keywords internal
 check_local_source <- function(local_source, ind_ext) {
   if(is_ind_file(local_source)) {
     local_file <- as_data_file(local_source, ind_ext=ind_ext)
@@ -150,8 +144,6 @@ s3_get <- function(
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
-  warning('s3_get is out of date relative to gd_get') # need to update s3_xx with lessons learned from gd_xx
-  
   require_libs('aws.signature', 'aws.s3')
   
   # download the file from S3 to the local data_file
@@ -165,28 +157,28 @@ s3_get <- function(
     file = data_file)
 }
 
-#' List the S3 objects for this project
-#' 
-#' List the S3 objects in the project bucket/path as given in config_file
-#' 
-#' @param ... arguments passed to aws.s3::get_bucket_df
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
-#' @export
-s3_list <- function(..., config_file=getOption("scipiper.s3_config_file")) {
-  
-  warning('s3_list is out of date relative to gd_list') # need to update s3_xx with lessons learned from gd_xx
-  
-  require_libs('aws.signature', 'aws.s3')
-  
-  message("Listing project files on S3")
-  s3_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = s3_config$profile)
-  bucket_df <- aws.s3::get_bucket_df(bucket=s3_config$bucket, prefix=s3_config$path)
-  Key <- '.dplyr.var'
-  dplyr::filter(bucket_df, grepl(sprintf("^%s/.+", s3_config$path), Key))
-  
-}
+#' #' List the S3 objects for this project
+#' #' 
+#' #' List the S3 objects in the project bucket/path as given in config_file
+#' #' 
+#' #' @param ... arguments passed to aws.s3::get_bucket_df
+#' #' @param config_file character name of the yml file containing project-specific
+#' #'   configuration information
+#' #' @export
+#' s3_list <- function(..., config_file=getOption("scipiper.s3_config_file")) {
+#'   
+#'   warning('s3_list is out of date relative to gd_list') # need to update s3_xx with lessons learned from gd_xx
+#'   
+#'   require_libs('aws.signature', 'aws.s3')
+#'   
+#'   message("Listing project files on S3")
+#'   s3_config <- yaml::yaml.load_file(config_file)
+#'   aws.signature::use_credentials(profile = s3_config$profile)
+#'   bucket_df <- aws.s3::get_bucket_df(bucket=s3_config$bucket, prefix=s3_config$path)
+#'   Key <- '.dplyr.var'
+#'   dplyr::filter(bucket_df, grepl(sprintf("^%s/.+", s3_config$path), Key))
+#'   
+#' }
 
 #' Check whether a file is on S3, and if so, write an indicator file
 #' 
@@ -226,7 +218,7 @@ s3_confirm_posted <- function(
 s3_indicate <- function(ind_file, remote_time) {
   
   warning('s3_indicate is out of date relative to gd_indicate') # need to update s3_xx with lessons learned from gd_xx
-  
+  #TODO: get hash from S3 too, add to indicator file
   # write the cache file
   if(is.character(remote_time)) remote_time <- s3_read_time(remote_time)
   writeLines(remote_time, con=ind_file)
