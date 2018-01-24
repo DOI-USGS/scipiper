@@ -157,29 +157,6 @@ s3_get <- function(
     file = data_file)
 }
 
-#' #' List the S3 objects for this project
-#' #' 
-#' #' List the S3 objects in the project bucket/path as given in config_file
-#' #' 
-#' #' @param ... arguments passed to aws.s3::get_bucket_df
-#' #' @param config_file character name of the yml file containing project-specific
-#' #'   configuration information
-#' #' @export
-#' s3_list <- function(..., config_file=getOption("scipiper.s3_config_file")) {
-#'   
-#'   warning('s3_list is out of date relative to gd_list') # need to update s3_xx with lessons learned from gd_xx
-#'   
-#'   require_libs('aws.signature', 'aws.s3')
-#'   
-#'   message("Listing project files on S3")
-#'   s3_config <- yaml::yaml.load_file(config_file)
-#'   aws.signature::use_credentials(profile = s3_config$profile)
-#'   bucket_df <- aws.s3::get_bucket_df(bucket=s3_config$bucket, prefix=s3_config$path)
-#'   Key <- '.dplyr.var'
-#'   dplyr::filter(bucket_df, grepl(sprintf("^%s/.+", s3_config$path), Key))
-#'   
-#' }
-
 #' Check whether a file is on S3, and if so, write an indicator file
 #' 
 #' @param ind_file character name of the indicator file to write locally once
