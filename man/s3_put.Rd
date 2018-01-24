@@ -51,7 +51,7 @@ project-specific configuration information for S3}
 remote_ind}
 }
 \description{
-Upload (create or overwrite) a file to the project bucket and path. Writes an
+Upload (create or overwrite) a file to the project bucket. Writes an
 indicator file exactly corresponding to the data_file path and name (but with
 indicator file extension).
 }

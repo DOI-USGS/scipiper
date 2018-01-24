@@ -4,13 +4,10 @@
 \alias{s3_config}
 \title{Create or overwrite an S3 configuration file}
 \usage{
-s3_config(path, bucket, profile = "default",
+s3_config(bucket, profile = "default",
   config_file = getOption("scipiper.s3_config_file"))
 }
 \arguments{
-\item{path}{character name of a path (prefix) within the bucket where all
-files for this project are to be stored}
-
 \item{bucket}{character name of an S3 bucket}
 
 \item{profile}{character name of an S3 profile to use}
@@ -19,5 +16,7 @@ files for this project are to be stored}
 information should be written}
 }
 \description{
-Create or overwrite an S3 configuration file
+It is assumed that the bucket corresponds 1:1 with the local project directory
+structure, so all object keys will be the same as the local file path from the
+root of the project directory.
 }
