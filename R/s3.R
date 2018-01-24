@@ -127,8 +127,6 @@ check_local_source <- function(local_source, ind_ext) {
 }
 
 
-
-
 #' Download a file from S3
 #'
 #' Download a file from S3 to the local project
@@ -170,45 +168,14 @@ s3_confirm_posted <- function(
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
-  warning('s3_confirm_posted is out of date relative to gd_confirm_posted') # need to update s3_xx with lessons learned from gd_xx
-  
   # look on S3 for the specified file
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   s3_config <- yaml::yaml.load_file(config_file)
-  key <- file.path(s3_config$path, basename(ind_file))
-  Key <- '.dplyr.var'
-  remote.info <- filter(s3_list(config_file=config_file, prefix=key), Key==key)
-  if(nrow(remote.info) != 1) stop(paste0("failed to find exactly 1 S3 file with Key=", key))
-  
-  s3_indicate(ind_file, remote_time=remote.info$LastModified)
+  bucket_contents <- get_bucket_df(bucket = s3_config$bucket)
+  remote.info <- filter(bucket_contents, Key == data_file)
+  if(nrow(remote.info) == 0) {
+    stop(paste0("failed to find S3 file with Key=", data_file))
+  }
+  indicate(ind_file, md5_checksum = remote.info$ETag)
 }
 
-#' Write an S3 indicator file
-#' 
-#' Write an indicator file using a standard format for s3 files
-#' 
-#' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
-#' @param config_file character name of the yml file containing project-specific
-#'   configuration information
-#' @keywords internal
-s3_indicate <- function(ind_file, remote_time) {
-  
-  warning('s3_indicate is out of date relative to gd_indicate') # need to update s3_xx with lessons learned from gd_xx
-  #TODO: get hash from S3 too, add to indicator file
-  # write the cache file
-  if(is.character(remote_time)) remote_time <- s3_read_time(remote_time)
-  writeLines(remote_time, con=ind_file)
-  
-}
-
-#' Reads a datetime as returned from AWS S3
-#' 
-#' Reads in an AWS S3 standard datetime into POSIXct
-#' 
-#' @param datetime character datetime as from an aws.s3 call
-#' @return POSIXct datetime
-#' @keywords internal
-s3_read_time <- function(datetime) {
-  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%OSZ', tz='UTC')
-}
