@@ -4,12 +4,15 @@
 \alias{s3_get}
 \title{Download a file from S3}
 \usage{
-s3_get(data_file, config_file = getOption("scipiper.s3_config_file"),
+s3_get(ind_file, verbose = FALSE,
+  config_file = getOption("scipiper.s3_config_file"),
   ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
-\item{data_file}{character name of the data file to download (downloads the
-S3 object whose key equals the data_file basename)}
+\item{ind_file}{character name of the indicator file for which data should be
+downloaded. downloads the S3 object whose key equals the data_file basename}
+
+\item{verbose}{logical  used to determine whether to include messages specific to \code{s3_get()}}
 
 \item{config_file}{character name of the yml file containing project-specific
 configuration information}
