@@ -105,8 +105,8 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   }
   
   # write the indicator file (involves another check on S3 to get the timestamp)
-  success <- s3_confirm_posted(data_file=data_file, ind_file=ind_file, 
-                               config_file=config_file, ind_ext=ind_ext)
+  success <- s3_confirm_posted(ind_file=ind_file, config_file=config_file, 
+                               ind_ext=ind_ext)
   return(success)
 }
 
