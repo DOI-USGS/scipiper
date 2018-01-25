@@ -105,7 +105,7 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   }
   
   # write the indicator file (involves another check on S3 to get the timestamp)
-  success <- s3_confirm_posted(ind_file=ind_file, config_file=config_file, 
+  success <- s3_confirm_posted(ind_file=remote_ind, config_file=config_file, 
                                ind_ext=ind_ext)
   return(success)
 }
@@ -182,7 +182,9 @@ s3_confirm_posted <- function(
   remote.info <- filter(bucket_contents, Key == data_file)
   if(nrow(remote.info) == 0) {
     stop(paste0("failed to find S3 file with Key=", data_file))
+  } else {
+    indicate(ind_file, md5_checksum = remote.info$ETag)
+    return(TRUE)
   }
-  indicate(ind_file, md5_checksum = remote.info$ETag)
 }
 
