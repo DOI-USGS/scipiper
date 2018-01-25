@@ -127,6 +127,8 @@ sc_indicate <- function(ind_file, ..., data_file) {
     info_list$hash <- unname(tools::md5sum(data_file))
   }
   
+  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+  
   # if no writable information is given, use the current time. this is a
   # fallback when we don't have direct information about the contents of the
   # data file or when the thing being indicated isn't a file and probably

@@ -356,21 +356,7 @@ gd_confirm_posted <- function(
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
   # we could prepare a timestamp from modifiedTime...but checksum is even better
-  indicate(ind_file, md5_checksum=remote_info$md5Checksum)
+  sc_indicate(ind_file, md5_checksum=remote_info$md5Checksum)
   
   return(TRUE)
-}
-
-#' Write an indicator file
-#' 
-#' Write an indicator file using a standard format
-#' 
-#' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
-#' @param md5_checksum character md5 hash
-#' @keywords internal
-indicate <- function(ind_file, md5_checksum) {
-  # write the indicator file
-  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
-  sc_indicate(ind_file, hash=md5_checksum)
 }
