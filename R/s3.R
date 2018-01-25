@@ -74,11 +74,8 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
                   config_file=getOption("scipiper.s3_config_file"),
                   ind_ext=getOption("scipiper.ind_ext")) {
   
-  warning('s3_put is out of date relative to gd_put') # need to update s3_xx with lessons learned from gd_xx
-  
   # check arguments
   mock_get <- match.arg(mock_get)
-  ind_file <- as_ind_file(data_file, ind_ext=ind_ext)
   
   # decide whether local_source is an indicator or data file and find the data file 
   # if it is an indicator
