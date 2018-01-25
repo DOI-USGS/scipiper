@@ -183,7 +183,7 @@ s3_confirm_posted <- function(
   if(nrow(remote_info) == 0) {
     stop(paste0("failed to find S3 file with Key=", data_file))
   } else {
-    sc_indicate(ind_file, md5_checksum = remote_info$ETag)
+    sc_indicate(ind_file, hash = remote_info$ETag)
     return(TRUE)
   }
 }

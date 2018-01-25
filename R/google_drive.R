@@ -356,7 +356,7 @@ gd_confirm_posted <- function(
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
   # we could prepare a timestamp from modifiedTime...but checksum is even better
-  sc_indicate(ind_file, md5_checksum=remote_info$md5Checksum)
+  sc_indicate(ind_file, hash=remote_info$md5Checksum)
   
   return(TRUE)
 }
