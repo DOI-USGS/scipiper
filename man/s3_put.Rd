@@ -4,19 +4,54 @@
 \alias{s3_put}
 \title{Upload a file to S3}
 \usage{
-s3_put(data_file, config_file = getOption("scipiper.s3_config_file"),
+s3_put(remote_ind, local_source, mock_get = c("copy", "move", "none"),
+  on_exists = c("replace", "stop"), verbose = FALSE,
+  config_file = getOption("scipiper.s3_config_file"),
   ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
-\item{data_file}{character name of the data file to upload. The basename will
-be used as the S3 key and must be unique within the project (bucket & path)}
+\item{remote_ind}{character name of the indicator file to write locally, but
+which describes the status of the remote file once the file has been
+uploaded by this function. The remote data file will have a name
+corresponding to this ind_file (without the indicator extension, but with
+same path and basename).}
 
-\item{config_file}{character name of the yml file containing project-specific
-configuration information}
+\item{local_source}{character name of EITHER a data file to upload OR the
+indicator file of a data file to upload. Using the same value for both
+remote_ind and local_source (or setting local_source to the data file name
+corresponding to the indicator in remote_ind) will only work (in remake) if
+you are calling \code{s3_put} from within the same function that created the
+data_file. If instead you have separate recipes for (a) creating the
+original data_file, (b) posting the data_file, and (c) retrieving the
+data_file from S3, then the 'a' and 'c' recipes must have
+different targets and this function's local_source argument should match
+the target of the 'a' recipe while this function's remote_ind argument
+should match the target of this recipe (=='b') and the data_file target of
+the 'c' recipe. See the examples.}
+
+\item{mock_get}{character. if remote_ind and local_source imply different
+local file locations, should the current local file (implied by
+local_source) be left alone ('none'), or copied ('copy') or moved ('move')
+to the location implied by remote_ind? If 'copy' or 'move' are used, and if
+gd_get will be called in an upcoming command, this argument may help to
+avoid an unnecessary download from S3 back to this computer
+because \code{s3_get} skips the download if there's already a local file in the
+right place with the right contents (MD5 hash).}
+
+\item{on_exists}{what to do if the file already exists - replace, or
+throw an error? the default is to replace}
+
+\item{verbose}{logical Used in this function and passed through aws.s3::put_object to
+aws.s3::s3HTTP}
+
+\item{config_file}{character name of the YAML file containing
+project-specific configuration information for S3}
 
 \item{ind_ext}{the indicator file extension to expect at the end of
 remote_ind}
 }
 \description{
-Upload (create or overwrite) a file to the project bucket and path.
+Upload (create or overwrite) a file to the project bucket. Writes an
+indicator file exactly corresponding to the data_file path and name (but with
+indicator file extension).
 }

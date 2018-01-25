@@ -122,14 +122,7 @@ gd_put <- function(
   mock_get <- match.arg(mock_get)
   
   # decide whether local_source is an indicator or data file and find the data file
-  if(is_ind_file(local_source)) {
-    local_file <- as_data_file(local_source, ind_ext=ind_ext)
-  } else {
-    local_file <- local_source
-  }
-  if(!file.exists(local_file)) {
-    stop(paste('data file matching local_source does not exist:', local_file))
-  }
+  local_file <- find_local_file(local_source, ind_ext)
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
@@ -363,38 +356,7 @@ gd_confirm_posted <- function(
   remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
   
   # we could prepare a timestamp from modifiedTime...but checksum is even better
-  gd_indicate(ind_file, md5_checksum=remote_info$md5Checksum)
+  sc_indicate(ind_file, hash=remote_info$md5Checksum)
   
   return(TRUE)
-}
-
-#' Write an Google Drive indicator file
-#' 
-#' Write an indicator file using a standard format for gd files
-#' 
-#' @param ind_file character name of the indicator file to write locally once
-#'   the file has been uploaded
-#' @param config_file character name of the YAML file containing project-specific
-#'   configuration information
-#' @keywords internal
-gd_indicate <- function(ind_file, md5_checksum) {
-  
-  # we could prepare a timestamp...but checksum is even better
-  # if(is.character(remote_time)) remote_time <- POSIX2char(gd_read_time(remote_time))
-  
-  # write the indicator file
-  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
-  sc_indicate(ind_file, hash=md5_checksum)
-  
-}
-
-#' Reads a datetime as returned from AWS Google Drive
-#' 
-#' Reads in an AWS Google Drive standard datetime into POSIXct
-#' 
-#' @param datetime character datetime as from an aws.gd call
-#' @return POSIXct datetime
-#' @keywords internal
-gd_read_time <- function(datetime) {
-  as.POSIXct(datetime, format='%Y-%m-%dT%H:%M:%OSZ', tz='UTC')
 }
