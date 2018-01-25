@@ -79,7 +79,7 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   
   # decide whether local_source is an indicator or data file and find the data file 
   # if it is an indicator
-  local_file <- check_local_source(local_source, ind_ext)
+  local_file <- find_local_file(local_source, ind_ext)
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
@@ -99,7 +99,7 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   if(exists_on_s3 && on_exists == "stop") {
     stop('File already exists and on_exists==stop')
   } else {
-    if(verbose) message("Uploading ", local_file, " to S3")
+    if(verbose) message("Uploading ", local_file, " to S3, overwriting = ", exists_on_s3)
     status <- aws.s3::put_object(file = local_file, object = local_file, 
                                  bucket = s3_config$bucket)
   }
@@ -113,7 +113,7 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
 #' decide whether local_source is an indicator or data file and find the data file 
 #' if it is an indicator
 #' @keywords internal
-check_local_source <- function(local_source, ind_ext) {
+find_local_file <- function(local_source, ind_ext) {
   if(is_ind_file(local_source)) {
     local_file <- as_data_file(local_source, ind_ext=ind_ext)
   } else {
@@ -179,11 +179,11 @@ s3_confirm_posted <- function(
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   s3_config <- yaml::yaml.load_file(config_file)
   bucket_contents <- aws.s3::get_bucket_df(bucket = s3_config$bucket)
-  remote.info <- filter(bucket_contents, Key == data_file)
-  if(nrow(remote.info) == 0) {
+  remote_info <- filter(bucket_contents, Key == data_file)
+  if(nrow(remote_info) == 0) {
     stop(paste0("failed to find S3 file with Key=", data_file))
   } else {
-    sc_indicate(ind_file, md5_checksum = remote.info$ETag)
+    sc_indicate(ind_file, md5_checksum = remote_info$ETag)
     return(TRUE)
   }
 }
