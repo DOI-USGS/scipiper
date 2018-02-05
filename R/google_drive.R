@@ -283,7 +283,10 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
       pattern=gsub('.', '\\.', fixed=TRUE, x=gsub('/', '|', relative_path)),
       recursive=TRUE)
   ) %>%
-    dplyr::mutate(parents=lapply(drive_resource, function(dr) unlist(dr$parents))) %>%
+    dplyr::mutate(parents=lapply(drive_resource, function(dr) {
+      parent <- unlist(dr$parents)
+      if(is.character(parent)) parent else NA
+    })) %>%
     tidyr::unnest(parents) # make it a single row per item-parent combination
   
   # navigate from the outermost directory down to the file to identify the file
