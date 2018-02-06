@@ -280,14 +280,14 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
       id=googledrive::as_id(gd_config$folder)),
     googledrive::drive_ls(
       path=googledrive::as_id(gd_config$folder), 
-      pattern=gsub('.', '\\.', fixed=TRUE, x=gsub('/', '|', relative_path)),
+      pattern=sprintf("^%s$", gsub('.', '\\.', fixed=TRUE, x=gsub('/', '$|^', relative_path))),
       recursive=TRUE)
   ) %>%
     dplyr::mutate(parents=lapply(drive_resource, function(dr) {
       parent <- unlist(dr$parents)
       if(is.character(parent)) parent else NA
     })) %>%
-    tidyr::unnest(parents) # make it a single row per item-parent combination
+    tidyr::unnest(parents, .preserve=c('drive_resource')) # make it a single row per item-parent combination
   
   # navigate from the outermost directory down to the file to identify the file
   # by both its name and its directory location
