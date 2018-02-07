@@ -176,21 +176,30 @@ gd_put <- function(
     remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
   } else {
     on_exists <- match.arg(on_exists)
-    switch(
-      on_exists,
-      update={
-        if(verbose) message("Updating ", local_file, " on Google Drive")
-        remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=local_file, verbose=verbose)$id
-      },
-      replace={
-        if(verbose) message("Replacing ", local_file, " on Google Drive")
-        googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
-        remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
-      },
-      stop={
-        stop('File already exists and on_exists==stop')
+    if(on_exists == 'stop') {
+      stop('File already exists and on_exists==stop')
+    } else {
+      # check Drive to see whether the file we want to post is identical to what's already up there
+      local_hash <- unname(tools::md5sum(data_file))
+      remote_hash <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]] %>% .[['md5Checksum']]
+      # if the local file is different from the file on Drive, update or replace it
+      if(local_hash == remote_hash) {
+        if(verbose) message("Not re-posting identical ", local_file, " to Google Drive")
+      } else {
+        switch(
+          on_exists,
+          update={
+            if(verbose) message("Updating ", local_file, " on Google Drive")
+            remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=local_file, verbose=verbose)$id
+          },
+          replace={
+            if(verbose) message("Replacing ", local_file, " on Google Drive")
+            googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
+            remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
+          }
+        )
       }
-    )
+    }
   }
   
   # write the indicator file (involves another check on Google Drive)
