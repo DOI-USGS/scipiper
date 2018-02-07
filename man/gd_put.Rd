@@ -39,8 +39,13 @@ because \code{gd_get} skips the download if there's already a local file in the
 right place with the right contents (MD5 hash).}
 
 \item{on_exists}{what to do if the file already exists - update, replace, or
-throw an error? the default is to update (using google drive's versioning
-functionality)}
+throw an error? The default is to update (using google drive's versioning
+functionality). Note that while replacing might be cleaner than updating in
+some ways, it has the drawback that only the owner (or Google Teams
+organizer) of an item can delete it. Since 'replace' here means delete the
+old file and post the new one, 'replace' doesn't work for collaboration on
+standard Drive folders owned by a single person, unless only that owner
+will ever be trying to replace the file in question.}
 
 \item{type}{media type as passed to drive_upload or drive_update}
 
