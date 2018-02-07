@@ -4,16 +4,15 @@
 \alias{scdel}
 \title{Wrapper for remake::delete that permits cache sharing}
 \usage{
-scdel(target_names, verbose = TRUE,
-  remake_file = getOption("scipiper.remake_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+scdel(target_names, remake_file = getOption("scipiper.remake_file"),
+  verbose = TRUE, ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
 \item{target_names}{vector of targets to delete}
 
-\item{verbose}{as in \code{\link[remake:delete]{remake::delete()}}}
-
 \item{remake_file}{as in \code{\link[remake:delete]{remake::delete()}}}
+
+\item{verbose}{as in \code{\link[remake:delete]{remake::delete()}}}
 
 \item{ind_ext}{the indicator file extension identifying those files for which
 build/status information will be deleted if their targets are

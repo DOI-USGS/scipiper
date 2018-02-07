@@ -66,16 +66,17 @@ scmake <- function(
 #' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
 #'
 #' @param target_names vector of targets to delete
-#' @param verbose as in [remake::delete()]
 #' @param remake_file as in [remake::delete()]
+#' @param verbose as in [remake::delete()]
 #' @param ind_ext the indicator file extension identifying those files for which
 #'   build/status information will be deleted if their targets are
 #'   remake::deleted. You should git commit the deletion of any build/status
 #'   files (unless you immediately rebuild them and commit any changes instead).
 #' @export
 scdel <- function(
-  target_names, verbose = TRUE,
+  target_names,
   remake_file = getOption('scipiper.remake_file'),
+  verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
   
   # run remake::delete, which takes care of the file itself and the RDS status
