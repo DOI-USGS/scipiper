@@ -281,6 +281,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
     googledrive::drive_ls(
       path=googledrive::as_id(gd_config$folder), 
       pattern=sprintf("^%s$", gsub('.', '\\.', fixed=TRUE, x=gsub('/', '$|^', relative_path))),
+      verbose=FALSE,
       recursive=TRUE)
   ) %>%
     dplyr::mutate(parents=lapply(drive_resource, function(dr) {
