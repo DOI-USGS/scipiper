@@ -171,6 +171,7 @@ gd_put <- function(
   }
   
   # post the file (create or update) from the local data file to Google Drive
+  remote_file_changed <- TRUE # assume we'll be changing it
   if(is.na(remote_id)) {
     if(verbose) message("Uploading ", local_file, " to Google Drive")
     remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
@@ -178,6 +179,7 @@ gd_put <- function(
     on_exists <- match.arg(on_exists)
     if(on_exists == 'stop') {
       stop('File already exists and on_exists==stop')
+      # remote_file_changed <- FALSE # true but unnecessary
     } else {
       # check Drive to see whether the file we want to post is identical to what's already up there
       local_hash <- unname(tools::md5sum(data_file))
@@ -185,6 +187,7 @@ gd_put <- function(
       # if the local file is different from the file on Drive, update or replace it
       if(local_hash == remote_hash) {
         if(verbose) message("Not re-posting identical ", local_file, " to Google Drive")
+        remote_file_changed <- FALSE
       } else {
         switch(
           on_exists,
@@ -202,8 +205,16 @@ gd_put <- function(
     }
   }
   
-  # write the indicator file (involves another check on Google Drive)
-  retry_patiently(gd_confirm_posted(ind_file=remote_ind, config_file=config_file), verbose=verbose)
+  # write the indicator file
+  if(remote_file_changed) {
+    # most common case. involves another check on Google Drive, with patience in
+    # case Drive doesn't fully recognized the new file right away
+    retry_patiently(gd_confirm_posted(ind_file=remote_ind, config_file=config_file), verbose=verbose)
+  } else {
+    # special case. if the remote file was already identical to the local, then
+    # we did not repost the file, and we don't need to check Drive again
+    sc_indicate(ind_file=remote_ind, hash=remote_hash)
+  }
   
   # if posting was successful, potentially bypass a superfluous download from
   # google drive by copying or moving local_file to data_file (the gd_get
