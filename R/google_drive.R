@@ -189,7 +189,7 @@ gd_put <- function(
   }
   
   # write the indicator file (involves another check on Google Drive)
-  gd_confirm_posted(ind_file=remote_ind, config_file=config_file)
+  retry_patiently(gd_confirm_posted(ind_file=remote_ind, config_file=config_file), verbose=verbose)
   
   # if posting was successful, potentially bypass a superfluous download from
   # google drive by copying or moving local_file to data_file (the gd_get
