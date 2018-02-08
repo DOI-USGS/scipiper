@@ -58,8 +58,13 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 #'   because `gd_get` skips the download if there's already a local file in the
 #'   right place with the right contents (MD5 hash).
 #' @param on_exists what to do if the file already exists - update, replace, or
-#'   throw an error? the default is to update (using google drive's versioning
-#'   functionality)
+#'   throw an error? The default is to update (using google drive's versioning
+#'   functionality). Note that while replacing might be cleaner than updating in
+#'   some ways, it has the drawback that only the owner (or Google Teams
+#'   organizer) of an item can delete it. Since 'replace' here means delete the
+#'   old file and post the new one, 'replace' doesn't work for collaboration on
+#'   standard Drive folders owned by a single person, unless only that owner
+#'   will ever be trying to replace the file in question.
 #' @param type media type as passed to drive_upload or drive_update
 #' @param verbose logical, used in gd_put and passed onto
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
@@ -166,30 +171,49 @@ gd_put <- function(
   }
   
   # post the file (create or update) from the local data file to Google Drive
+  remote_file_changed <- TRUE # assume we'll be changing it
   if(is.na(remote_id)) {
     if(verbose) message("Uploading ", local_file, " to Google Drive")
     remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
   } else {
     on_exists <- match.arg(on_exists)
-    switch(
-      on_exists,
-      update={
-        if(verbose) message("Updating ", local_file, " on Google Drive")
-        remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=local_file, verbose=verbose)$id
-      },
-      replace={
-        if(verbose) message("Replacing ", local_file, " on Google Drive")
-        googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
-        remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
-      },
-      stop={
-        stop('File already exists and on_exists==stop')
+    if(on_exists == 'stop') {
+      stop('File already exists and on_exists==stop')
+    } else {
+      # check Drive to see whether the file we want to post is identical to what's already up there
+      local_hash <- unname(tools::md5sum(data_file))
+      remote_hash <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]] %>% .[['md5Checksum']]
+      # if the local file is different from the file on Drive, update or replace it
+      if(local_hash == remote_hash) {
+        if(verbose) message("Not re-posting identical ", local_file, " to Google Drive")
+        remote_file_changed <- FALSE
+      } else {
+        switch(
+          on_exists,
+          update={
+            if(verbose) message("Updating ", local_file, " on Google Drive")
+            remote_id <- googledrive::drive_update(googledrive::as_id(remote_id), media=local_file, verbose=verbose)$id
+          },
+          replace={
+            if(verbose) message("Replacing ", local_file, " on Google Drive")
+            googledrive::drive_rm(googledrive::as_id(remote_id), verbose=verbose)
+            remote_id <- googledrive::drive_upload(media=local_file, path=googledrive::as_id(parent), type=type, verbose=verbose)$id
+          }
+        )
       }
-    )
+    }
   }
   
-  # write the indicator file (involves another check on Google Drive)
-  gd_confirm_posted(ind_file=remote_ind, config_file=config_file)
+  # write the indicator file
+  if(remote_file_changed) {
+    # most common case. involves another check on Google Drive, with patience in
+    # case Drive doesn't fully recognized the new file right away
+    retry_patiently(gd_confirm_posted(ind_file=remote_ind, config_file=config_file), verbose=verbose)
+  } else {
+    # special case. if the remote file was already identical to the local, then
+    # we did not repost the file, and we don't need to check Drive again
+    sc_indicate(ind_file=remote_ind, hash=remote_hash)
+  }
   
   # if posting was successful, potentially bypass a superfluous download from
   # google drive by copying or moving local_file to data_file (the gd_get
@@ -281,6 +305,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
     googledrive::drive_ls(
       path=googledrive::as_id(gd_config$folder), 
       pattern=sprintf("^%s$", gsub('.', '\\.', fixed=TRUE, x=gsub('/', '$|^', relative_path))),
+      verbose=FALSE,
       recursive=TRUE)
   ) %>%
     dplyr::mutate(parents=lapply(drive_resource, function(dr) {
