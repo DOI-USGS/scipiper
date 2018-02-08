@@ -179,7 +179,6 @@ gd_put <- function(
     on_exists <- match.arg(on_exists)
     if(on_exists == 'stop') {
       stop('File already exists and on_exists==stop')
-      # remote_file_changed <- FALSE # true but unnecessary
     } else {
       # check Drive to see whether the file we want to post is identical to what's already up there
       local_hash <- unname(tools::md5sum(data_file))
