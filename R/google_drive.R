@@ -181,7 +181,7 @@ gd_put <- function(
       stop('File already exists and on_exists==stop')
     } else {
       # check Drive to see whether the file we want to post is identical to what's already up there
-      local_hash <- unname(tools::md5sum(data_file))
+      local_hash <- unname(tools::md5sum(local_file))
       remote_hash <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]] %>% .[['md5Checksum']]
       # if the local file is different from the file on Drive, update or replace it
       if(local_hash == remote_hash) {
