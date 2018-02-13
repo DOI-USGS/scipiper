@@ -100,13 +100,15 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
     stop('File already exists and on_exists==stop')
   } else {
     if(verbose) message("Uploading ", local_file, " to S3, overwriting = ", exists_on_s3)
-    status <- aws.s3::put_object(file = local_file, object = local_file, 
+    status <- aws.s3::put_object(file = local_file, object = data_file, 
                                  bucket = s3_config$bucket)
   }
   
   # write the indicator file (involves another check on S3 to get the timestamp)
   success <- s3_confirm_posted(ind_file=remote_ind, config_file=config_file, 
                                ind_ext=ind_ext)
+  mock_move_copy(mock_get, local_file, data_file)
+  
   return(success)
 }
 
