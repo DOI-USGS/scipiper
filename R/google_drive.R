@@ -218,6 +218,12 @@ gd_put <- function(
   # if posting was successful, potentially bypass a superfluous download from
   # google drive by copying or moving local_file to data_file (the gd_get
   # destination)
+  mock_move_copy(mock_get, local_file, data_file)
+  
+  invisible()
+}
+
+mock_move_copy <- function(mock_get, local_file, data_file) {
   if(mock_get %in% c('copy','move')) {
     if(data_file != local_file) {
       file.copy(from=local_file, to=data_file, overwrite=TRUE)
@@ -226,8 +232,6 @@ gd_put <- function(
       }
     }
   }
-  
-  invisible()
 }
 
 #' Download a file from Google Drive if needed
@@ -332,7 +336,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
     }
   }
   
- return(path_df)
+  return(path_df)
 }
 
 get_relative_path <- function(file) {
@@ -357,7 +361,7 @@ gd_list <- function(..., config_file=getOption("scipiper.gd_config_file")) {
   message("Listing project files on Google Drive")
   gd_config <- yaml::yaml.load_file(config_file)
   folder_df <- googledrive::drive_ls(path=googledrive::as_id(gd_config$folder), ...)
-
+  
   return(folder_df)  
 }
 
