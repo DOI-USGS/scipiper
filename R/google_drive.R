@@ -8,9 +8,10 @@
 #'   parallel to the local project file structure
 #' @param config_file character name of the YAML file where this configuration
 #'   information should be written
-#' @importFrom googledrive drive_auth
 #' @export
 gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) {
+  require_libs('googledrive')
+  
   # write the given information to the specified config_file
   cfg <- list(folder=folder)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
