@@ -8,6 +8,7 @@
 #'   parallel to the local project file structure
 #' @param config_file character name of the YAML file where this configuration
 #'   information should be written
+#' @importFrom googledrive drive_auth
 #' @export
 gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) {
   # write the given information to the specified config_file
@@ -18,7 +19,7 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
   # check for credentials
   cred_file <- '.httr-oauth'
   if(!file.exists(cred_file)) {
-    warning(paste0("googledrive expects credentials at ", cred_file, " - see ??drive_auth to create this file"))
+    googledrive::drive_auth(cache=TRUE)
   }
   
   if(config_file != getOption("scipiper.gd_config_file")) {
