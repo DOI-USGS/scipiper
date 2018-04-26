@@ -16,6 +16,7 @@ Imports:
   whisker,
   yaml
 Suggests:
+  googledrive,
   aws.signature,
   aws.s3,
   testthat
