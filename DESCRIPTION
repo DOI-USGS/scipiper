@@ -6,7 +6,7 @@ Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"))
 Description: Functions to organize a data analysis repository and ensure that data flows smoothly.
 Depends:
-    R (>= 3.4.1)
+    R (>= 3.3.2)
 Imports:
   dplyr,
   methods,
