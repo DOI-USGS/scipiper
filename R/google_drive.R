@@ -15,7 +15,7 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
   # write the given information to the specified config_file
   cfg <- list(folder=folder)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
-  writeLines(yaml::as.yaml(cfg), config_file)
+  readr::write_lines(yaml::as.yaml(cfg), config_file)
   
   # check for credentials
   cred_file <- '.httr-oauth'
