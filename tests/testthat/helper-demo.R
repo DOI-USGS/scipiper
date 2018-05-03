@@ -1,7 +1,7 @@
 # make_file must be defined in both helper-demo.R and extdata/sharedcache/demo.R
 # because we need it both places, remake only sees one
 make_file <- function(fname, ftext='', ftstamp=Sys.time()) { # "2017-09-05 07:00:00 MST"
-  readr::write_lines(ftext, con=fname)
+  readr::write_lines(ftext, fname)
   system(sprintf('touch -d "%s" %s', POSIX2char(ftstamp), fname))
   invisible(NULL)
 }

@@ -139,7 +139,7 @@ sc_indicate <- function(ind_file, ..., data_file) {
   }
   
   # write the info to the indicator file
-  readr::write_lines(yaml::as.yaml(info_list), con=ind_file)
+  readr::write_lines(yaml::as.yaml(info_list), ind_file)
   
   invisible(NULL)
 }
