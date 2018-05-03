@@ -10,6 +10,7 @@ Depends:
 Imports:
   dplyr,
   methods,
+  readr,
   remake,
   storr,
   tidyr,

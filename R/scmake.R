@@ -139,7 +139,7 @@ sc_indicate <- function(ind_file, ..., data_file) {
   }
   
   # write the info to the indicator file
-  writeLines(yaml::as.yaml(info_list), con=ind_file)
+  readr::write_lines(yaml::as.yaml(info_list), con=ind_file)
   
   invisible(NULL)
 }
@@ -313,7 +313,7 @@ YAMLify_build_status <- function(target_names, remake_file=getOption('scipiper.r
     status_yml <- yaml::as.yaml(status)
     status_key <- get_mangled_key(to_export[i], dbstore)
     status_file <- file.path('build/status', paste0(status_key, '.yml'))
-    writeLines(status_yml, status_file)
+    readr::write_lines(status_yml, status_file)
     
     return(status_file)
   })

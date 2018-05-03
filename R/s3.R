@@ -16,7 +16,7 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
   # write the given information to the specified config_file
   cfg <- list(bucket=bucket, profile=profile)
   if(!dir.exists(dirname(config_file))) dir.create(dirname(config_file), recursive=TRUE)
-  writeLines(yaml::as.yaml(cfg), config_file)
+  readr::write_lines(yaml::as.yaml(cfg), config_file)
   
   # check for credentials
   cred_file <- aws.signature::default_credentials_file()

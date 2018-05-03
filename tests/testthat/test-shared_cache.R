@@ -407,7 +407,7 @@ test_that("d7", {
   # pull once, delete A.cache (corrupt cache), edit R
   di <- setup_demo('B.rds')
   on.exit(cleanup_demo(di))
-  writeLines('A2', 'A.txt.cache')
+  readr::write_lines('A2', 'A.txt.cache')
   develop_local_R3(di)
   expect_equal(unname(inspect_local(di)), c('A2','[A1]','---','3','A1B1','[A1B1]','---'))
   expect_error(capture_make('B.rds'), "despite A.txt.ind, badhash A.txt.cache")
