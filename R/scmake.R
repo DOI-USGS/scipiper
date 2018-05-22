@@ -101,7 +101,7 @@ scdel <- function(
   status_keys <- get_mangled_key(status_targets, dbstore)
   status_files <- file.path('build/status', paste0(status_keys, '.yml'))
   status_exists <- status_files[file.exists(status_files)]
-  file.remove(status_files)
+  if(length(status_exists) > 0) file.remove(status_exists)
 }
 
 #' Create an indicator file
