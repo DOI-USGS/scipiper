@@ -1,0 +1,255 @@
+---
+title: "Task plans"
+author: "Alison Appling"
+date: "May 22, 2018"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Task plans}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
+knitr::opts_knit$set(root.dir = tempdir())
+```
+
+## Setup
+
+```{r libs, message=FALSE}
+library(scipiper)
+library(dplyr)
+```
+
+## Basic task file generation
+
+Suppose you want to run the following 3 steps for each of a bunch of different states. Here are some dummy functions representing those steps:
+```{r step_funs_shhh, echo=FALSE}
+cat("
+## @knitr step_funs
+
+# step 1: prepare some data given the info in prep_name, arg2, file 'A.txt', and R object 'B'
+prep <- function(prep_name) {
+  message(sprintf('preparing %s', prep_name))
+  return(prep_name)
+}
+
+# step 2: visualize the data
+visualize <- function(plot_name, state_data, state_capital) {
+  message(sprintf('visualizing %s - %s', plot_name, state_capital))
+  file.create(plot_name, showWarnings=FALSE)
+}
+
+# step 3: create the report
+report <- function(report_name) {
+  message(sprintf('reporting on %s', report_name))
+  file.create(report_name, showWarnings=FALSE)
+}
+", file='script.R')
+knitr::read_chunk('script.R')
+```
+
+```{r step_funs}
+```
+
+Here are the states and state capitals for which you want to run the above steps:
+```{r tasks}
+task_config <- data_frame(
+  id=c('WI','AZ','PA'),
+  capital=c('Madison','Phoenix','Harrisburg')
+)
+```
+
+To use `scipiper` to run these tasks, first generate a set of instructions, or `task_step`s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to `create_task_step()` can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in `?create_task_step` for list of the arguments each function can see and use.
+```{r task_steps}
+# step1 creates recipes like this:
+# WI_prep:
+#   command: prep(I('WI'))
+step1 <- create_task_step(step_name = 'prep')
+
+# step2 creates recipes like this:
+# WI_plot.png:
+#   command: visualize(target_name, 'WI_prep', I('Madison'))
+step2 <- create_task_step(
+  step_name = 'plot',
+  target_name = function(task_name, ...) {
+    sprintf('%s_plot.png', task_name)
+  },
+  command = function(target_name, task_name, ...) {
+    capital <- task_config[task_config$id == task_name, 'capital']
+    sprintf("visualize(target_name, %s_prep, I('%s'))", task_name, capital)
+  })
+
+# step3 creates recipes like this:
+# WI.pdf:
+#   command: report(target_name)
+#   depends:
+#    - WI_plot.png
+step3 <- create_task_step(
+  step_name = 'report',
+  target_name = function(task_name, ...) {
+    sprintf('%s.pdf', task_name)
+  },
+  depends = function(task_name, ...) {
+    sprintf('%s_plot.png', task_name)
+  },
+  command = function(task_name, step_name, ...) {
+    sprintf("report(target_name)", task_name)
+  })
+```
+
+You can now create a task_plan that wraps the tasks and steps together.
+```{r plan}
+task_plan_1 <- create_task_plan(
+  task_config$id,
+  list(step1, step2, step3),
+  final_steps='report',
+  ind_dir='states/log')
+```
+
+You'll need the `task_plan` in that form for two things: to create a remake .yml makefile and to run `loop_tasks`. First, the makefile:
+
+```{r makefile, results='markup'}
+create_task_makefile(
+  task_plan=task_plan_1,
+  makefile='task_plan_1.yml',
+  include=c(),
+  packages=c('ggplot2'),
+  sources=c('script.R'),
+  file_extensions=c('ind'),
+  ind_complete=TRUE)
+```
+
+And here are the contents of task_plan_1.yml:
+
+```{r read_makefile, results='markup', comment='', echo=FALSE}
+cat(readr::read_lines('task_plan_1.yml'), sep='\n')
+```
+
+Note that at the end of each state's task list is a final task, e.g., `states/log/WI.ind`, that we didn't directly specify in the task_plan. These recipes for the `complete` step were generated in `create_task_plan` because we allowed the default argument `add_complete=TRUE`.
+
+Next, use the `task_plan` and the `task_makefile` in `loop_tasks`:
+
+```{r delete1, echo=FALSE}
+unlink('.remake')
+unlink('build')
+```
+
+```{r loop1a}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+## Forcing rebuilds
+
+### Forcing rebuild for one task-step
+
+If we try to `scmake` any of the targets in the task makefile, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. Instead, `AZ_plot.png` is already `OK`:
+```{r try_rebuild_one}
+scmake('AZ_plot.png', 'task_plan_1.yml')
+```
+
+One way to force the rebuild of a single target is to use `scdel`, like this:
+```{r delete_one}
+scdel('AZ_plot.png', 'task_plan_1.yml')
+```
+
+Now when we `scmake` that target again, `AZ_plot.png` gets rebuilt:
+```{r rebuild_one}
+scmake('AZ_plot.png', 'task_plan_1.yml')
+```
+
+### Forcing rebuild for all task-steps
+
+If we run the same `loop_tasks` command a second time, nothing will get rebuilt. Instead, all items say `OK`:
+```{r try_rebuild_all}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument either missing or set to `NULL`. We'll do this several times in this vignette for demonstration purposes.
+```{r delete_all}
+scdel(remake_file='task_plan_1.yml')
+```
+
+Now when we run the entire loop, everything gets rebuilt:
+```{r rebuild_all}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+## Developing a successful loop
+
+Not analyses will go smoothly the first time you try. You can use `loop_tasks` to run just a few task-steps at a time at first, debugging before you launch a full batch.
+
+Before we can demonstrate, we'll need to delete all output files and remake status information again:
+```{r delete_all2}
+scdel(remake_file='task_plan_1.yml')
+```
+
+You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
+```{r loop_task_step_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  task_names='PA',
+  step_names='prep')
+```
+Note that an error is thrown at the end to prevent the indicator file from being created. This is useful because it means we can keep running `loop_tasks` on subsets of the batch until everything is done.
+
+Alternatively, you can run a step (and any dependencies to that step) for all tasks. Here let's run only the plotting steps (and therefore also the prepping steps) for all states:
+```{r loop_steps_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  step_names='plot')
+```
+
+Or you can run a complete task, or handful of tasks, without touching the others. Here we run PA and AZ only:
+```{r loop_tasks_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  task_names=c('PA','AZ'))
+```
+
+Now if we run the full loop without constraints, the only things left to build are the WI report, the final indicator for each task (built silently) and the final indicator file for the whole batch (target `task_plan_1`).
+```{r loop_remainder}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+## Indicator files option
+
+If you have a really lightweight project and want to skip the indicator files, you can do so. To skip the `complete` step and accompanying .ind files, set `add_complete=FALSE`. If you also intend not to create a final indicator file for the entire task batch, you can also skip setting `ind_dir`.
+
+```{r plan2}
+task_plan_2 <- create_task_plan(
+  task_config$id,
+  list(step1, step2, step3),
+  final_steps='report',
+  add_complete=FALSE)
+```
+
+To avoid creating an indicator file when the entire batch is complete, set `ind_complete=FALSE` in `create_task_makefile`:
+
+```{r makefile2, results='markup'}
+create_task_makefile(
+  task_plan=task_plan_2,
+  makefile='task_plan_2.yml',
+  include=c(),
+  packages=c('ggplot2'),
+  sources=c('script.R'),
+  file_extensions=c('ind'),
+  ind_complete=FALSE)
+```
+
+Now here are the contents of task_plan_2.yml, which will not create any `.ind` files:
+
+```{r read_makefile2, results='markup', comment='', echo=FALSE}
+cat(readr::read_lines('task_plan_2.yml'), sep='\n')
+```
