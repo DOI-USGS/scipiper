@@ -21,7 +21,7 @@
 #'   character string or vector, defining any dependencies that need to be
 #'   declared in addition to those implied by `command`. If a function, should
 #'   accept `...` and other args optionally including `task_name`, `step_name`,
-#'   and `target_name` args optionally including `task_name` and `step_name`
+#'   and `target_name`
 #' @param command a character string or vector, or a function that produces a
 #'   character string or vector, defining the command to be run for each
 #'   application of this step to a specific task. If a function, should accept
@@ -43,7 +43,7 @@ create_task_step <- function(
   },
   depends = character(0),
   command = function(task_name, step_name, ...) {
-    sprintf("%s('%s')", step_name, task_name)
+    sprintf("%s(I('%s'))", step_name, task_name)
   }
 ) {
   
