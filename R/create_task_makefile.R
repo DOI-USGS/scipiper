@@ -80,7 +80,20 @@ create_task_makefile <- function(
     # even though target_name is an object (not file), job_command should write
     # to ind_file - again so the calling remake file can use
     # ind_file as its target
-    command = sprintf("sc_indicate(I('%s'))", ind_file),
+    command = {
+      if(is.na(ind_complete)) {
+        message('ind_complete=NA is deprecated; use TRUE or FALSE')
+        sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
+      } else {
+        if(isTRUE(ind_complete)) {
+          sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
+                  job_output, job_target, makefile)
+        } else {
+          sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
+        }
+          
+      }
+    },
     # as dependencies of this overall/default job, extract the target_name from
     # every task and all those steps indexed by job_steps. an alternative (or
     # complement) would be to create a dummy target for each task (probably with
