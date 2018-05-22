@@ -21,10 +21,12 @@
 #'   step named 'complete' will be added to the step list. This step will depend
 #'   on all `final_steps` and will write an indicator file with a timestamp when
 #'   all final steps are complete.
-#' @param ind_dir directory path, only used if `add_complete==TRUE`, specifying
-#'   the location where task-specific indicator files should be written. Such
-#'   files will always be named after their associated tasks, with '.ind' as a
-#'   suffix
+#' @param ind_dir directory path, only used within steps if
+#'   `add_complete==TRUE`, specifying the location where task-specific indicator
+#'   files should be written. Such files will always be named after their
+#'   associated tasks, with '.ind' as a suffix. This path information is also
+#'   passed on to `create_task_makefile()` so that you don't need to specify it
+#'   in both places.
 #' @param ind_ext the indicator file extension to use in creating indicator
 #'   files for any `complete` steps (only used if `add_complete==TRUE`)
 #' @return a structured list that can be passed to `create_task_makefile` or
@@ -33,7 +35,7 @@
 #' @examples
 #' task_config <- data.frame(
 #'   id=c('AZ','CO','CA'),
-#'   capital=c('Phoeniz','Denver','Sacramento')
+#'   capital=c('Phoenix','Denver','Sacramento')
 #' )
 #' step1 <- create_task_step(
 #'   step_name = 'prep',
@@ -56,7 +58,7 @@
 create_task_plan <- function(
   task_names, task_steps, 
   final_steps=sapply(task_steps, `[[`, 'step_name'),
-  ind_dir, add_complete=TRUE,
+  ind_dir=NULL, add_complete=TRUE,
   ind_ext=getOption("scipiper.ind_ext")
 ) {
   
@@ -108,7 +110,12 @@ create_task_plan <- function(
         # return the target_names from each of the chosen_steps
         sapply(chosen_steps, `[[`, 'target_name', USE.NAMES=FALSE)
       },
-      command = "sc_indicate(target_name)"
+      command = function(target_name, ...) {
+        "sc_indicate(target_name)"
+        # would be nice to use hashes, but it'd be costly to get makefile in here
+        # sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
+      }
+      
     )
     task_steps <- c(task_steps, list(complete_task))
   }
