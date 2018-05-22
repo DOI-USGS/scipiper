@@ -65,7 +65,8 @@ scmake <- function(
 #' depend - i.e., if B is built from A and you ask to delete B with
 #' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
 #'
-#' @param target_names vector of targets to delete
+#' @param target_names vector of targets to delete, or NULL or missing to delete
+#'   all targets
 #' @param remake_file as in [remake::delete()]
 #' @param verbose as in [remake::delete()]
 #' @param ind_ext the indicator file extension identifying those files for which
@@ -78,6 +79,10 @@ scdel <- function(
   remake_file = getOption('scipiper.remake_file'),
   verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
+  
+  if(missing(target_names) || is.null(target_names)) {
+    target_names <- get_remake_status(NULL, remake_file='task_plan_1.yml')$target
+  }
   
   # run remake::delete, which takes care of the file itself and the RDS status
   # file, leaving us with just the YAML file to deal with below. Lock in
@@ -266,7 +271,7 @@ get_remake_status <- function(target_names, remake_file=getOption('scipiper.rema
   remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
   # make sure target_names is concrete
-  if(is.null(target_names)) target_names <- remake_object$default_target
+  if(missing(target_names) || is.null(target_names)) target_names <- remake_object$default_target
   
   unknown_targets <- setdiff(target_names, names(remake_object$targets))
   if(length(unknown_targets) > 0) stop('unknown targets: ', paste(unknown_targets, collapse=', '))
