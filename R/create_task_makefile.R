@@ -60,8 +60,9 @@
 #'   file_extensions=c('ind'), packages='mda.streams')
 #' cat(readLines(task_makefile), sep='\n')
 create_task_makefile <- function(
-  task_plan, makefile=NULL,
+  task_plan, makefile,
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
+  ind_complete=NA,
   ind_dir=attr(task_plan, 'ind_dir'),
   ind_ext=getOption("scipiper.ind_ext"),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper')) {
@@ -74,7 +75,17 @@ create_task_makefile <- function(
   # actually writing to ind_file)
   job_target <- tools::file_path_sans_ext(basename(makefile))
   job_steps <- attr(task_plan, 'final_steps')
-  ind_file <- file.path(ind_dir, as_ind_file(job_target, ind_ext))
+  job_deps <- unlist(lapply(task_plan, function(task) {
+    lapply(task$steps[job_steps], function(step) {
+      step$target_name
+    })
+  }), use.names=FALSE)
+  job_output <- if(isTRUE(ind_complete)) {
+    if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
+    file.path(ind_dir, as_ind_file(job_target, ind_ext))
+  } else {
+    sprintf('%s_%s', job_target, ind_ext)
+  }
   job <- list(
     target_name = job_target,
     # even though target_name is an object (not file), job_command should write
@@ -100,15 +111,11 @@ create_task_makefile <- function(
     # indicator file, at least until
     # https://github.com/richfitz/remake/issues/92 is resolved) and then have
     # this overall target depend on those dummy targets.
-    depends = unlist(lapply(task_plan, function(task) {
-      lapply(task$steps[job_steps], function(step) {
-        step$target_name
-      })
-    }), use.names=FALSE)
+    depends = job_deps
   )
   message(sprintf(
     "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
-    ind_file, job_target, makefile))
+    job_output, job_target, makefile))
   
   # prepare the task list for rendering
   tasks <- unname(task_plan) # remove list element names where they'd interfere with whisker.render
