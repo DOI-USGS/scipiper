@@ -114,8 +114,19 @@ scdel <- function(
 #' @param data_file optional. file name of the data file whose presence is being
 #'   indicated. if given, the hash of the data file will be included in the
 #'   indicator file as the `hash` element.
+#' @param hash_depends logical. If TRUE, this call will look through
+#'   `depends_makefile` for a recipe for `depends_target`, will generate a hash
+#'   of each file or object listed in the depends section for that recipe, and
+#'   will report those named hashes in `ind_file`. This pattern is useful for
+#'   generating indicator files that sum up the output of a target that groups
+#'   together many other targets in its depends section.
+#' @param depends_target character name of a target in the remake .yml file
+#'   specified in `depends_makefile`. This target must have at least one item in
+#'   its depends section. Used only when `hash_depends=TRUE`.
+#' @param depends_makefile character name of the remake file that contains a
+#'   recipe for `depends_target`. Used only when `hash_depends=TRUE`.
 #' @export
-sc_indicate <- function(ind_file, ..., data_file) {
+sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_target, depends_makefile) {
   
   info_list <- list(...)
   
@@ -128,7 +139,15 @@ sc_indicate <- function(ind_file, ..., data_file) {
     info_list$hash <- unname(tools::md5sum(data_file))
   }
   
-  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+  # if hash_depends and depends_target and depends_makefile are given, create
+  # hashes of all the dependencies of that depends_target and append them to
+  # info_list
+  if(isTRUE(hash_depends)) {
+    if(missing(depends_target)) stop('depends_target is required when hash_depends=TRUE')
+    if(missing(depends_makefile)) stop('depends_makefile is required when hash_depends=TRUE')
+    hashes <- hash_dependencies(depends_target, depends_makefile)
+    info_list <- c(info_list, as.list(hashes))
+  }
   
   # if no writable information is given, use the current time. this is a
   # fallback when we don't have direct information about the contents of the
@@ -138,10 +157,15 @@ sc_indicate <- function(ind_file, ..., data_file) {
     info_list$indication_time <- POSIX2char(Sys.time())
   }
   
-  # write the info to the indicator file
-  readr::write_lines(yaml::as.yaml(info_list), ind_file)
-  
-  invisible(NULL)
+  if(ind_file == '') {
+    # return the information as an R object
+    return(info_list)
+  } else {
+    # write the info to the indicator file
+    if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+    readr::write_lines(yaml::as.yaml(info_list), ind_file)
+    return(invisible(NULL))
+  }
 }
 #' Retrieve the data file declared by an indicator
 #'
