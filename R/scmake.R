@@ -65,7 +65,7 @@ scmake <- function(
 #' depend - i.e., if B is built from A and you ask to delete B with
 #' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
 #'
-#' @param target_names vector of targets to delete, or NULL or missing to delete
+#' @param target_names vector of targets to delete, or NULL to delete
 #'   all targets
 #' @param remake_file as in [remake::delete()]
 #' @param verbose as in [remake::delete()]
@@ -80,7 +80,7 @@ scdel <- function(
   verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
   
-  if(missing(target_names) || is.null(target_names)) {
+  if(is.null(target_names)) {
     target_names <- get_remake_status(NULL, remake_file='task_plan_1.yml')$target
   }
   
@@ -102,6 +102,8 @@ scdel <- function(
   status_files <- file.path('build/status', paste0(status_keys, '.yml'))
   status_exists <- status_files[file.exists(status_files)]
   if(length(status_exists) > 0) file.remove(status_exists)
+  
+  invisible()
 }
 
 #' Create an indicator file

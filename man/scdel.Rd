@@ -8,7 +8,7 @@ scdel(target_names, remake_file = getOption("scipiper.remake_file"),
   verbose = TRUE, ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
-\item{target_names}{vector of targets to delete, or NULL or missing to delete
+\item{target_names}{vector of targets to delete, or NULL to delete
 all targets}
 
 \item{remake_file}{as in \code{\link[remake:delete]{remake::delete()}}}
