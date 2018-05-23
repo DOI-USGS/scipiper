@@ -9,6 +9,8 @@
 #'   before ... and second in line, so it can be easily specified without naming
 #'   the argument
 #' @param ... as in remake::make
+#' @param force logical. if TRUE, the target_names will be deleted with `scdel`
+#'   before being built.
 #' @param verbose as in remake::make
 #' @param allow_missing_packages as in remake::make
 #' @param ind_ext the indicator file extension identifying those files for which
@@ -18,7 +20,12 @@
 #' @export
 scmake <- function(
   target_names = NULL, remake_file = getOption('scipiper.remake_file'), ..., 
-  verbose = TRUE, allow_missing_packages = FALSE, ind_ext = getOption("scipiper.ind_ext")) {
+  force = FALSE, verbose = TRUE, allow_missing_packages = FALSE, ind_ext = getOption("scipiper.ind_ext")) {
+  
+  # allow force rebuild by deleting the target[s] before attempting a build
+  if(isTRUE(force)) {
+    scdel(target_names=target_names, remake_file=remake_file, verbose=verbose, ind_ext=ind_ext)
+  }
   
   # update .remake with any new build/status info
   RDSify_build_status(remake_file=remake_file)
