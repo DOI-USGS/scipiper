@@ -81,7 +81,7 @@ scdel <- function(
   ind_ext = getOption('scipiper.ind_ext')) {
   
   if(is.null(target_names)) {
-    target_names <- get_remake_status(NULL, remake_file='task_plan_1.yml')$target
+    target_names <- get_remake_status(NULL, remake_file=remake_file)$target
   }
   
   # run remake::delete, which takes care of the file itself and the RDS status
