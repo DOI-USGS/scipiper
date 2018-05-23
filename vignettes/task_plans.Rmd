@@ -1,7 +1,7 @@
 ---
 title: "Task plans"
 author: "Alison Appling"
-date: "May 22, 2018"
+date: "May 23, 2018"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Task plans}
@@ -98,9 +98,12 @@ step3 <- create_task_step(
   })
 ```
 
-You can now create a task_plan that wraps the tasks and steps together. In the following call to `create_task_plan`, a couple of things happen. First, the steps you identified are organized into an R object that `scipiper` can use efficiently later. Second, when the default argument `add_complete=TRUE` is accepted (e.g., by not specifying `add_complete` at all), a final step gets tacked onto the list. The final step generates an .ind file for each task once all other steps for that task have been completed (or, if `final_steps` is specified, once those specified steps have been completed).
+You can now create a task_plan that wraps the tasks and steps together. In the following call to `create_task_plan`, a couple of things happen. The main thing is that the steps you identified are organized into an R object that `scipiper` can use efficiently later. The other thing is that when the default argument `add_complete=TRUE` is accepted (e.g., by not specifying `add_complete` at all), a final step gets tacked onto the list. The final step generates an .ind file for each task once all other steps for that task have been completed (or, if `final_steps` is specified, once those specified steps have been completed).
 
-The main benefit of this final step and .ind file is speed: iteration over the complete task plan can be more efficient because the presence of an .ind file for a task can be used as a first-cut indication that the task doesn't need to be built, and the iteration effort can be more efficiently spent on other tasks. The usual way that `remake` determines which tasks need to be rebuilt can be quite slow for large task lists, so speed here is a good thing.
+The main benefit of this `complete` step and the corresponding .ind file is speed: iteration over the complete task plan can be more efficient because the presence of an .ind file for a task can be used as a first-cut indication that the task doesn't need to be built, such that iteration effort can be more efficiently spent on other tasks. The usual way that `remake` determines which tasks need to be rebuilt can be quite slow for large task lists or large output files, so speed here is a good thing.
+
+One drawback of the `add_complete` system and corresponding .ind files is that the speed shortcut only works if the presence of these .ind files is a fairly accurate description of which tasks are up to date. If you build a complete task plan once, change an input, and intend to rebuild, then it's strongly recommended that you delete the .ind files before calling `loop_tasks` again. If you don't, nothing will break, but your build will be slower and will not include automatic retries.
+
 ```{r plan}
 task_plan_1 <- create_task_plan(
   task_config$id,
@@ -110,7 +113,7 @@ task_plan_1 <- create_task_plan(
 ```
 
 
-You'll need the `task_plan` in that form for two things: to create a remake .yml makefile and to run `loop_tasks`. First, the makefile:
+You'll need the `task_plan` R object for two things: to create a remake .yml makefile and to run `loop_tasks`. First, the makefile:
 
 ```{r makefile, results='markup'}
 create_task_makefile(
@@ -129,9 +132,9 @@ Here are the contents of task_plan_1.yml:
 cat(readr::read_lines('task_plan_1.yml'), sep='\n')
 ```
 
-Note that at the end of each state's task list is a final task, e.g., `states/log/WI.ind`, that we didn't directly specify in the task_plan. These recipes for the `complete` step were generated in `create_task_plan` as described above.
+Note that at the end of each state's task list is a final task, e.g., `states/log/WI.ind`, that we didn't directly specify in the task_plan. These recipes for the `complete` step were generated in `create_task_plan` as described above. These .ind files representing the completeness of each task are also used as the dependencies of the final target, `task_plan_1`, which describes all targets that must be complete to consider the whole task batch complete.
 
-Next, use the `task_plan` and the `task_makefile` in `loop_tasks`:
+Next, use the `task_plan` and the `task_makefile` in `loop_tasks` to run all the steps in all the tasks:
 
 ```{r delete1, echo=FALSE}
 unlink('.remake')
@@ -145,20 +148,19 @@ loop_tasks(
 ```
 
 The benefits of using `loop_tasks` to run all the remake targets in task_plan_1.yml are:
+
 1. baked-in retries during each execution of `loop_tasks`
 2. quicker restarts if `loop_tasks` gets interrupted partway through (e.g., if your computer runs out of battery or crashes)
-3. the ability to easily run subsets of tasks and/or steps while you're developing the analysis; see below
+3. the ability to easily run subsets of tasks and/or steps while you're developing the analysis (see below)
 
-To use the baked-in retries effectively, simply ensure that the functions defined in your task-steps throw errors (e.g., with `stop()`) when things go wrong. No need to build retries into the functions themselves because `loop_tasks` will take care of that for you. And if your function isn't the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can change the value of the `num_tries` argument to `loop_tasks`.
-
-One drawback of the `add_complete` system of .ind files (described above) is that the speed shortcut only works if the presence of .ind files is a fairly accurate description of which tasks are up to date. If you build a complete task plan once, change an input, and intend to rebuild, then it's strongly recommended that you delete the .ind files before calling `loop_tasks` again. If you don't, nothing will break, but your build will be slower and will not include automatic retries.
+To use the baked-in retries effectively, simply ensure that the functions called in your task-steps throw errors (typically with `stop()`) when things go wrong. No need to build retries into the functions themselves because `loop_tasks` will take care of that for you. And if your function isn't the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can set `num_tries=1` in `loop_tasks`.
 
 
 ## Forcing rebuilds
 
 ### Forcing rebuild for one task-step
 
-If we try to `scmake` any of the targets in the task makefile without changing any of the inputs, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. Instead, `AZ_plot.png` is already `OK`:
+If we try to `scmake` any of the targets in the task makefile without changing any of the inputs, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. For example, because we ran `loop_tasks` above, `AZ_plot.png` is already `OK` when we try to build it again:
 ```{r try_rebuild_one}
 scmake('AZ_plot.png', 'task_plan_1.yml')
 ```
@@ -173,18 +175,23 @@ Now when we `scmake` that target again, `AZ_plot.png` gets rebuilt:
 scmake('AZ_plot.png', 'task_plan_1.yml')
 ```
 
+Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the `force=TRUE` argument to `scmake`:
+```{r force_one}
+scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
+```
+
 ### Forcing rebuild for all task-steps
 
-If we run the same `loop_tasks` command a second time, nothing will get rebuilt. Instead, all items say `OK`:
+Similar to the one-target example, above, if we run the same `loop_tasks` command twice, nothing will get rebuilt the second time. Instead, all items will say `OK`:
 ```{r try_rebuild_all}
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')
 ```
 
-One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `NULL`. We'll do this several times in this vignette for demonstration purposes.
+One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `list_all_targets([remake_file])`.
 ```{r delete_all}
-scdel(target_names=NULL, remake_file='task_plan_1.yml')
+scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 ```
 
 Now when we run the entire loop, everything gets rebuilt:
@@ -194,13 +201,19 @@ loop_tasks(
   task_makefile='task_plan_1.yml')
 ```
 
+Again, the less-typing solution is to force a rebuild with the `force=TRUE` argument to `scmake`:
+```{r force_all}
+scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
+```
+
+
 ## Developing a successful loop
 
 Not analyses will go smoothly the first time you try. You can use `loop_tasks` to run just a few task-steps at a time at first, debugging before you launch a full batch.
 
 Before we can demonstrate, we'll need to delete all output files and remake status information again:
 ```{r delete_all2}
-scdel(target_names=NULL, remake_file='task_plan_1.yml')
+scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 ```
 
 You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
