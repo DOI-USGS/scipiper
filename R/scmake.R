@@ -65,8 +65,10 @@ scmake <- function(
 #' depend - i.e., if B is built from A and you ask to delete B with
 #' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
 #'
-#' @param target_names vector of targets to delete, or NULL to delete
-#'   all targets
+#' @param target_names vector of targets to delete, or NULL to delete the
+#'   default target. Use the output of `list_all_targets()` to delete all
+#'   explicitly named targets in the remake file (excluding tidy, clean, and
+#'   purge)
 #' @param remake_file as in [remake::delete()]
 #' @param verbose as in [remake::delete()]
 #' @param ind_ext the indicator file extension identifying those files for which
@@ -74,14 +76,23 @@ scmake <- function(
 #'   remake::deleted. You should git commit the deletion of any build/status
 #'   files (unless you immediately rebuild them and commit any changes instead).
 #' @export
+#' @examples
+#' \dontrun{
+#' scdel('one_target', 'remake.yml')
+#' scdel(NULL, 'remake.yml') # delete the default target
+#' scdel(list_all_targets('remake.yml'), 'remake.yml')
+#' }
 scdel <- function(
-  target_names,
+  target_names = NULL,
   remake_file = getOption('scipiper.remake_file'),
   verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
   
+  # make sure target_names is concrete
   if(is.null(target_names)) {
-    target_names <- get_remake_status(NULL, remake_file=remake_file)$target
+    # collect information about the current remake database. do load sources to get the dependencies right
+    remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+    target_names <- remake_object$default_target
   }
   
   # run remake::delete, which takes care of the file itself and the RDS status
@@ -264,16 +275,26 @@ as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
 #' Produce a table describing the remake build status relative to 1+ targets
 #'
 #' @param target_names character vector of targets for which to determine build
-#'   status (complete status will include dependencies of these targets)
+#'   status, including status for dependencies of the named targets. If NULL
+#'   will return status for the default target and its dependencies.
 #' @param remake_file filename of the remake YAML file from which status should
 #'   be determined
 #' @export
-get_remake_status <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
+#' @examples
+#' \dontrun{
+#' # assuming you have a file named remake.yml:
+#' get_remake_status() # get status for the default target and its dependencies
+#' get_remake_status(list_all_targets()) # get status for all explicitly named targets in remake.yml
+#' 
+#' # or to get status for all targets in a different remake YAML:
+#' get_remake_status(list_all_targets('other_remake.yml'), 'other_remake.yml')
+#' }
+get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper.remake_file')) {
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
   # make sure target_names is concrete
-  if(missing(target_names) || is.null(target_names)) target_names <- remake_object$default_target
+  if(is.null(target_names)) target_names <- remake_object$default_target
   
   unknown_targets <- setdiff(target_names, names(remake_object$targets))
   if(length(unknown_targets) > 0) stop('unknown targets: ', paste(unknown_targets, collapse=', '))
