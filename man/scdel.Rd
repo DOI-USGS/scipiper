@@ -4,12 +4,14 @@
 \alias{scdel}
 \title{Wrapper for remake::delete that permits cache sharing}
 \usage{
-scdel(target_names, remake_file = getOption("scipiper.remake_file"),
+scdel(target_names = NULL, remake_file = getOption("scipiper.remake_file"),
   verbose = TRUE, ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
-\item{target_names}{vector of targets to delete, or NULL to delete
-all targets}
+\item{target_names}{vector of targets to delete, or NULL to delete the
+default target. Use the output of \code{list_all_targets()} to delete all
+explicitly named targets in the remake file (excluding tidy, clean, and
+purge)}
 
 \item{remake_file}{as in \code{\link[remake:delete]{remake::delete()}}}
 
@@ -33,4 +35,11 @@ because it sounds terrifying to me: as currently implemented in remake,
 dependencies are the UPSTREAM targets on which the current target_names
 depend - i.e., if B is built from A and you ask to delete B with
 dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
+}
+\examples{
+\dontrun{
+scdel('one_target', 'remake.yml')
+scdel(NULL, 'remake.yml') # delete the default target
+scdel(list_all_targets('remake.yml'), 'remake.yml')
+}
 }

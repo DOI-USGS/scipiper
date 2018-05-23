@@ -4,16 +4,27 @@
 \alias{get_remake_status}
 \title{Produce a table describing the remake build status relative to 1+ targets}
 \usage{
-get_remake_status(target_names,
+get_remake_status(target_names = NULL,
   remake_file = getOption("scipiper.remake_file"))
 }
 \arguments{
 \item{target_names}{character vector of targets for which to determine build
-status (complete status will include dependencies of these targets)}
+status, including status for dependencies of the named targets. If NULL
+will return status for the default target and its dependencies.}
 
 \item{remake_file}{filename of the remake YAML file from which status should
 be determined}
 }
 \description{
 Produce a table describing the remake build status relative to 1+ targets
+}
+\examples{
+\dontrun{
+# assuming you have a file named remake.yml:
+get_remake_status() # get status for the default target and its dependencies
+get_remake_status(list_all_targets()) # get status for all explicitly named targets in remake.yml
+
+# or to get status for all targets in a different remake YAML:
+get_remake_status(list_all_targets('other_remake.yml'), 'other_remake.yml')
+}
 }
