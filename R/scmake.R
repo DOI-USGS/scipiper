@@ -9,6 +9,8 @@
 #'   before ... and second in line, so it can be easily specified without naming
 #'   the argument
 #' @param ... as in remake::make
+#' @param force logical. if TRUE, the target_names will be deleted with `scdel`
+#'   before being built.
 #' @param verbose as in remake::make
 #' @param allow_missing_packages as in remake::make
 #' @param ind_ext the indicator file extension identifying those files for which
@@ -18,7 +20,12 @@
 #' @export
 scmake <- function(
   target_names = NULL, remake_file = getOption('scipiper.remake_file'), ..., 
-  verbose = TRUE, allow_missing_packages = FALSE, ind_ext = getOption("scipiper.ind_ext")) {
+  force = FALSE, verbose = TRUE, allow_missing_packages = FALSE, ind_ext = getOption("scipiper.ind_ext")) {
+  
+  # allow force rebuild by deleting the target[s] before attempting a build
+  if(isTRUE(force)) {
+    scdel(target_names=target_names, remake_file=remake_file, verbose=verbose, ind_ext=ind_ext)
+  }
   
   # update .remake with any new build/status info
   RDSify_build_status(remake_file=remake_file)
@@ -65,7 +72,10 @@ scmake <- function(
 #' depend - i.e., if B is built from A and you ask to delete B with
 #' dependencies=TRUE, A will also be deleted. Scary, right? So let's not.
 #'
-#' @param target_names vector of targets to delete
+#' @param target_names vector of targets to delete, or NULL to delete the
+#'   default target. Use the output of `list_all_targets()` to delete all
+#'   explicitly named targets in the remake file (excluding tidy, clean, and
+#'   purge)
 #' @param remake_file as in [remake::delete()]
 #' @param verbose as in [remake::delete()]
 #' @param ind_ext the indicator file extension identifying those files for which
@@ -73,11 +83,24 @@ scmake <- function(
 #'   remake::deleted. You should git commit the deletion of any build/status
 #'   files (unless you immediately rebuild them and commit any changes instead).
 #' @export
+#' @examples
+#' \dontrun{
+#' scdel('one_target', 'remake.yml')
+#' scdel(NULL, 'remake.yml') # delete the default target
+#' scdel(list_all_targets('remake.yml'), 'remake.yml')
+#' }
 scdel <- function(
-  target_names,
+  target_names = NULL,
   remake_file = getOption('scipiper.remake_file'),
   verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
+  
+  # make sure target_names is concrete
+  if(is.null(target_names)) {
+    # collect information about the current remake database. do load sources to get the dependencies right
+    remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+    target_names <- remake_object$default_target
+  }
   
   # run remake::delete, which takes care of the file itself and the RDS status
   # file, leaving us with just the YAML file to deal with below. Lock in
@@ -96,7 +119,9 @@ scdel <- function(
   status_keys <- get_mangled_key(status_targets, dbstore)
   status_files <- file.path('build/status', paste0(status_keys, '.yml'))
   status_exists <- status_files[file.exists(status_files)]
-  file.remove(status_files)
+  if(length(status_exists) > 0) file.remove(status_exists)
+  
+  invisible()
 }
 
 #' Create an indicator file
@@ -114,8 +139,19 @@ scdel <- function(
 #' @param data_file optional. file name of the data file whose presence is being
 #'   indicated. if given, the hash of the data file will be included in the
 #'   indicator file as the `hash` element.
+#' @param hash_depends logical. If TRUE, this call will look through
+#'   `depends_makefile` for a recipe for `depends_target`, will generate a hash
+#'   of each file or object listed in the depends section for that recipe, and
+#'   will report those named hashes in `ind_file`. This pattern is useful for
+#'   generating indicator files that sum up the output of a target that groups
+#'   together many other targets in its depends section.
+#' @param depends_target character name of a target in the remake .yml file
+#'   specified in `depends_makefile`. This target must have at least one item in
+#'   its depends section. Used only when `hash_depends=TRUE`.
+#' @param depends_makefile character name of the remake file that contains a
+#'   recipe for `depends_target`. Used only when `hash_depends=TRUE`.
 #' @export
-sc_indicate <- function(ind_file, ..., data_file) {
+sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_target, depends_makefile) {
   
   info_list <- list(...)
   
@@ -128,7 +164,15 @@ sc_indicate <- function(ind_file, ..., data_file) {
     info_list$hash <- unname(tools::md5sum(data_file))
   }
   
-  if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+  # if hash_depends and depends_target and depends_makefile are given, create
+  # hashes of all the dependencies of that depends_target and append them to
+  # info_list
+  if(isTRUE(hash_depends)) {
+    if(missing(depends_target)) stop('depends_target is required when hash_depends=TRUE')
+    if(missing(depends_makefile)) stop('depends_makefile is required when hash_depends=TRUE')
+    hashes <- hash_dependencies(depends_target, depends_makefile)
+    info_list <- c(info_list, as.list(hashes))
+  }
   
   # if no writable information is given, use the current time. this is a
   # fallback when we don't have direct information about the contents of the
@@ -138,10 +182,15 @@ sc_indicate <- function(ind_file, ..., data_file) {
     info_list$indication_time <- POSIX2char(Sys.time())
   }
   
-  # write the info to the indicator file
-  readr::write_lines(yaml::as.yaml(info_list), ind_file)
-  
-  invisible(NULL)
+  if(ind_file == '') {
+    # return the information as an R object
+    return(info_list)
+  } else {
+    # write the info to the indicator file
+    if(!dir.exists(dirname(ind_file))) dir.create(dirname(ind_file), recursive=TRUE)
+    readr::write_lines(yaml::as.yaml(info_list), ind_file)
+    return(invisible(NULL))
+  }
 }
 #' Retrieve the data file declared by an indicator
 #'
@@ -230,14 +279,72 @@ as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
   tools::file_path_sans_ext(ind_file)
 }
 
+#' Get a list of all targets in a remake file
+#'
+#' @param remake_file filename of the remake YAML file from which targets should
+#'   be collected
+#' @param recursive logical. if TRUE, result will include all targets from any
+#'   YAMLs listed in the include: section of the given remake_file, or any YAMLs
+#'   listed in the include: sections of those included YAMLs, etc.
+#' @return vector of all target names explicitly declared in this remake_file
+#'   (and if recursive=TRUE, also the names of targets declared in remake files
+#'   included by this remake_file)
+#' @export
+#' @examples
+#' \dontrun{
+#' # assuming you have a file named remake.yml:
+#' list_all_targets() # get status for all explicitly named targets in remake.yml
+#' 
+#' # status for all targets in a different remake YAML:
+#' list_all_targets('other_remake.yml')
+#' 
+#' # status for all targets in remake.yml and any remake YAMLs included by remake.yml
+#' list_all_targets(recursive=TRUE)
+#' }
+list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recursive=FALSE) {
+  # load the remake file as a yaml and as remake loads it
+  remake_list <- yaml::yaml.load_file(remake_file)
+  
+  # get all explicitly defined targets
+  targets <- names(remake_list$targets)
+
+  # exclude remake keyword targets, which can be explicit even though they're
+  # usually not
+  targets <- setdiff(targets, c('tidy','clean','purge'))
+  
+  # if requested, include targets of the included ymls
+  if(isTRUE(recursive)) {
+    includes <- remake_list$include
+    nested_targets <- unlist(lapply(includes, list_all_targets))
+    targets <- c(targets, nested_targets)
+  }
+
+  # if we wanted to add more info about these targets, we could return the following instead:
+  # remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  # remake_object$targets[targets]
+  
+  # return a simple vector of target names
+  targets
+}
+
 #' Produce a table describing the remake build status relative to 1+ targets
 #'
 #' @param target_names character vector of targets for which to determine build
-#'   status (complete status will include dependencies of these targets)
+#'   status, including status for dependencies of the named targets. If NULL
+#'   will return status for the default target and its dependencies.
 #' @param remake_file filename of the remake YAML file from which status should
 #'   be determined
 #' @export
-get_remake_status <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
+#' @examples
+#' \dontrun{
+#' # assuming you have a file named remake.yml:
+#' get_remake_status() # get status for the default target and its dependencies
+#' get_remake_status(list_all_targets()) # get status for all explicitly named targets in remake.yml
+#' 
+#' # or to get status for all targets in a different remake YAML:
+#' get_remake_status(list_all_targets('other_remake.yml'), 'other_remake.yml')
+#' }
+get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper.remake_file')) {
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   

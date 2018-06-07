@@ -5,7 +5,7 @@
 \title{Define a set of tasks and steps within a single job}
 \usage{
 create_task_plan(task_names, task_steps, final_steps = sapply(task_steps,
-  `[[`, "step_name"), ind_dir, add_complete = TRUE,
+  `[[`, "step_name"), ind_dir = NULL, add_complete = TRUE,
   ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{
@@ -26,10 +26,12 @@ task complete. If one step depends on all previous steps (as indicated by
 its remake \code{depends:} and \code{command:} fields) then only that one step need
 be included in \code{final_steps}.}
 
-\item{ind_dir}{directory path, only used if \code{add_complete==TRUE}, specifying
-the location where task-specific indicator files should be written. Such
-files will always be named after their associated tasks, with '.ind' as a
-suffix}
+\item{ind_dir}{directory path, only used within steps if
+\code{add_complete==TRUE}, specifying the location where task-specific indicator
+files should be written. Such files will always be named after their
+associated tasks, with '.ind' as a suffix. This path information is also
+passed on to \code{create_task_makefile()} so that you don't need to specify it
+in both places.}
 
 \item{add_complete}{logical. if TRUE, \code{ind_dir} must be supplied and a final
 step named 'complete' will be added to the step list. This step will depend
@@ -50,7 +52,7 @@ a large number of near-identical tasks
 \examples{
 task_config <- data.frame(
   id=c('AZ','CO','CA'),
-  capital=c('Phoeniz','Denver','Sacramento')
+  capital=c('Phoenix','Denver','Sacramento')
 )
 step1 <- create_task_step(
   step_name = 'prep',

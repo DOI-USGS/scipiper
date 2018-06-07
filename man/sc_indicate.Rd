@@ -4,7 +4,8 @@
 \alias{sc_indicate}
 \title{Create an indicator file}
 \usage{
-sc_indicate(ind_file, ..., data_file)
+sc_indicate(ind_file, ..., data_file, hash_depends = FALSE, depends_target,
+  depends_makefile)
 }
 \arguments{
 \item{ind_file}{file name of the indicator file to write}
@@ -18,6 +19,20 @@ argument instead.}
 \item{data_file}{optional. file name of the data file whose presence is being
 indicated. if given, the hash of the data file will be included in the
 indicator file as the \code{hash} element.}
+
+\item{hash_depends}{logical. If TRUE, this call will look through
+\code{depends_makefile} for a recipe for \code{depends_target}, will generate a hash
+of each file or object listed in the depends section for that recipe, and
+will report those named hashes in \code{ind_file}. This pattern is useful for
+generating indicator files that sum up the output of a target that groups
+together many other targets in its depends section.}
+
+\item{depends_target}{character name of a target in the remake .yml file
+specified in \code{depends_makefile}. This target must have at least one item in
+its depends section. Used only when \code{hash_depends=TRUE}.}
+
+\item{depends_makefile}{character name of the remake file that contains a
+recipe for \code{depends_target}. Used only when \code{hash_depends=TRUE}.}
 }
 \description{
 If only the first argument (\code{ind_file}) is given, the contents of the

@@ -6,7 +6,7 @@
 \usage{
 create_task_step(step_name, target_name = function(task_name, step_name, ...)
   {     sprintf("\%s_\%s", task_name, step_name) }, depends = character(0),
-  command = function(task_name, step_name, ...) {     sprintf("\%s('\%s')",
+  command = function(task_name, step_name, ...) {     sprintf("\%s(I('\%s'))",
   step_name, task_name) })
 }
 \arguments{
@@ -25,7 +25,7 @@ should accept \code{...} and other args optionally including \code{task_name} an
 character string or vector, defining any dependencies that need to be
 declared in addition to those implied by \code{command}. If a function, should
 accept \code{...} and other args optionally including \code{task_name}, \code{step_name},
-and \code{target_name} args optionally including \code{task_name} and \code{step_name}}
+and \code{target_name}}
 
 \item{command}{a character string or vector, or a function that produces a
 character string or vector, defining the command to be run for each
