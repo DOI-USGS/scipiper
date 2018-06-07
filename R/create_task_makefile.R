@@ -80,7 +80,7 @@ create_task_makefile <- function(
       step$target_name
     })
   }), use.names=FALSE)
-  job_output <- if(isTRUE(ind_complete)) {
+  job_output <- if(isTRUE(ind_complete) || is.na(ind_complete)) {
     if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
     file.path(ind_dir, as_ind_file(job_target, ind_ext))
   } else {
