@@ -302,6 +302,11 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
   # relative path from both the local working directory and the google drive
   # parent folder
   relative_path <- get_relative_path(file)
+  relative_path_escaped <- relative_path %>% 
+    gsub(pattern = '[', replacement = '\\[', fixed = TRUE) %>% 
+    gsub(pattern = ']', replacement = '\\]', fixed = TRUE) %>% 
+    gsub(pattern = '.', replacement = '\\.', fixed=TRUE) %>% 
+    gsub(pattern = '/', replacement = '$|^') 
   
   # query google drive for all possibly relevant files and add their parents as
   # a simple column
@@ -310,7 +315,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
       id=googledrive::as_id(gd_config$folder)),
     googledrive::drive_ls(
       path=googledrive::as_id(gd_config$folder), 
-      pattern=sprintf("^%s$", gsub('.', '\\.', fixed=TRUE, x=gsub('/', '$|^', relative_path))),
+      pattern=sprintf("^%s$", relative_path_escaped),
       verbose=FALSE,
       recursive=TRUE)
   ) %>%
