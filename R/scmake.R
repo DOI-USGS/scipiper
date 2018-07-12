@@ -430,16 +430,18 @@ YAMLify_build_status <- function(target_names, remake_file=getOption('scipiper.r
 #'
 #' Copy build status files from versionable text to .remake binary (.rds file)
 #'
-#' @param new_only logical. You could corrupt a shared-cache repo by calling
+#' @param new_only logical. It's possible to corrupt a shared-cache repo. One
+#'   way this happens seems to be something about collaborating on .ind and
+#'   build/status files via git. Another way to corrupt it is by calling
 #'   remake::make after git pulling new build/status files and before calling
-#'   scmake. Therefore, (1) you should avoid calling remake::make in a
-#'   shared-cache repo; call scmake instead, and (2) this flag provides
-#'   recourse; set new_only=FALSE to overwrite all .remake files for which we
-#'   have build/status files
+#'   scmake. Therefore, (1) this flag provides recourse; set new_only=FALSE to
+#'   overwrite all .remake files for which we have build/status files, (2) the
+#'   default is FALSE, and (3) still, you should avoid calling remake::make in a
+#'   shared-cache repo; call scmake instead.
 #' @param remake_file filename of the remake YAML file for which build/status
 #'   files should be RDSified
 #' @keywords internal
-RDSify_build_status <- function(new_only=TRUE, remake_file=getOption('scipiper.remake_file')) {
+RDSify_build_status <- function(new_only=FALSE, remake_file=getOption('scipiper.remake_file')) {
   # get info about the remake project. calling remake:::remake gives us info and
   # simultaneously ensures there's a directory to receive the export (creates
   # the .remake dir as a storr)
