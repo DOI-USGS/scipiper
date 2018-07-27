@@ -122,6 +122,7 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 gd_put <- function(
   remote_ind, local_source, mock_get=c('copy','move','none'),
   on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
+  dry_put=getOption("scipiper.dry_put"),
   config_file=getOption("scipiper.gd_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
@@ -133,6 +134,14 @@ gd_put <- function(
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
+  
+  # allow for dry runs of gd_put, where we move and create files locally but do
+  # nothing on Google Drive
+  if(isTRUE(dry_put)) {
+    sc_indicate(ind_file=remote_ind, warning="dry_put=TRUE; not actually pushed", data_file=data_file)
+    mock_move_copy(mock_get, local_file, data_file)
+    return()
+  }
   
   # prepare to use google drive
   require_libs('googledrive')

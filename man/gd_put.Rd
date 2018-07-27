@@ -6,7 +6,8 @@
 \usage{
 gd_put(remote_ind, local_source, mock_get = c("copy", "move", "none"),
   on_exists = c("update", "replace", "stop"), type = NULL,
-  verbose = FALSE, config_file = getOption("scipiper.gd_config_file"),
+  verbose = FALSE, dry_put = getOption("scipiper.dry_put"),
+  config_file = getOption("scipiper.gd_config_file"),
   ind_ext = getOption("scipiper.ind_ext"))
 }
 \arguments{

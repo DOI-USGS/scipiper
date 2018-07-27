@@ -15,6 +15,8 @@ Several session-level options are stored in R's \code{.Options} object.
 project. Used as the default for the \code{remake_file} argument in many
 functions.}
 
+\item{\code{scipiper.dry_put}}{Logical, default FALSE. If TRUE, calls to \code{s3_put} or \code{gd_put} won't actually push anything to S3 or Google Drive; they'll just pretend they've done it.}
+
 \item{\code{scipiper.s3_config_file}}{File path to a configuration file for an
 Amazon S3 bucket. Used as the default for the \code{s3_config_file} argument in
 many functions (usually those prefixed with \code{s3_}).}

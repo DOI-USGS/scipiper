@@ -69,10 +69,12 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
 #' @export
-s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
-                   on_exists=c('replace','stop'), verbose = FALSE,
-                  config_file=getOption("scipiper.s3_config_file"),
-                  ind_ext=getOption("scipiper.ind_ext")) {
+s3_put <- function(
+  remote_ind, local_source,  mock_get=c('copy','move','none'),
+  on_exists=c('replace','stop'), verbose = FALSE,
+  dry_put=getOption("scipiper.dry_put"),
+  config_file=getOption("scipiper.s3_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
   
   # check arguments
   mock_get <- match.arg(mock_get)
@@ -83,6 +85,14 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
+  
+  # allow for dry runs of s3_put, where we move and create files locally but do
+  # nothing on S3
+  if(isTRUE(dry_put)) {
+    sc_indicate(ind_file=remote_ind, warning="dry_put=TRUE; not actually pushed", data_file=data_file)
+    mock_move_copy(mock_get, local_file, data_file)
+    return(NA)
+  }
   
   # prepare to use S3
   require_libs('aws.signature', 'aws.s3')
