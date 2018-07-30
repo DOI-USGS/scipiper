@@ -390,21 +390,20 @@ gd_list <- function(..., config_file=getOption("scipiper.gd_config_file")) {
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
 #' @export
 gd_confirm_posted <- function(
-  ind_file, config_file=getOption("scipiper.gd_config_file"),
+  ind_file,
+  config_file=getOption("scipiper.gd_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
   require_libs('googledrive')
   
   # look on Google Drive for the specified file
-  # figure out whether and where the file exists on gdrive
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   remote_path <- gd_locate_file(data_file, config_file)
   remote_id <- tail(remote_path$id, 1)
-  if(is.na(remote_id)) stop(paste('File was not found on Google Drive:', data_file))
-  remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
-  
-  # we could prepare a timestamp from modifiedTime...but checksum is even better
-  sc_indicate(ind_file, hash=remote_info$md5Checksum)
-  
-  return(TRUE)
+  if(is.na(remote_id)){
+    stop(paste('failed to find Google Drive file:', data_file))
+  } else {
+    remote_info <- remote_path %>% slice(n()) %>% pull(drive_resource) %>% .[[1]]
+    sc_indicate(ind_file, hash=remote_info$md5Checksum)
+  }
 }
