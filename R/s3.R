@@ -69,10 +69,12 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
 #' @export
-s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
-                   on_exists=c('replace','stop'), verbose = FALSE,
-                  config_file=getOption("scipiper.s3_config_file"),
-                  ind_ext=getOption("scipiper.ind_ext")) {
+s3_put <- function(
+  remote_ind, local_source,  mock_get=c('copy','move','none'),
+  on_exists=c('replace','stop'), verbose = FALSE,
+  dry_put=getOption("scipiper.dry_put"),
+  config_file=getOption("scipiper.s3_config_file"),
+  ind_ext=getOption("scipiper.ind_ext")) {
   
   # check arguments
   mock_get <- match.arg(mock_get)
@@ -83,6 +85,14 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   
   # identify the remote data file to be indicated by remote_ind
   data_file <- as_data_file(remote_ind, ind_ext=ind_ext)
+  
+  # allow for dry runs of s3_put, where we move and create files locally but do
+  # nothing on S3
+  if(isTRUE(dry_put)) {
+    sc_indicate(ind_file=remote_ind, warning="dry_put=TRUE; not actually pushed", data_file=data_file)
+    mock_move_copy(mock_get, local_file, data_file)
+    return()
+  }
   
   # prepare to use S3
   require_libs('aws.signature', 'aws.s3')
@@ -105,11 +115,13 @@ s3_put <- function(remote_ind, local_source,  mock_get=c('copy','move','none'),
   }
   
   # write the indicator file (involves another check on S3 to get the timestamp)
-  success <- s3_confirm_posted(ind_file=remote_ind, config_file=config_file, 
-                               ind_ext=ind_ext)
+  s3_confirm_posted(ind_file=remote_ind, config_file=config_file, ind_ext=ind_ext)
+  
+  # if posting was successful, potentially bypass a superfluous download from S3
+  # by copying or moving local_file to data_file (the s3_get destination)
   mock_move_copy(mock_get, local_file, data_file)
   
-  return(success)
+  invisible()
 }
 
 #' decide whether local_source is an indicator or data file and find the data file 
@@ -177,6 +189,8 @@ s3_confirm_posted <- function(
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
+  require_libs('aws.signature','aws.s3')
+  
   # look on S3 for the specified file
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   s3_config <- yaml::yaml.load_file(config_file)
@@ -185,9 +199,8 @@ s3_confirm_posted <- function(
   if(nrow(remote_info) == 0) {
     stop(paste0("failed to find S3 file with Key=", data_file))
   } else {
-    sc_indicate(ind_file, hash = gsub(pattern = "\"", x = remote_info$ETag, 
-                                      replacement = ""))
-    return(TRUE)
+    hash <- gsub(pattern = "\"", replacement = "", remote_info$ETag)
+    sc_indicate(ind_file, hash = hash)
   }
 }
 

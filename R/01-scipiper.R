@@ -11,6 +11,7 @@
   op <- options()
   op.scipiper <- list(
     scipiper.remake_file = 'remake.yml',
+    scipiper.dry_put = FALSE,
     scipiper.gd_config_file = "lib/cfg/gd_config.yml",
     scipiper.s3_config_file = "lib/cfg/s3_config.yml",
     scipiper.ind_ext = 'ind'
@@ -29,6 +30,8 @@
 #' \item{`scipiper.remake_file`}{File path of the main remake YAML file for a
 #' project. Used as the default for the `remake_file` argument in many
 #' functions.}
+#'
+#' \item{`scipiper.dry_put`}{Logical, default FALSE. If TRUE, calls to `s3_put` or `gd_put` won't actually push anything to S3 or Google Drive; they'll just pretend they've done it.}
 #'
 #' \item{`scipiper.s3_config_file`}{File path to a configuration file for an
 #' Amazon S3 bucket. Used as the default for the `s3_config_file` argument in
