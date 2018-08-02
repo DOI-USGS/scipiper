@@ -252,9 +252,9 @@ is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
 #' as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
 #' as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
 as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
-  are_ind_files <- is_ind_file(data_file, ind_ext=ind_ext)
-  if(any(are_ind_files)) {
-    stop(paste(paste(data_file[are_ind_files], collapse = ","), 'are/is already an indicator file(s)'))
+  ind_files <- data_file[which(is_ind_file(data_file, ind_ext=ind_ext))]
+  if(length(ind_files) > 0) {
+    stop(sprintf('data_file contains indicator files: %s', paste(ind_files, collapse=', ')))
   }
   paste0(data_file, '.', ind_ext)
 }
@@ -273,8 +273,9 @@ as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
 #' as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
 #' as_data_file('mydata.rds.st', ind_ext='st') # 'mydata.rds'
 as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
-  if(!is_ind_file(ind_file, ind_ext=ind_ext)) {
-    stop('ind_file is not an indicator file')
+  non_inds <- ind_file[which(!is_ind_file(ind_file, ind_ext=ind_ext))]
+  if(length(non_inds) > 0) {
+    stop(sprintf('ind_file contains non-indicator files: %s', paste(non_inds, collapse=', ')))
   }
   tools::file_path_sans_ext(ind_file)
 }
