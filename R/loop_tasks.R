@@ -31,12 +31,18 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
+#' @param task_mssg "vebose","progress", or "silent" to define the format of task 
+#'   messages. Use "verbose" for a return-line `message` for each task, "progress" 
+#'   for a compact progress bar for task status, and "silent" for no output. 
+#'   Using "silent" is not recommended, but is implemented here for completeness. 
 #' @export
+#' @import progress
 loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
-  ind_ext = getOption('scipiper.ind_ext')) {
+  ind_ext = getOption('scipiper.ind_ext'),
+  task_mssg = c('verbose','progress','silent')) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
@@ -52,6 +58,7 @@ loop_tasks <- function(
     step_names <- attr(task_plan, "final_steps")
   }
   
+  task_mssg <- match.arg(task_mssg)
   # identify the task-step targets to be run, ordered by tasks and then steps
   # within tasks
   targets <- unlist(lapply(unname(task_plan[task_names]), function(task) {
@@ -97,20 +104,35 @@ loop_tasks <- function(
       "\n### Starting loop attempt %s of %s with %s tasks remaining:",
       this_try, num_tries, num_targets))
     this_try <- this_try + 1
+    
+    if (task_mssg == 'progress'){
+      pb <- progress::progress_bar$new(
+        format = "  Building :what [:bar] :percent",
+        clear = TRUE, total = num_targets)
+    }
+    
     for(i in seq_len(num_targets)) {
       tryCatch({
         target_num_overall <- incomplete_targets[i]
         target <- targets[target_num_overall]
-        message(sprintf(
-          "Building task %s of %s in loop: %s (#%s of %s total)",
-          i, num_targets, target, target_num_overall, num_targets_overall))
+        if (task_mssg == 'verbose'){
+          message(sprintf(
+            "Building task %s of %s in loop: %s (#%s of %s total)",
+            i, num_targets, target, target_num_overall, num_targets_overall))
+        } 
+        
         
         # the main action: run the task-step
         scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
-        
+        pb$tick(tokens = list(what = target))
       }, error=function(e) {
-        message(sprintf("  Error in %s: %s", deparse(e$call), e$message))
-        message(sprintf("  Skipping task #%s due to error", incomplete_targets[i]))
+        if (task_mssg == 'verbose'){
+          message(sprintf("  Error in %s: %s", deparse(e$call), e$message))
+          message(sprintf("  Skipping task #%s due to error", incomplete_targets[i]))
+        } else if(task_mssg == 'progress'){
+          pb$message(sprintf("* Error in %s: %s; Skipping task #%s due to error", deparse(e$call), e$message, incomplete_targets[i]))
+        }
+        
         # sleep for a while if requested
         if(sleep_on_error > 0) {
           Sys.sleep(sleep_on_error)
