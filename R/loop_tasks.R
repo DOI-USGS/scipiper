@@ -31,12 +31,16 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
+#' @param vebose define the format of task messages. Use TRUE for progress bar 
+#'   for the status of each task, and FALSE for no output
 #' @export
+#' @import progress
 loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
-  ind_ext = getOption('scipiper.ind_ext')) {
+  ind_ext = getOption('scipiper.ind_ext'),
+  verbose = TRUE) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
@@ -51,7 +55,6 @@ loop_tasks <- function(
   if(is.null(step_names)) {
     step_names <- attr(task_plan, "final_steps")
   }
-  
   # identify the task-step targets to be run, ordered by tasks and then steps
   # within tasks
   targets <- unlist(lapply(unname(task_plan[task_names]), function(task) {
@@ -75,6 +78,16 @@ loop_tasks <- function(
     incomplete_targets <- which(!(file.exists(targets) | is_current))
   }
   
+  incomplete_targets <- which_incomplete(targets, task_makefile)
+  total_num_tasks_incomplete <- length(incomplete_targets)
+  total_num_tasks_complete <- 0
+  if (verbose){
+    pb <- progress::progress_bar$new(
+      format = ":what [:bar] :percent",
+      show_after = 0, 
+      clear = FALSE, total = total_num_tasks_incomplete)
+  }
+  
   # run the targets in a loop, with retries, so that we complete (or skip) one
   # task before trying the next. If we just ran scmake(job_target,
   # task_makefile) directly, remake would try to build the first step for all
@@ -88,29 +101,50 @@ loop_tasks <- function(
     # will catch it in the final calls of this function when we run remake on
     # the entire job, properly. if a target is an object rather than a file,
     # we'll build it every time
-    incomplete_targets <- which_incomplete(targets, task_makefile)
     num_targets <- length(incomplete_targets)
-    if(num_targets == 0) break
+    target_complete <- rep(FALSE, num_targets)
+    
+    if(num_targets == 0) {
+      if (verbose){
+        if (total_num_tasks_incomplete > 0){ # was the prgress bar build to > 0?
+          pb$update(1, tokens = list(what = "All tasks complete"))
+        }
+      }
+      break
+    }
     
     # if there are remaining targets, try to run them
-    message(sprintf(
-      "\n### Starting loop attempt %s of %s with %s tasks remaining:",
-      this_try, num_tries, num_targets))
+    loop_start_msg <- sprintf(
+      "### Starting loop attempt %s of %s with %s of %s tasks remaining:",
+      this_try, num_tries, num_targets, num_targets_overall)
+    if (verbose){
+      pb$message(loop_start_msg)
+    }
     this_try <- this_try + 1
+    
     for(i in seq_len(num_targets)) {
       tryCatch({
         target_num_overall <- incomplete_targets[i]
         target <- targets[target_num_overall]
-        message(sprintf(
-          "Building task %s of %s in loop: %s (#%s of %s total)",
-          i, num_targets, target, target_num_overall, num_targets_overall))
+        task_name <- task_names[target_num_overall]
+        if (verbose){
+          pb$update(total_num_tasks_complete/total_num_tasks_incomplete, 
+                    tokens = list(what = sprintf('  Building %s', 
+                                                 task_name, target_num_overall, num_targets_overall)))
+        }
+        
         
         # the main action: run the task-step
         scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
+        target_complete[i] <- TRUE
+        total_num_tasks_complete <- total_num_tasks_complete + 1
         
       }, error=function(e) {
-        message(sprintf("  Error in %s: %s", deparse(e$call), e$message))
-        message(sprintf("  Skipping task #%s due to error", incomplete_targets[i]))
+        if(verbose){
+          pb$message(sprintf("* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+                             deparse(e$call), e$message, target, task_makefile))
+        }
+        
         # sleep for a while if requested
         if(sleep_on_error > 0) {
           Sys.sleep(sleep_on_error)
@@ -120,6 +154,7 @@ loop_tasks <- function(
       # object targets, not sure if storr keeps them all in memory
       gc()
     }
+    incomplete_targets <- incomplete_targets[!target_complete]
   }
   
   # check the indicator files one last time; if we didn't make it this far,
@@ -137,9 +172,11 @@ loop_tasks <- function(
   # if we've made it this far, remake every file to ensure we're done and to
   # write the job indicator file. this will take a few minutes because remake
   # will check the hashes of every file (the big model files take the longest).
-  message(sprintf("\n### Final check for completeness of all targets"))
+  if (verbose){
+    message(sprintf("\n### Final check for completeness of all targets"))
+  }
   if(!is.na(job_target)) {
-    scmake(job_target, task_makefile, ind_ext=ind_ext, verbose=TRUE)
+    scmake(job_target, task_makefile, ind_ext=ind_ext, verbose=verbose)
   } else {
     # check all file targets, which at this point will all exist even if they're
     # not up to date. there's no need to run non-file targets because we've
@@ -149,16 +186,18 @@ loop_tasks <- function(
     num_files <- length(file_targets)
     for(i in seq_len(num_files)) {
       target <- file_targets[i]
-      message(sprintf(
-        "Checking file %s of %s: %s",
-        i, num_files, target
-      ))
+      if (verbose){
+        message(sprintf(
+          "Checking file %s of %s: %s",
+          i, num_files, target
+        ))
+      }
       scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
     }
     msg <- paste(c(
       strwrap("Set task_names=NULL, step_names=NULL to build the job target. Until then, expect this error:"),
       "  'command for [target] did not create file'"),
       collapse="\n")
-    message(msg)
+    if (verbose) message(msg)
   }
 }
