@@ -186,10 +186,12 @@ loop_tasks <- function(
     num_files <- length(file_targets)
     for(i in seq_len(num_files)) {
       target <- file_targets[i]
-      message(sprintf(
-        "Checking file %s of %s: %s",
-        i, num_files, target
-      ))
+      if (verbose){
+        message(sprintf(
+          "Checking file %s of %s: %s",
+          i, num_files, target
+        ))
+      }
       scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
     }
     msg <- paste(c(
