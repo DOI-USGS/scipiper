@@ -144,7 +144,7 @@ unlink('build')
 ```{r loop1a}
 loop_tasks(
   task_plan=task_plan_1,
-  task_makefile='task_plan_1.yml', task_mssg = 'progress')
+  task_makefile='task_plan_1.yml')
 ```
 
 The benefits of using `loop_tasks` to run all the remake targets in task_plan_1.yml are:
