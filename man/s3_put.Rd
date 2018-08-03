@@ -4,8 +4,8 @@
 \alias{s3_put}
 \title{Upload a file to S3}
 \usage{
-s3_put(remote_ind, local_source, mock_get = c("copy", "move", "none"),
-  on_exists = c("replace", "stop"), verbose = FALSE,
+s3_put(remote_ind, local_source = remote_ind, mock_get = c("copy", "move",
+  "none"), on_exists = c("replace", "stop"), verbose = FALSE,
   dry_put = getOption("scipiper.dry_put"),
   config_file = getOption("scipiper.s3_config_file"),
   ind_ext = getOption("scipiper.ind_ext"))
@@ -28,7 +28,9 @@ data_file from S3, then the 'a' and 'c' recipes must have
 different targets and this function's local_source argument should match
 the target of the 'a' recipe while this function's remote_ind argument
 should match the target of this recipe (=='b') and the data_file target of
-the 'c' recipe. See the examples.}
+the 'c' recipe. See the examples. Nonetheless, because we have commonly
+adopted the 2-target option where remote_ind and local_source \emph{can} be the
+same, the default for this argument is to set \code{local_source=remote_ind}.}
 
 \item{mock_get}{character. if remote_ind and local_source imply different
 local file locations, should the current local file (implied by

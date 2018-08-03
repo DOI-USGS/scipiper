@@ -50,7 +50,9 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 #'   different targets and this function's local_source argument should match
 #'   the target of the 'a' recipe while this function's remote_ind argument
 #'   should match the target of this recipe (=='b') and the data_file target of
-#'   the 'c' recipe. See the examples.
+#'   the 'c' recipe. See the examples. Nonetheless, because we have commonly
+#'   adopted the 2-target option where remote_ind and local_source _can_ be the
+#'   same, the default for this argument is to set `local_source=remote_ind`.
 #' @param mock_get character. if remote_ind and local_source imply different
 #'   local file locations, should the current local file (implied by
 #'   local_source) be left alone ('none'), or copied ('copy') or moved ('move')
@@ -120,7 +122,7 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 #'
 #' }
 gd_put <- function(
-  remote_ind, local_source, mock_get=c('copy','move','none'),
+  remote_ind, local_source=remote_ind, mock_get=c('copy','move','none'),
   on_exists=c('update','replace','stop'), type=NULL, verbose=FALSE,
   dry_put=getOption("scipiper.dry_put"),
   config_file=getOption("scipiper.gd_config_file"),
