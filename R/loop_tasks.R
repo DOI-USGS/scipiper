@@ -158,13 +158,10 @@ loop_tasks <- function(
     incomplete_targets <- incomplete_targets[!target_complete]
   }
   
-  # check the indicator files one last time; if we didn't make it this far,
-  # don't try remaking the entire job
-  is_current <- get_remake_status(targets, task_makefile) %>%
-    dplyr::right_join(data_frame(target=targets), by='target') %>%
-    pull(is_current) %>%
-    as.logical()
-  incomplete_targets <- which(!(file.exists(targets) | is_current))
+  # check for completeness the quick way one last time; if we didn't make it
+  # this far even according to our heuristic (values in incomplete_targets,
+  # based on file presence and success/failure of individual task builds), then
+  # don't try remake-checking the entire job
   num_targets <- length(incomplete_targets)
   if(num_targets > 0) {
     stop(sprintf("All tries are exhausted, but %s tasks remain", num_targets))
