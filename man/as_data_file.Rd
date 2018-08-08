@@ -18,6 +18,8 @@ generated.
 }
 \examples{
 as_data_file('mydata.rds.ind') # 'mydata.rds'
-as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
 as_data_file('mydata.rds.st', ind_ext='st') # 'mydata.rds'
+\dontrun{
+as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
+}
 }

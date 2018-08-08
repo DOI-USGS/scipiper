@@ -4,8 +4,8 @@
 \alias{retry_patiently}
 \title{Evaluate an expression with retries, waiting between tries}
 \usage{
-retry_patiently(expr, max_wait_times = c(0, 3^c(0:4)), min_wait_frac = 0.5,
-  verbose = FALSE)
+retry_patiently(expr, max_wait_times = c(0, 3^c(0:4)),
+  min_wait_frac = 0.5, verbose = FALSE)
 }
 \arguments{
 \item{expr}{expression to evaluate}

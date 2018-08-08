@@ -1,3 +1,29 @@
+#### task-plan demo ####
+
+setup_tasks_demo <- function() {
+  dirinfo <- list(
+    wd = getwd(),
+    #srcdir = 'inst/extdata/tasks_demo', # for use while developing tests
+    srcdir = system.file('extdata/tasks_demo', package='scipiper'),
+    tmpdir = file.path(tempdir(), format(Sys.time(), '%y%m%d_%H%M%S')))
+  dirinfo$newdir <- file.path(dirinfo$tmpdir, basename(dirinfo$srcdir))
+  
+  unlink(dirinfo$newdir, recursive=TRUE)
+  dir.create(dirinfo$newdir, recursive=TRUE)
+  file.copy(dirinfo$srcdir, dirinfo$tmpdir, recursive=TRUE)
+  dir(dirinfo$newdir)
+  
+  setwd(dirinfo$newdir)
+  return(dirinfo)
+}
+
+cleanup_tasks_demo <- function(dirinfo) {
+  setwd(dirinfo$wd)
+  unlink(dirinfo$tmpdir, recursive=TRUE)
+}
+
+#### shared-cache demo ####
+
 # make_file must be defined in both helper-demo.R and extdata/sharedcache/demo.R
 # because we need it both places, remake only sees one
 make_file <- function(fname, ftext='', ftstamp=Sys.time()) { # "2017-09-05 07:00:00 MST"

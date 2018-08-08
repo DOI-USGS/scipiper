@@ -4,9 +4,9 @@
 \alias{loop_tasks}
 \title{Build a job target by looping over the tasks and steps in a task remake file}
 \usage{
-loop_tasks(task_plan, task_makefile, task_names = NULL, step_names = NULL,
-  num_tries = 30, sleep_on_error = 0,
-  ind_ext = getOption("scipiper.ind_ext"))
+loop_tasks(task_plan, task_makefile, task_names = NULL,
+  step_names = NULL, num_tries = 30, sleep_on_error = 0,
+  ind_ext = getOption("scipiper.ind_ext"), verbose = TRUE)
 }
 \arguments{
 \item{task_plan}{task plan as created by \code{create_task_plan()}}
@@ -26,6 +26,9 @@ remaining tasks}
 failed task. Especially useful if the error was likely to be inconsistent
 (e.g., a temporary network issue) and might not occur again if we wait a
 while}
+
+\item{vebose}{define the format of task messages. Use TRUE for progress bar
+for the status of each task, and FALSE for no output}
 }
 \description{
 {

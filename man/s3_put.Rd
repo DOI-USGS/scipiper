@@ -4,8 +4,8 @@
 \alias{s3_put}
 \title{Upload a file to S3}
 \usage{
-s3_put(remote_ind, local_source = remote_ind, mock_get = c("copy", "move",
-  "none"), on_exists = c("replace", "stop"), verbose = FALSE,
+s3_put(remote_ind, local_source = remote_ind, mock_get = c("copy",
+  "move", "none"), on_exists = c("replace", "stop"), verbose = FALSE,
   dry_put = getOption("scipiper.dry_put"),
   config_file = getOption("scipiper.s3_config_file"),
   ind_ext = getOption("scipiper.ind_ext"))
