@@ -83,7 +83,8 @@ loop_tasks <- function(
   total_num_tasks_complete <- 0
   if (verbose){
     pb <- progress::progress_bar$new(
-      format = ":what [:bar] :percent",
+      format = ":what [:bar] :percent  ",
+      width = getOption('width')+4,
       show_after = 0, 
       clear = FALSE, total = total_num_tasks_incomplete)
   }
