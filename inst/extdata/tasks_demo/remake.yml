@@ -1,0 +1,44 @@
+# Managing multi-task jobs
+
+# Basic approach:
+# Every big job gets one line in the main remake file. Multi-task jobs also get
+# their own remake files, disconnected from the main one except in that the
+# separate file generates a single output when the job is complete
+
+# include:
+
+packages:
+  - scipiper
+
+sources:
+  - tasks_demo.R
+
+file_extensions: "ind" # in addition to remake::file_extensions()
+
+target_default: models.ind
+
+targets:
+  
+  # make up some task names and other task information
+  task_config:
+    command: data.frame(
+      id=I(c('AZ','CO','CA')),
+      capital=I(c('Phoenix','Denver','Sacramento')))
+  
+  # create some resources that are needed in models.yml recipes
+  resource_A:
+    command: c(I(1:20))
+  resource_B:
+    command: c(I(21:31))
+
+  task_plan:
+    command: demo_task_plan(task_config)
+  
+  models.yml:
+    command: demo_task_makefile(target_name, task_plan)
+
+  # The key to this multi-task job is that the models.ind command appeals to a
+  # decoupled makefile, 'models.yml', which is created by this makefile but
+  # never `include`d.
+  models.ind:
+    command: loop_tasks(task_plan, 'models.yml')
