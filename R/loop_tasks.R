@@ -39,8 +39,8 @@ loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
-  ind_ext = getOption('scipiper.ind_ext'),
-  verbose = TRUE) {
+  ind_ext=getOption('scipiper.ind_ext'),
+  verbose=TRUE) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default

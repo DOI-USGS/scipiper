@@ -270,8 +270,10 @@ as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
 #' @export
 #' @examples
 #' as_data_file('mydata.rds.ind') # 'mydata.rds'
-#' as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
 #' as_data_file('mydata.rds.st', ind_ext='st') # 'mydata.rds'
+#' \dontrun{
+#' as_data_file('mydata.rds') # Error: "ind_file is not an indicator file"
+#' }
 as_data_file <- function(ind_file, ind_ext=getOption("scipiper.ind_ext")) {
   non_inds <- ind_file[which(!is_ind_file(ind_file, ind_ext=ind_ext))]
   if(length(non_inds) > 0) {
