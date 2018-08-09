@@ -69,7 +69,9 @@ loop_tasks <- function(
   # model file to check for changes before we even get started. if we let some
   # files get out of date without deleting them, they will be skipped in these
   # loops, but remake will catch them in the final calls of this function when
-  # we run remake on the entire job/all targets
+  # we run remake on the entire job/all targets. if a target is an object rather
+  # than a file, we'll need to check it with get_remake_status every time, which
+  # is part of why files are recommended over objects.
   which_incomplete <- function(targets, task_makefile) {
     is_current <- get_remake_status(targets, task_makefile) %>%
       dplyr::right_join(data_frame(target=targets), by='target') %>%
@@ -79,14 +81,14 @@ loop_tasks <- function(
   }
   
   incomplete_targets <- which_incomplete(targets, task_makefile)
-  total_num_tasks_incomplete <- length(incomplete_targets)
-  total_num_tasks_complete <- 0
+  num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+  num_targets_complete <- num_targets_overall - num_targets_incomplete
   if (verbose){
     pb <- progress::progress_bar$new(
       format = ":what [:bar] :percent  ",
       width = getOption('width')+4,
       show_after = 0, 
-      clear = FALSE, total = total_num_tasks_incomplete)
+      clear = FALSE, total = num_targets_overall)
   }
   
   # run the targets in a loop, with retries, so that we complete (or skip) one
@@ -95,19 +97,10 @@ loop_tasks <- function(
   # tasks before proceeding to the second step for any task
   this_try <- 1
   while(this_try <= num_tries) {
-    # identify remaining needs based on the presence or absence of the target
-    # file. if the file exists, don't bother. this is much quicker than asking
-    # remake to rehash every model file to check for changes before we even get
-    # started. if we somehow messed up and let file file get out of date, remake
-    # will catch it in the final calls of this function when we run remake on
-    # the entire job, properly. if a target is an object rather than a file,
-    # we'll build it every time
-    num_targets <- length(incomplete_targets)
-    target_complete <- rep(FALSE, num_targets)
-    
-    if(num_targets == 0) {
+    # if we're done, update the progress bar and get out of the while loop
+    if(num_targets_incomplete == 0) {
       if (verbose){
-        if (total_num_tasks_incomplete > 0){ # was the prgress bar build to > 0?
+        if (num_targets_overall > 0){ # was the prgress bar build to > 0?
           pb$update(1, tokens = list(what = "All tasks complete"))
         }
       }
@@ -115,35 +108,44 @@ loop_tasks <- function(
     }
     
     # if there are remaining targets, try to run them
-    loop_start_msg <- sprintf(
-      "### Starting loop attempt %s of %s with %s of %s tasks remaining:",
-      this_try, num_tries, num_targets, num_targets_overall)
     if (verbose){
+      loop_start_msg <- sprintf(
+        "### Starting loop attempt %s of %s with %s of %s tasks remaining:",
+        this_try, num_tries, num_targets_incomplete, num_targets_overall)
       pb$message(loop_start_msg)
     }
     this_try <- this_try + 1
     
-    for(i in seq_len(num_targets)) {
+    # prepare a vector to record successes/failures within this loop
+    target_succeeded <- rep(FALSE, num_targets_incomplete)
+    
+    # attempt to build each of the incomplete targets
+    for(i in seq_len(num_targets_incomplete)) {
       tryCatch({
+        # get the names of the target and the task
         target_num_overall <- incomplete_targets[i]
         target <- targets[target_num_overall]
         task_name <- task_names[target_num_overall]
-        if (verbose){
-          pb$update(total_num_tasks_complete/total_num_tasks_incomplete, 
-                    tokens = list(what = sprintf('  Building %s', 
-                                                 task_name, target_num_overall, num_targets_overall)))
-        }
         
+        # update the progress bar
+        if (verbose){
+          pb$update(
+            num_targets_complete/num_targets_overall, 
+            tokens = list(what = sprintf('  Building %s', task_name)))
+        }
         
         # the main action: run the task-step
         scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
-        target_complete[i] <- TRUE
-        total_num_tasks_complete <- total_num_tasks_complete + 1
+        
+        # if it worked, note the success
+        target_succeeded[i] <- TRUE
+        num_targets_complete <- num_targets_complete + 1
         
       }, error=function(e) {
         if(verbose){
-          pb$message(sprintf("* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
-                             deparse(e$call), e$message, target, task_makefile))
+          pb$message(sprintf(
+            "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+            deparse(e$call), e$message, target, task_makefile))
         }
         
         # sleep for a while if requested
@@ -151,20 +153,25 @@ loop_tasks <- function(
           Sys.sleep(sleep_on_error)
         }
       })
+
       # try to keep memory under control if possible; might be harder with
       # object targets, not sure if storr keeps them all in memory
       gc()
     }
-    incomplete_targets <- incomplete_targets[!target_complete]
+    
+    # revise and recount the list of incomplete targets for the next while loop iteration
+    incomplete_targets <- incomplete_targets[!target_succeeded]
+    num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+    
   }
   
   # check for completeness the quick way one last time; if we didn't make it
   # this far even according to our heuristic (values in incomplete_targets,
   # based on file presence and success/failure of individual task builds), then
   # don't try remake-checking the entire job
-  num_targets <- length(incomplete_targets)
-  if(num_targets > 0) {
-    stop(sprintf("All tries are exhausted, but %s tasks remain", num_targets))
+  num_targets_incomplete <- length(incomplete_targets)
+  if(num_targets_incomplete > 0) {
+    stop(sprintf("All tries are exhausted, but %s tasks remain", num_targets_incomplete))
   }
   
   # if we've made it this far, remake every file to ensure we're done and to
