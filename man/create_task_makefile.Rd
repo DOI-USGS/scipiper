@@ -4,9 +4,9 @@
 \alias{create_task_makefile}
 \title{Create a .yml makefile for a multi-task job}
 \usage{
-create_task_makefile(task_plan, makefile, include = c(), packages = c(),
-  sources = c(), file_extensions = c("ind"), ind_complete = NA,
-  ind_dir = attr(task_plan, "ind_dir"),
+create_task_makefile(task_plan, makefile, include = c(),
+  packages = c(), sources = c(), file_extensions = c("ind"),
+  ind_complete = NA, ind_dir = attr(task_plan, "ind_dir"),
   ind_ext = getOption("scipiper.ind_ext"),
   template_file = system.file("extdata/task_makefile.mustache", package =
   "scipiper"))

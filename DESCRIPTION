@@ -1,7 +1,7 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.13
-Date: 2018-08-03
+Version: 0.0.14
+Date: 2018-08-08
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"))
 Description: Functions to organize a data analysis repository and ensure that data flows smoothly.
@@ -19,6 +19,7 @@ Imports:
   yaml
 Suggests:
   googledrive,
+  knitr,
   aws.signature,
   aws.s3,
   testthat
@@ -33,5 +34,5 @@ BugReports: https://github.com/USGS-R/scipiper/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 VignetteBuilder: knitr

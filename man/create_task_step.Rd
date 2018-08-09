@@ -4,10 +4,10 @@
 \alias{create_task_step}
 \title{Create an object that defines a step within a task}
 \usage{
-create_task_step(step_name, target_name = function(task_name, step_name, ...)
-  {     sprintf("\%s_\%s", task_name, step_name) }, depends = character(0),
-  command = function(task_name, step_name, ...) {     sprintf("\%s(I('\%s'))",
-  step_name, task_name) })
+create_task_step(step_name, target_name = function(task_name, step_name,
+  ...) {     sprintf("\%s_\%s", task_name, step_name) },
+  depends = character(0), command = function(task_name, step_name, ...)
+  {     sprintf("\%s(I('\%s'))", step_name, task_name) })
 }
 \arguments{
 \item{step_name}{a single character string naming this step. The default
