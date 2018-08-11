@@ -136,9 +136,10 @@ scdel <- function(
 #'   file (possibly retrieved as a hash from the remote cache). If you have the
 #'   data_file locally and don't yet have a hash, just specify the `data_file`
 #'   argument instead.
-#' @param data_file optional. file name of the data file whose presence is being
-#'   indicated. if given, the hash of the data file will be included in the
-#'   indicator file as the `hash` element.
+#' @param data_file optional. file name(s) of the data file(s) whose presence is being
+#'   indicated. if length one, the hash of the data file will be included in the
+#'   indicator file as the `hash` element. if given as a multi-file vector, 
+#'   the file names and `hash` elements will be paired in the output. 
 #' @param hash_depends logical. If TRUE, this call will look through
 #'   `depends_makefile` for a recipe for `depends_target`, will generate a hash
 #'   of each file or object listed in the depends section for that recipe, and
@@ -158,10 +159,16 @@ sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_ta
   # if data_file is given, get a hash of the file so we have the option of
   # checking whether this indicator file has gone bad
   if(!missing(data_file)) {
-    if(!file.exists(data_file)) {
+    if(!all(file.exists(data_file))) {
       stop('data_file must exist if specified')
     }
-    info_list$hash <- unname(tools::md5sum(data_file))
+    if (length(data_file) > 1){
+      for (file in data_file){
+        info_list[[file]] <- unname(tools::md5sum(file))
+      }
+    } else {
+      info_list$hash <- unname(tools::md5sum(data_file))
+    }
   }
   
   # if hash_depends and depends_target and depends_makefile are given, create
