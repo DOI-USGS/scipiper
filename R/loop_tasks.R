@@ -35,12 +35,15 @@
 #'   for the status of each task, and FALSE for no output
 #' @export
 #' @import progress
+#' @import foreach
 loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
   ind_ext=getOption('scipiper.ind_ext'),
-  verbose=TRUE) {
+  verbose=TRUE,
+  parallel=FALSE,
+  n_cores=(parallel::detectCores() - 1)) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
@@ -114,57 +117,99 @@ loop_tasks <- function(
         this_try, num_tries, num_targets_incomplete, num_targets_overall)
       pb$message(loop_start_msg)
     }
+    
+    error_function <- function(e) {
+      if(verbose){
+        pb$message(sprintf(
+          "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+          deparse(e$call), e$message, target, task_makefile))
+      }# sleep for a while if requested
+      if(sleep_on_error > 0) {
+        Sys.sleep(sleep_on_error)
+      }
+    }
+    #would parallelize here
+    if(!parallel) {
+      # prepare a vector to record successes/failures within this loop
+      target_succeeded <- rep(FALSE, num_targets_incomplete)
+      # attempt to build each of the incomplete targets
+      for(i in seq_len(num_targets_incomplete)) {
+        tryCatch({
+          # get the names of the target and the task
+          target_num_overall <- incomplete_targets[i]
+          target <- targets[target_num_overall]
+          task_name <- task_names[target_num_overall]
+          
+          # update the progress bar
+          #probably can't do this parallel?  Would result in race conditions?
+          #or move to after?
+          if (verbose){
+            pb$update(
+              num_targets_complete/num_targets_overall, 
+              tokens = list(what = sprintf('  Building %s', task_name)))
+          }
+          ##################
+          ### will need to get packages out of yaml
+          ### .export arg for other functions?  will this just work?
+          
+          # the main action: run the task-step
+          scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
+          
+          #need to return these from each node -- compile into a vector outside dopar?
+          # if it worked, note the success
+          target_succeeded[i] <- TRUE
+          num_targets_complete <- num_targets_complete + 1
+          #############
+        }, error = error_function
+        )
+        # try to keep memory under control if possible; might be harder with
+        # object targets, not sure if storr keeps them all in memory
+        gc()
+      } 
+    }else {
+      #parallelized
+      cl <- parallel::makeCluster(n_cores)
+      doParallel::registerDoParallel(cl, n_cores)
+      target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete), .combine = c)  %dopar% {
+        tryCatch({
+          # get the names of the target and the task
+          target_num_overall <- incomplete_targets[i]
+          target <- targets[target_num_overall]
+          task_name <- task_names[target_num_overall]
+          
+          ##################
+          ### will need to get packages out of yaml
+          ### .export arg for other functions?  will this just work?
+          browser()
+          # the main action: run the task-step
+          scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
+          return(TRUE)
+          #need to return these from each node -- compile into a vector outside dopar?
+          # if it worked, note the success
+          #############
+        }, error = error_function
+        )
+      }
+      num_targets_complete <- sum(target_succeeded)
+      # revise and recount the list of incomplete targets for the next while loop iteration
+      incomplete_targets <- incomplete_targets[!target_succeeded]
+      num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+      # update the progress bar
+      #or move to after?
+      browser()
+      frac_complete <- num_targets_complete/num_targets_overall
+      if (verbose){
+        pb$update(
+          frac_complete, 
+          tokens = list(what = sprintf('  Finished try %s, %s targets left', this_try, num_targets_incomplete)))
+      }
+      if(frac_complete == 1) {
+        pb$terminate()
+      }
+    }
     this_try <- this_try + 1
     
-    # prepare a vector to record successes/failures within this loop
-    target_succeeded <- rep(FALSE, num_targets_incomplete)
-    
-    # attempt to build each of the incomplete targets
-    for(i in seq_len(num_targets_incomplete)) {
-      tryCatch({
-        # get the names of the target and the task
-        target_num_overall <- incomplete_targets[i]
-        target <- targets[target_num_overall]
-        task_name <- task_names[target_num_overall]
-        
-        # update the progress bar
-        if (verbose){
-          pb$update(
-            num_targets_complete/num_targets_overall, 
-            tokens = list(what = sprintf('  Building %s', task_name)))
-        }
-        
-        # the main action: run the task-step
-        scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
-        
-        # if it worked, note the success
-        target_succeeded[i] <- TRUE
-        num_targets_complete <- num_targets_complete + 1
-        
-      }, error=function(e) {
-        if(verbose){
-          pb$message(sprintf(
-            "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
-            deparse(e$call), e$message, target, task_makefile))
-        }
-        
-        # sleep for a while if requested
-        if(sleep_on_error > 0) {
-          Sys.sleep(sleep_on_error)
-        }
-      })
-
-      # try to keep memory under control if possible; might be harder with
-      # object targets, not sure if storr keeps them all in memory
-      gc()
-    }
-    
-    # revise and recount the list of incomplete targets for the next while loop iteration
-    incomplete_targets <- incomplete_targets[!target_succeeded]
-    num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
-    
   }
-  
   # check for completeness the quick way one last time; if we didn't make it
   # this far even according to our heuristic (values in incomplete_targets,
   # based on file presence and success/failure of individual task builds), then
