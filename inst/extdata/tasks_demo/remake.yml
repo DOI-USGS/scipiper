@@ -42,3 +42,7 @@ targets:
   # never `include`d.
   models.ind:
     command: loop_tasks(task_plan, 'models.yml')
+  
+  test_fail:
+    command: stop(I("A wild error appears --- hopefully the build files still get written"))
+    depends: models.ind
