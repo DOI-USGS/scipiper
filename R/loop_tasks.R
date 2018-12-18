@@ -194,18 +194,15 @@ loop_tasks <- function(
       # revise and recount the list of incomplete targets for the next while loop iteration
       incomplete_targets <- incomplete_targets[!target_succeeded]
       num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
-      # update the progress bar
-      #or move to after?
-      browser()
+      # update the progress bar, if there are targets left.  If all targets complete, 
+      # pb will be updated at top of while loop before breaking from loop
       frac_complete <- num_targets_complete/num_targets_overall
-      if (verbose){
+      if (verbose && frac_complete < 1){
         pb$update(
           frac_complete, 
           tokens = list(what = sprintf('  Finished try %s, %s targets left', this_try, num_targets_incomplete)))
       }
-      if(frac_complete == 1) {
-        pb$terminate()
-      }
+      
     }
     this_try <- this_try + 1
     
