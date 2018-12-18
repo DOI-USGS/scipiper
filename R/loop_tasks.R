@@ -144,22 +144,14 @@ loop_tasks <- function(
           task_name <- task_names[target_num_overall]
           
           # update the progress bar
-          #probably can't do this parallel?  Would result in race conditions?
-          #or move to after?
           if (verbose){
             pb$update(
               num_targets_complete/num_targets_overall, 
               tokens = list(what = sprintf('  Building %s', task_name)))
           }
-          ##################
-          ### will need to get packages out of yaml
-          ### .export arg for other functions?  will this just work?
-          
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           
-          #need to return these from each node -- compile into a vector outside dopar?
-          # if it worked, note the success
           target_succeeded[i] <- TRUE
           num_targets_complete <- num_targets_complete + 1
           #############
