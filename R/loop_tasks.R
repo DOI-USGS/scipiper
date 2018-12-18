@@ -31,8 +31,11 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
-#' @param vebose define the format of task messages. Use TRUE for progress bar 
+#' @param verbose define the format of task messages. Use TRUE for progress bar 
 #'   for the status of each task, and FALSE for no output
+#' @param parallel logical Should the tasks be run in parallel?  
+#' @param n_cores integer How many cores should be utilized in the local cluster created 
+#' if `parallel=TRUE`? Defaults to one less than the available number of cores
 #' @export
 #' @import progress
 #' @import foreach
