@@ -172,16 +172,10 @@ loop_tasks <- function(
           target <- targets[target_num_overall]
           task_name <- task_names[target_num_overall]
           
-          ##################
-          ### will need to get packages out of yaml
           ### .export arg for other functions?  will this just work?
-          browser()
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           return(TRUE)
-          #need to return these from each node -- compile into a vector outside dopar?
-          # if it worked, note the success
-          #############
         }, error = error_function
         )
       }
