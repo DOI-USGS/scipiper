@@ -31,7 +31,7 @@ warnings_are_errors: true
 script: 
   - |
   R CMD build .
-travis_wait 20 R CMD check dataRetrieval*tar.gz
+travis_wait 20 R CMD check scipiper*tar.gz
 r_github_packages:
   - jimhester/covr
   - richfitz/remake
