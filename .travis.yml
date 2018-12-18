@@ -23,8 +23,8 @@ addons:
 env:
   global:
   - R_BUILD_ARGS="--no-build-vignettes --no-manual"
-- R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
-- _R_CHECK_FORCE_SUGGESTS_=false
+  - R_CHECK_ARGS="--no-build-vignettes --no-manual --as-cran"
+  - _R_CHECK_FORCE_SUGGESTS_=false
 
 warnings_are_errors: true
 
