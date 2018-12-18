@@ -34,26 +34,35 @@ scmake <- function(
   status_pre <- get_remake_status(target_names, remake_file=remake_file)
   
   # run remake::make
+  update_build_files <- function(target_names, remake_file, status_pre) {
+    # record status after running make
+    status_post <- get_remake_status(target_names, remake_file=remake_file)
+    
+    # for every target that (1) changed status and (2) is a status indicator file,
+    # make a text (YAML) copy of the build status file from the remake db storr;
+    # put it in build/status
+    tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
+    tdiffs <- tdiffs[is_ind_file(tdiffs$target, ind_ext=ind_ext),]
+    YAMLify_build_status(tdiffs$target, remake_file=remake_file)
+  }
+  
   start_time <- Sys.time()
   if(verbose) message('Starting build at ', start_time)
-  out <- remake::make(
+  out <- tryCatch({
+    remake::make(
     target_names=target_names, ..., verbose=verbose,
     allow_missing_packages=allow_missing_packages, remake_file=remake_file)
+  }, error = function(e) {
+    update_build_files(target_names = target_names, remake_file = remake_file, status_pre = status_pre)
+    stop(e$message)
+  })
+    
   end_time <- Sys.time()
   if(verbose) {
     message('Finished build at ', end_time)
     message(sprintf('Build completed in %0.2f minutes', as.numeric(end_time - start_time, units='mins')))
   }
-  
-  # record status after running make
-  status_post <- get_remake_status(target_names, remake_file=remake_file)
-  
-  # for every target that (1) changed status and (2) is a status indicator file,
-  # make a text (YAML) copy of the build status file from the remake db storr;
-  # put it in build/status
-  tdiffs <- dplyr::anti_join(status_post, status_pre, by=names(status_pre))
-  tdiffs <- tdiffs[is_ind_file(tdiffs$target, ind_ext=ind_ext),]
-  YAMLify_build_status(tdiffs$target, remake_file=remake_file)
+  update_build_files(target_names = target_names, remake_file = remake_file, status_pre = status_pre)
   
   invisible(out)
 }
