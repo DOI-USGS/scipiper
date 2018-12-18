@@ -54,7 +54,7 @@ scmake <- function(
     allow_missing_packages=allow_missing_packages, remake_file=remake_file)
   }, error = function(e) {
     update_build_files(target_names = target_names, remake_file = remake_file, status_pre = status_pre)
-    stop(e$message)
+    stop(e)
   })
     
   end_time <- Sys.time()
