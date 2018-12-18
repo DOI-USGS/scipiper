@@ -4,14 +4,13 @@ setup_tasks_demo <- function() {
   dirinfo <- list(
     wd = getwd(),
     #srcdir = 'inst/extdata/tasks_demo', # for use while developing tests
-    srcdir = system.file('extdata/tasks_demo', package='scipiper'),
+    srcdir = system.file('inst/extdata/tasks_demo', package='scipiper'),
     tmpdir = file.path(tempdir(), format(Sys.time(), '%y%m%d_%H%M%S')))
   dirinfo$newdir <- file.path(dirinfo$tmpdir, basename(dirinfo$srcdir))
   
   unlink(dirinfo$newdir, recursive=TRUE)
   dir.create(dirinfo$newdir, recursive=TRUE)
   file.copy(dirinfo$srcdir, dirinfo$tmpdir, recursive=TRUE)
-  dir(dirinfo$newdir)
   
   setwd(dirinfo$newdir)
   return(dirinfo)
