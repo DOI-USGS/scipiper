@@ -129,7 +129,7 @@ loop_tasks <- function(
         Sys.sleep(sleep_on_error)
       }
     }
-    if(ncores == 1) {
+    if(n_cores == 1) {
       # prepare a vector to record successes/failures within this loop
       target_succeeded <- rep(FALSE, num_targets_incomplete)
       # attempt to build each of the incomplete targets
