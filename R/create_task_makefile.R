@@ -100,7 +100,6 @@ create_task_makefile <- function(
       tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
     }
   }
-  job <- list()
   
   job <- list(list(
     #is this a code-breaking change?
@@ -140,11 +139,10 @@ create_task_makefile <- function(
     # indicator file, at least until
     # https://github.com/richfitz/remake/issues/92 is resolved) and then have
     # this overall target depend on those dummy targets.
-    depends = job_deps
+    depends = job_deps,
+    has_depends <- length(job_deps) > 0
   ))
   
-  job[[1]]$has_depends <- length(job[[1]]$depends) > 0
-  job[[2]] <- job[[1]]
   
   
   # Gather info about how this function is being called
