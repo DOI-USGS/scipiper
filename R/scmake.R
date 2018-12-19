@@ -50,13 +50,13 @@ scmake <- function(
   if(verbose) message('Starting build at ', start_time)
   out <- tryCatch({
     remake::make(
-    target_names=target_names, ..., verbose=verbose,
-    allow_missing_packages=allow_missing_packages, remake_file=remake_file)
+      target_names=target_names, ..., verbose=verbose,
+      allow_missing_packages=allow_missing_packages, remake_file=remake_file)
   }, error = function(e) {
     update_build_files(target_names = target_names, remake_file = remake_file, status_pre = status_pre)
-    stop(e$message)
+    stop(e)
   })
-    
+  
   end_time <- Sys.time()
   if(verbose) {
     message('Finished build at ', end_time)
@@ -326,7 +326,7 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
   
   # get all explicitly defined targets
   targets <- names(remake_list$targets)
-
+  
   # exclude remake keyword targets, which can be explicit even though they're
   # usually not
   targets <- setdiff(targets, c('tidy','clean','purge'))
@@ -337,7 +337,7 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
     nested_targets <- unlist(lapply(includes, list_all_targets))
     targets <- c(targets, nested_targets)
   }
-
+  
   # if we wanted to add more info about these targets, we could return the following instead:
   # remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   # remake_object$targets[targets]
