@@ -103,7 +103,8 @@ create_task_makefile <- function(
   job <- list()
   
   job <- list(list(
-    target_name = ifelse(is.null(finalize_fun), job_name, target_name),
+    #is this a code-breaking change?
+    target_name = ifelse(is.null(finalize_fun), paste0(job_name,'_ind'), target_name), 
     # even though target_name is an object (not file), job_command should write
     # to ind_file - again so the calling remake file can use
     # ind_file as its target
@@ -143,6 +144,7 @@ create_task_makefile <- function(
   ))
   
   job[[1]]$has_depends <- length(job[[1]]$depends) > 0
+  job[[2]] <- job[[1]]
   
   
   # Gather info about how this function is being called

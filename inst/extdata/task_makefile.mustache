@@ -2,7 +2,11 @@
 # from the task_makefile.mustache template
 # by {{rendering_function}}
 
-target_default: {{#job}}{{target_name}}{{/job}}
+target_default: {{target_default}}
+    depends:
+{{#job}}    
+      - {{target_name}}
+{{/job}}
 
 {{#has_include}}
 include:
