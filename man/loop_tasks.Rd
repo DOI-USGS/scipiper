@@ -28,6 +28,11 @@ failed task. Especially useful if the error was likely to be inconsistent
 (e.g., a temporary network issue) and might not occur again if we wait a
 while}
 
+\item{ind_ext}{the indicator file extension passed to \code{scmake}, identifying
+those files for which build/status information will be shared via
+git-committable files in the build/status folder. You should git commit the
+resulting build/status files.}
+
 \item{verbose}{define the format of task messages. Use TRUE for progress bar
 for the status of each task, and FALSE for no output}
 
