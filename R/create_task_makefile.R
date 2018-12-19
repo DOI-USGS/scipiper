@@ -66,7 +66,7 @@ create_task_makefile <- function(
   ind_dir=attr(task_plan, 'ind_dir'),
   ind_ext=getOption("scipiper.ind_ext"),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
-  target_name = tools::file_path_sans_ext(basename(makefile)),
+  target_name,
   finalize_fun = NULL) {
   
   # prepare the overall job task: list every step of every job as a dependency.
@@ -75,17 +75,19 @@ create_task_makefile <- function(
   # conflicting with other targets) and allows the calling remake file to use
   # ind_file as a target (even though this target is the one responsible for
   # actually writing to ind_file)
+  job_name <- tools::file_path_sans_ext(basename(makefile))
   job_steps <- attr(task_plan, 'final_steps')
   job_deps <- unlist(lapply(task_plan, function(task) {
     lapply(task$steps[job_steps], function(step) {
       step$target_name
     })
   }), use.names=FALSE)
+  
   job_output <- if(isTRUE(ind_complete) || is.na(ind_complete)) {
     if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
-    file.path(ind_dir, as_ind_file(target_name, ind_ext))
+    file.path(ind_dir, as_ind_file(job_name, ind_ext))
   } else {
-    sprintf('%s_%s', target_name, ind_ext)
+    sprintf('%s_%s', job_name, ind_ext)
   }
   
   # prepare the task list for rendering
@@ -100,7 +102,7 @@ create_task_makefile <- function(
   }
   
   job <- list(
-    target_name = target_name,
+    target_name = ifelse(is.null(finalize_fun), job_name, target_name),
     # even though target_name is an object (not file), job_command should write
     # to ind_file - again so the calling remake file can use
     # ind_file as its target
@@ -111,32 +113,34 @@ create_task_makefile <- function(
           ind_complete <- FALSE
           # and will need to skip hashing...
         }
-        sprintf("%s(target_name = %s,\n)", finalize_fun, target_name) # and more w/ ...
-      }
-      if(is.na(ind_complete)) {
-        message('ind_complete=NA is deprecated; use TRUE or FALSE')
-        sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
+        to_combine <- paste(job_deps, collapse=',\n      ')
+        sprintf("%s(target_name = %s,\n      %s)", finalize_fun, target_name, to_combine) 
       } else {
-        if(isTRUE(ind_complete)) {
-          sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
-                  job_output, target_name, makefile)
+        if(is.na(ind_complete)) {
+          message('ind_complete=NA is deprecated; use TRUE or FALSE')
+          sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
         } else {
-          sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
+          if(isTRUE(ind_complete)) {
+            sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
+                    job_output, target_name, makefile)
+          } else {
+            sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
+          }
         }
-          
       }
-    },
+    }
+  )
+  if(is.null(finalize_fun)){
     # as dependencies of this overall/default job, extract the target_name from
     # every task and all those steps indexed by job_steps. an alternative (or
     # complement) would be to create a dummy target for each task (probably with
     # indicator file, at least until
     # https://github.com/richfitz/remake/issues/92 is resolved) and then have
     # this overall target depend on those dummy targets.
-    depends = job_deps
-  )
-  message(sprintf(
-    "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
-    job_output, target_name, makefile))
+    job$depends <- job_deps
+  } 
+  
+  job$has_depends <- length(job$depends) > 0
   
   
   # Gather info about how this function is being called
@@ -151,7 +155,7 @@ create_task_makefile <- function(
   # prepare the final list of variables to be rendered in the template
   params <- list(
     job = job,
-    target_default = target_name,
+    target_default = job_name,
     include = include,
     has_include = length(include) > 0,
     packages = packages,
@@ -163,7 +167,6 @@ create_task_makefile <- function(
     tasks = tasks,
     rendering_function = call_info
   )
-  
   # read the template
   template <- readLines(template_file)
   
@@ -173,5 +176,10 @@ create_task_makefile <- function(
   
   # write the makefile and return the file path
   cat(yml, file=makefile)
+  
+  message(sprintf(
+    "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
+    job_output, job_name, makefile))
+  
   return(makefile)
 }
