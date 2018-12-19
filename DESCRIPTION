@@ -1,6 +1,6 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.15
+Version: 0.0.16
 Date: 2018-08-10
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"),
@@ -26,7 +26,8 @@ Suggests:
   testthat,
   foreach,
   doParallel,
-  parallel
+  parallel,
+  rmarkdown
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of

@@ -1,0 +1,33 @@
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
+
+language: R
+cache: packages
+
+matrix:
+  include:
+    - os: linux
+      r: release
+    - os: linux
+      r: devel
+      env: R_CODECOV=true
+
+env:
+   global:
+     - R_BUILD_ARGS="--no-build-vignettes --no-manual"
+     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
+     - NOT_CRAN="true"
+     - _R_CHECK_FORCE_SUGGESTS_=false
+     
+warnings_are_errors: true
+
+r_github_packages:
+  - jimhester/covr
+  - richfitz/remake
+
+after_success:
+  - if [[ "${R_CODECOV}" ]]; then R -e 'covr::coveralls()'; fi
+  
+notifications:
+  email:
+    on_success: change
+    on_failure: change
