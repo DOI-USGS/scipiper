@@ -120,11 +120,17 @@ loop_tasks <- function(
     }
     
     error_function <- function(e) {
-      if(verbose){
+      if(verbose && !pb$finished){
         pb$message(sprintf(
           "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
           deparse(e$call), e$message, target, task_makefile))
-      }# sleep for a while if requested
+      } else if(verbose && pb$finished) {
+        message(sprintf(
+          "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+          deparse(e$call), e$message, target, task_makefile))
+      }
+        
+        # sleep for a while if requested
       if(sleep_on_error > 0) {
         Sys.sleep(sleep_on_error)
       }
@@ -151,7 +157,7 @@ loop_tasks <- function(
           
           target_succeeded[i] <- TRUE
           num_targets_complete <- num_targets_complete + 1
-        }, error = error_function()
+        }, error = error_function
         )
         # try to keep memory under control if possible; might be harder with
         # object targets, not sure if storr keeps them all in memory
@@ -174,7 +180,7 @@ loop_tasks <- function(
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           return(TRUE)
-        }, error = error_function()
+        }, error = error_function
         )
       }
       num_targets_complete <- sum(target_succeeded)
