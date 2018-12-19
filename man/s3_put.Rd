@@ -47,6 +47,9 @@ throw an error? the default is to replace}
 \item{verbose}{logical Used in this function and passed through aws.s3::put_object to
 aws.s3::s3HTTP}
 
+\item{dry_put}{logical. If TRUE, calls to this function won't actually push
+anything to Google Drive; they'll just pretend they've done it.}
+
 \item{config_file}{character name of the YAML file containing
 project-specific configuration information for S3}
 

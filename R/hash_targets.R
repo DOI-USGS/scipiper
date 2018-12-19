@@ -7,6 +7,8 @@
 #'   can be used to supplement the default remake::file_extensions() to infer
 #'   which targets are files from the target_names. If file_extensions=NULL,
 #'   only the remake defaults will be used
+#' @importFrom stats setNames
+#' @importFrom digest digest
 hash_targets <- function(target_names, target_is_file, file_extensions=NULL) {
   # allocate the named vector of hashes
   hashes <- character(length(target_names)) %>%
@@ -16,7 +18,7 @@ hash_targets <- function(target_names, target_is_file, file_extensions=NULL) {
   is_file <- if(!missing(target_is_file)) {
     target_is_file
   } else {
-    remake:::target_is_file(target_names, file_extensions = c(remake::file_extensions(), file_extensions))
+    ('remake' %:::% 'target_is_file')(target_names, file_extensions = c(remake::file_extensions(), file_extensions))
   }
   hashes[is_file] <- tools::md5sum(target_names[is_file])
   
@@ -37,7 +39,7 @@ hash_targets <- function(target_names, target_is_file, file_extensions=NULL) {
 #'   is given
 #' @export
 hash_dependencies <- function(target_name, remake_file) {
-  makefile <- remake:::remake(remake_file, verbose=FALSE, load_sources=FALSE, allow_missing_packages=TRUE)
+  makefile <- ('remake' %:::% 'remake')(remake_file, verbose=FALSE, load_sources=FALSE, allow_missing_packages=TRUE)
   deps <- makefile$targets[[target_name]]
   hashes <- hash_targets(deps$depends_name, target_is_file=unname(deps$depends_type=='file'))
   return(hashes)

@@ -17,8 +17,10 @@ knitr::opts_knit$set(root.dir = tempdir())
 ## Setup
 
 ```{r libs, message=FALSE}
-library(scipiper)
-library(dplyr)
+suppressPackageStartupMessages({
+  library(scipiper)
+  library(dplyr)
+})
 ```
 
 ## Basic task file generation

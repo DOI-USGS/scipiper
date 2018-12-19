@@ -56,6 +56,9 @@ will ever be trying to replace the file in question.}
 \item{verbose}{logical, used in gd_put and passed onto
 googledrive::drive_update, drive_upload, and/or drive_rm}
 
+\item{dry_put}{logical. If TRUE, calls to this function won't actually push
+anything to Google Drive; they'll just pretend they've done it.}
+
 \item{config_file}{character name of the YAML file containing
 project-specific configuration information for Google Drive}
 

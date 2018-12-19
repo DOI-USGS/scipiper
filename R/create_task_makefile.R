@@ -25,6 +25,9 @@
 #'   defaults at `remake::file_extensions()`. Inclusion of `'ind'` is
 #'   recommended because this indicator file extension is commonly used by
 #'   scipiper.
+#' @param ind_complete logical. Should there be a summary target that creates an
+#'   indicator file whose contents are the filename and hash of all of the final
+#'   steps of all tasks?
 #' @param ind_ext the indicator file extension to use in creating the job
 #'   indicator file
 #' @param template_file character name of the mustache template to render into
