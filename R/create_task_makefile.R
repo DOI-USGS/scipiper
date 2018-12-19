@@ -65,7 +65,9 @@ create_task_makefile <- function(
   ind_complete=NA,
   ind_dir=attr(task_plan, 'ind_dir'),
   ind_ext=getOption("scipiper.ind_ext"),
-  template_file=system.file('extdata/task_makefile.mustache', package='scipiper')) {
+  template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
+  target_name = tools::file_path_sans_ext(basename(makefile)),
+  finalize_fun = NULL) {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -73,7 +75,6 @@ create_task_makefile <- function(
   # conflicting with other targets) and allows the calling remake file to use
   # ind_file as a target (even though this target is the one responsible for
   # actually writing to ind_file)
-  job_target <- tools::file_path_sans_ext(basename(makefile))
   job_steps <- attr(task_plan, 'final_steps')
   job_deps <- unlist(lapply(task_plan, function(task) {
     lapply(task$steps[job_steps], function(step) {
@@ -82,23 +83,43 @@ create_task_makefile <- function(
   }), use.names=FALSE)
   job_output <- if(isTRUE(ind_complete) || is.na(ind_complete)) {
     if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
-    file.path(ind_dir, as_ind_file(job_target, ind_ext))
+    file.path(ind_dir, as_ind_file(target_name, ind_ext))
   } else {
-    sprintf('%s_%s', job_target, ind_ext)
+    sprintf('%s_%s', target_name, ind_ext)
   }
+  
+  # prepare the task list for rendering
+  tasks <- unname(task_plan) # remove list element names where they'd interfere with whisker.render
+  for(task in seq_along(tasks)) {
+    # remove lmore ist element names where they'd interfere with whisker.render
+    tasks[[task]]$steps <- unname(tasks[[task]]$steps)
+    for(step in seq_along(tasks[[task]]$steps)) {
+      # add a logical for has_depends
+      tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
+    }
+  }
+  
   job <- list(
-    target_name = job_target,
+    target_name = target_name,
     # even though target_name is an object (not file), job_command should write
     # to ind_file - again so the calling remake file can use
     # ind_file as its target
     command = {
+      if(!is.null(finalize_fun)){
+        if(isTRUE(ind_complete) | is.na(ind_complete)) {
+          message('ind_complete=', ind_complete, ' is incompatable with ', finalize_fun, '(). Using FALSE')
+          ind_complete <- FALSE
+          # and will need to skip hashing...
+        }
+        sprintf("%s(target_name = %s,\n)", finalize_fun, target_name) # and more w/ ...
+      }
       if(is.na(ind_complete)) {
         message('ind_complete=NA is deprecated; use TRUE or FALSE')
         sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
       } else {
         if(isTRUE(ind_complete)) {
           sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
-                  job_output, job_target, makefile)
+                  job_output, target_name, makefile)
         } else {
           sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
         }
@@ -115,18 +136,8 @@ create_task_makefile <- function(
   )
   message(sprintf(
     "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
-    job_output, job_target, makefile))
+    job_output, target_name, makefile))
   
-  # prepare the task list for rendering
-  tasks <- unname(task_plan) # remove list element names where they'd interfere with whisker.render
-  for(task in seq_along(tasks)) {
-    # remove lmore ist element names where they'd interfere with whisker.render
-    tasks[[task]]$steps <- unname(tasks[[task]]$steps)
-    for(step in seq_along(tasks[[task]]$steps)) {
-      # add a logical for has_depends
-      tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
-    }
-  }
   
   # Gather info about how this function is being called
   this_fun <- as.character(sys.call(0)[[1]])
@@ -140,7 +151,7 @@ create_task_makefile <- function(
   # prepare the final list of variables to be rendered in the template
   params <- list(
     job = job,
-    target_default = job_target,
+    target_default = target_name,
     include = include,
     has_include = length(include) > 0,
     packages = packages,
