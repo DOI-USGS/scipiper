@@ -71,7 +71,10 @@ step1 <- create_task_step(step_name = 'prep')
 
 # step2 creates recipes like this:
 # WI_plot.png:
-#   command: visualize(target_name, 'WI_prep', I('Madison'))
+#   command: visualize(
+#       plot_name = target_name, 
+#       state_data = WI_prep,
+#       state_capital = I('Madison'))
 step2 <- create_task_step(
   step_name = 'plot',
   target_name = function(task_name, ...) {
@@ -79,7 +82,12 @@ step2 <- create_task_step(
   },
   command = function(target_name, task_name, ...) {
     capital <- task_config[task_config$id == task_name, 'capital']
-    sprintf("visualize(target_name, %s_prep, I('%s'))", task_name, capital)
+    psprintf(
+      "visualize(",
+      "plot_name = target_name,",
+      "state_data = %s_prep,"=task_name,
+      "state_capital = I('%s'))"=capital
+      )
   })
 
 # step3 creates recipes like this:
