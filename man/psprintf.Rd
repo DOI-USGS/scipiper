@@ -13,3 +13,12 @@ psprintf(..., sep = "\\n      ")
 Helper function to sprintf a bunch of key-value (string-variableVector) pairs,
 then paste them together with a good separator for contructing remake recipes.
 }
+\examples{
+\dontrun{
+psprintf(
+  "plot_frame(",
+  "png_file = target_name,",
+  "date = date_\%s," = "2018-01-23",
+  "state = \%s)" = "Wisconsin")
+}
+}

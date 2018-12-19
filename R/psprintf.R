@@ -9,12 +9,10 @@
 #' @examples
 #' \dontrun{
 #' psprintf(
-#'   'plot_frame(',
-#'   'png_file = target_name,',
-#'   'date = I(%s),' = '2018-01-23',
-#'   'state = %s,' = 'Wisconsin',
-#'   )'
-#' )
+#'   "plot_frame(",
+#'   "png_file = target_name,",
+#'   "date = date_%s," = "2018-01-23",
+#'   "state = %s)" = "Wisconsin")
 #' }
 psprintf <- function(..., sep='\n      ') {
   args <- list(...)
