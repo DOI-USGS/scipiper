@@ -118,7 +118,7 @@ create_task_makefile <- function(
         }
         to_combine <- paste(job_deps, collapse=',\n      ')
         job_deps <- c() # these are no longer depends, they are inputs
-        sprintf("%s(target_name = %s,\n      %s)", finalize_fun, target_name, to_combine) 
+        sprintf("%s(target_name,\n      %s)", finalize_fun, to_combine) 
       } else {
         if(is.na(ind_complete)) {
           message('ind_complete=NA is deprecated; use TRUE or FALSE')
