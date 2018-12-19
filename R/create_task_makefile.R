@@ -62,12 +62,10 @@
 create_task_makefile <- function(
   task_plan, makefile,
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
-  ind_complete=NA,
   ind_dir=attr(task_plan, 'ind_dir'),
-  ind_ext=getOption("scipiper.ind_ext"),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
-  target_name,
-  finalize_fun = NULL) {
+  target_name, 
+  finalize_fun = "sc_indicate") {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -76,19 +74,18 @@ create_task_makefile <- function(
   # ind_file as a target (even though this target is the one responsible for
   # actually writing to ind_file)
   job_name <- tools::file_path_sans_ext(basename(makefile))
+  if(missing(target_name)){
+    # check that !length(finalize_fun) > 1
+    ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the target_name
+    target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))
+  }
   job_steps <- attr(task_plan, 'final_steps')
-  job_deps <- unlist(lapply(task_plan, function(task) {
+  
+  targets_to_combine <- unlist(lapply(task_plan, function(task) {
     lapply(task$steps[job_steps], function(step) {
       step$target_name
     })
   }), use.names=FALSE)
-  
-  job_output <- if(isTRUE(ind_complete) || is.na(ind_complete)) {
-    if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
-    file.path(ind_dir, as_ind_file(job_name, ind_ext))
-  } else {
-    sprintf('%s_%s', job_name, ind_ext)
-  }
   
   # prepare the task list for rendering
   tasks <- unname(task_plan) # remove list element names where they'd interfere with whisker.render
@@ -101,48 +98,19 @@ create_task_makefile <- function(
     }
   }
   
-  job <- list(list(
-    #is this a code-breaking change?
-    target_name = ifelse(is.null(finalize_fun), paste0(job_name,'_ind'), target_name), 
-    # even though target_name is an object (not file), job_command should write
-    # to ind_file - again so the calling remake file can use
-    # ind_file as its target
-    command = {
-      if(!is.null(finalize_fun)){
-        if(isTRUE(ind_complete) | is.na(ind_complete)) {
-          message('ind_complete=', ind_complete, ' is incompatable with ', finalize_fun, '(). Using FALSE')
-          ind_complete <- FALSE
-        }
-        if(length(job_deps) < 1){
-          stop('need to specify at least one target when using a finalize function', call. = FALSE)
-        }
-        to_combine <- paste(job_deps, collapse=',\n      ')
-        job_deps <- c() # these are no longer depends, they are inputs
-        sprintf("%s(target_name,\n      %s)", finalize_fun, to_combine) 
-      } else {
-        if(is.na(ind_complete)) {
-          message('ind_complete=NA is deprecated; use TRUE or FALSE')
-          sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
-        } else {
-          if(isTRUE(ind_complete)) {
-            sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
-                    job_output, paste0(job_name,'_ind'), makefile)
-          } else {
-            sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
-          }
-        }
-      }
-    },
-    # as dependencies of this overall/default job, extract the target_name from
-    # every task and all those steps indexed by job_steps. an alternative (or
-    # complement) would be to create a dummy target for each task (probably with
-    # indicator file, at least until
-    # https://github.com/richfitz/remake/issues/92 is resolved) and then have
-    # this overall target depend on those dummy targets.
-    depends = job_deps,
-    has_depends = length(job_deps) > 0
-  ))
-  
+  job <- lapply(seq_len(length(finalize_fun)), function(i){
+      list(
+        target_name = paste0(target_name[i], "_promise"), 
+        command = {
+          to_combine <- paste(targets_to_combine, collapse=',\n      ')
+          sprintf("%s(I(%s),\n      %s)", finalize_fun[i], target_name[i], to_combine)
+    })
+    
+    message(sprintf(
+      "run all tasks with\n%s:\n  command: scmake(remake_file='%s')",
+      target_name, makefile))
+    
+  })
   
   
   # Gather info about how this function is being called
@@ -178,10 +146,6 @@ create_task_makefile <- function(
   
   # write the makefile and return the file path
   cat(yml, file=makefile)
-  
-  message(sprintf(
-    "run all tasks with\n%s:\n  command: scmake(I('%s'), remake_file='%s')",
-    job_output, job_name, makefile))
-  
+
   return(makefile)
 }

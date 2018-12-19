@@ -60,10 +60,4 @@ targets:
 {{#job}}
   {{target_name}}:
     command: {{command}}
-{{#has_depends}}
-    depends: 
-{{#depends}}
-      - {{.}}
-{{/depends}}
-{{/has_depends}}
 {{/job}}
