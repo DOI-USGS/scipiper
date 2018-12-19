@@ -33,9 +33,8 @@
 #'   while
 #' @param verbose define the format of task messages. Use TRUE for progress bar 
 #'   for the status of each task, and FALSE for no output
-#' @param parallel logical Should the tasks be run in parallel?  
-#' @param n_cores integer How many cores should be utilized in the local cluster created 
-#' if `parallel=TRUE`? Defaults to one less than the available number of cores
+#' @param n_cores integer How many cores should be utilized when executing the task plan? 
+#' Defaults to one (no parallelization).
 #' @export
 #' @import progress
 #' @import foreach
@@ -45,9 +44,9 @@ loop_tasks <- function(
   num_tries=30, sleep_on_error=0,
   ind_ext=getOption('scipiper.ind_ext'),
   verbose=TRUE,
-  parallel=FALSE,
-  n_cores=(parallel::detectCores() - 1)) {
+  n_cores=1) {
   
+  stopifnot(n_cores >= 1)
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
   if(is.null(task_names) && is.null(step_names)) {
@@ -131,8 +130,7 @@ loop_tasks <- function(
         Sys.sleep(sleep_on_error)
       }
     }
-    #would parallelize here
-    if(!parallel) {
+    if(ncores == 1) {
       # prepare a vector to record successes/failures within this loop
       target_succeeded <- rep(FALSE, num_targets_incomplete)
       # attempt to build each of the incomplete targets
@@ -163,6 +161,9 @@ loop_tasks <- function(
       } 
     }else {
       #parallelized
+      requireNamespace(parallel, quietly = TRUE)
+      requireNamespace(doParallel, quietly = TRUE)
+      requireNamespace(foreach, quietly = TRUE)
       cl <- parallel::makeCluster(n_cores)
       doParallel::registerDoParallel(cl, n_cores)
       target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete), .combine = c)  %dopar% {
@@ -170,9 +171,7 @@ loop_tasks <- function(
           # get the names of the target and the task
           target_num_overall <- incomplete_targets[i]
           target <- targets[target_num_overall]
-          task_name <- task_names[target_num_overall]
           
-          ### .export arg for other functions?  will this just work?
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           return(TRUE)
