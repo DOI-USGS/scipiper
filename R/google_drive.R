@@ -72,6 +72,8 @@ gd_config <- function(folder, config_file=getOption("scipiper.gd_config_file")) 
 #' @param type media type as passed to drive_upload or drive_update
 #' @param verbose logical, used in gd_put and passed onto
 #'   googledrive::drive_update, drive_upload, and/or drive_rm
+#' @param dry_put logical. If TRUE, calls to this function won't actually push
+#'   anything to Google Drive; they'll just pretend they've done it.
 #' @param config_file character name of the YAML file containing
 #'   project-specific configuration information for Google Drive
 #' @param ind_ext the indicator file extension to expect at the end of
@@ -130,6 +132,9 @@ gd_put <- function(
   
   # check arguments
   mock_get <- match.arg(mock_get)
+  
+  # tell R CMD check not to worry about symbols used for dplyr non-standard eval
+  . <- name <- drive_resource <- '.dplyr.var'
   
   # decide whether local_source is an indicator or data file and find the data file
   local_file <- find_local_file(local_source, ind_ext)
@@ -268,6 +273,7 @@ mock_move_copy <- function(mock_get, local_file, data_file) {
 #' \dontrun{
 #' gd_get('0_test/test_sheet.ind', type='xlsx', overwrite=TRUE)
 #' }
+#' @importFrom utils tail
 #' @export
 gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE,
                    config_file=getOption("scipiper.gd_config_file"),
@@ -306,6 +312,9 @@ gd_get <- function(ind_file, type=NULL, overwrite=TRUE, verbose=FALSE,
 
 # Locate a file along a path relative to the gd_config folder, or return NA if not found
 gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file")) {
+  # tell R CMD check not to worry about symbols used for dplyr non-standard eval
+  drive_resource <- parents <- name <- '.dplyr.var'
+  
   # load the project's googledrive configuration
   gd_config <- yaml::yaml.load_file(config_file)
   
@@ -358,6 +367,10 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
 }
 
 get_relative_path <- function(file) {
+  
+  # tell R CMD check not to worry about symbols used for dplyr non-standard eval
+  . <- '.dplyr.var'
+  
   file %>% 
     normalizePath(winslash='/', mustWork=FALSE) %>%
     gsub(normalizePath(getwd(), winslash='/'), '', .) %>% # remove the working directory if present
@@ -390,6 +403,7 @@ gd_list <- function(..., config_file=getOption("scipiper.gd_config_file")) {
 #' @param config_file character name of the YAML file containing
 #'   project-specific configuration information
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
+#' @importFrom utils tail
 #' @export
 gd_confirm_posted <- function(
   ind_file,
@@ -397,6 +411,9 @@ gd_confirm_posted <- function(
   ind_ext=getOption("scipiper.ind_ext")) {
   
   require_libs('googledrive')
+  
+  # tell R CMD check not to worry about symbols used for dplyr non-standard eval
+  . <- drive_resource <- '.dplyr.var'
   
   # look on Google Drive for the specified file
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)

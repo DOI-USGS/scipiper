@@ -7,8 +7,9 @@ Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("
              person("Jordan", "Read", email = "jread@usgs.gov", role = "ctb"))
 Description: Functions to organize a data analysis repository and ensure that data flows smoothly.
 Depends:
-    R (>= 3.3.2)
+    R (>= 3.3)
 Imports:
+  digest,
   dplyr,
   methods,
   readr,
@@ -19,12 +20,12 @@ Imports:
   progress,
   yaml
 Suggests:
+  aws.s3,
+  aws.signature,
   googledrive,
   knitr,
-  aws.signature,
-  aws.s3,
-  testthat,
-  rmarkdown
+  rmarkdown,
+  testthat
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of

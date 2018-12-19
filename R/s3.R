@@ -66,6 +66,8 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
 #'   throw an error? the default is to replace
 #' @param verbose logical Used in this function and passed through aws.s3::put_object to
 #'   aws.s3::s3HTTP
+#' @param dry_put logical. If TRUE, calls to this function won't actually push
+#'   anything to Google Drive; they'll just pretend they've done it.
 #' @param config_file character name of the YAML file containing
 #'   project-specific configuration information for S3
 #' @param ind_ext the indicator file extension to expect at the end of
@@ -192,6 +194,9 @@ s3_confirm_posted <- function(
   ind_ext=getOption("scipiper.ind_ext")) {
   
   require_libs('aws.signature','aws.s3')
+  
+  # tell R CMD check not to worry about symbols used for dplyr non-standard eval
+  Key <- '.dplyr.var'
   
   # look on S3 for the specified file
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
