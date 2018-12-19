@@ -3,10 +3,6 @@
 # by {{rendering_function}}
 
 target_default: {{target_default}}
-    depends:
-{{#job}}    
-      - {{target_name}}
-{{/job}}
 
 {{#has_include}}
 include:
@@ -37,6 +33,12 @@ file_extensions:
 {{/has_file_extensions}}
 
 targets:
+  {{target_default}}:
+    depends:
+{{#job}}    
+      - {{target_name}}
+{{/job}}
+
 {{#tasks}}
   # --- {{task_name}} --- #
   

@@ -126,7 +126,7 @@ create_task_makefile <- function(
         } else {
           if(isTRUE(ind_complete)) {
             sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
-                    job_output, target_name, makefile)
+                    job_output, paste0(job_name,'_ind'), makefile)
           } else {
             sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
           }
@@ -140,7 +140,7 @@ create_task_makefile <- function(
     # https://github.com/richfitz/remake/issues/92 is resolved) and then have
     # this overall target depend on those dummy targets.
     depends = job_deps,
-    has_depends <- length(job_deps) > 0
+    has_depends = length(job_deps) > 0
   ))
   
   
@@ -180,7 +180,7 @@ create_task_makefile <- function(
   cat(yml, file=makefile)
   
   message(sprintf(
-    "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
+    "run all tasks with\n%s:\n  command: scmake(I('%s'), remake_file='%s')",
     job_output, job_name, makefile))
   
   return(makefile)
