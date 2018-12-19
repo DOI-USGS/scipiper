@@ -6,6 +6,16 @@
 #' @param sep separator for the list of arguments, defaults to new line
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' psprintf(
+#'   'plot_frame(',
+#'   'png_file = target_name,',
+#'   'date = I(%s),' = '2018-01-23',
+#'   'state = %s,' = 'Wisconsin',
+#'   )'
+#' )
+#' }
 psprintf <- function(..., sep='\n      ') {
   args <- list(...)
   non_null_args <- which(!sapply(args, is.null))
