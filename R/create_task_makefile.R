@@ -100,8 +100,9 @@ create_task_makefile <- function(
       tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
     }
   }
+  job <- list()
   
-  job <- list(
+  job <- list(list(
     target_name = ifelse(is.null(finalize_fun), job_name, target_name),
     # even though target_name is an object (not file), job_command should write
     # to ind_file - again so the calling remake file can use
@@ -111,9 +112,12 @@ create_task_makefile <- function(
         if(isTRUE(ind_complete) | is.na(ind_complete)) {
           message('ind_complete=', ind_complete, ' is incompatable with ', finalize_fun, '(). Using FALSE')
           ind_complete <- FALSE
-          # and will need to skip hashing...
+        }
+        if(length(job_deps) < 1){
+          stop('need to specify at least one target when using a finalize function', call. = FALSE)
         }
         to_combine <- paste(job_deps, collapse=',\n      ')
+        job_deps <- c() # these are no longer depends, they are inputs
         sprintf("%s(target_name = %s,\n      %s)", finalize_fun, target_name, to_combine) 
       } else {
         if(is.na(ind_complete)) {
@@ -128,19 +132,17 @@ create_task_makefile <- function(
           }
         }
       }
-    }
-  )
-  if(is.null(finalize_fun)){
+    },
     # as dependencies of this overall/default job, extract the target_name from
     # every task and all those steps indexed by job_steps. an alternative (or
     # complement) would be to create a dummy target for each task (probably with
     # indicator file, at least until
     # https://github.com/richfitz/remake/issues/92 is resolved) and then have
     # this overall target depend on those dummy targets.
-    job$depends <- job_deps
-  } 
+    depends = job_deps
+  ))
   
-  job$has_depends <- length(job$depends) > 0
+  job[[1]]$has_depends <- length(job[[1]]$depends) > 0
   
   
   # Gather info about how this function is being called
