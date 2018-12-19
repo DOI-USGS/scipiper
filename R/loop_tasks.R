@@ -114,7 +114,6 @@ loop_tasks <- function(
       }
       break
     }
-    
     # if there are remaining targets, try to run them
     if (verbose){
       loop_start_msg <- sprintf(
@@ -167,12 +166,15 @@ loop_tasks <- function(
         # object targets, not sure if storr keeps them all in memory
         gc()
       } 
+      # revise and recount the list of incomplete targets for the next while loop iteration
+      incomplete_targets <- incomplete_targets[!target_succeeded]
+      num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
     }else {
       #parallelized
-      requireNamespace(parallel, quietly = TRUE)
-      requireNamespace(doParallel, quietly = TRUE)
-      requireNamespace(foreach, quietly = TRUE)
-      `%dopar%` <- foreach::`%dopar`
+      requireNamespace('parallel', quietly = TRUE)
+      requireNamespace('doParallel', quietly = TRUE)
+      requireNamespace('foreach', quietly = TRUE)
+      `%dopar%` <- foreach::`%dopar%`
       cl <- parallel::makeCluster(n_cores)
       doParallel::registerDoParallel(cl, n_cores)
       target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete), .combine = c)  %dopar% {
