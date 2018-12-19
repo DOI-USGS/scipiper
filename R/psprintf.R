@@ -1,7 +1,7 @@
 #' Paste together sprintf-style text and variable values
 #'
 #' Helper function to sprintf a bunch of key-value (string-variableVector) pairs,
-#' then paste them together with a good separator for contructing remake recipes
+#' then paste them together with a good separator for contructing remake recipes.
 #'
 #' @param sep separator for the list of arguments, defaults to new line
 #'
