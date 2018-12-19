@@ -37,7 +37,6 @@
 #' Defaults to one (no parallelization).
 #' @export
 #' @import progress
-#' @import foreach
 loop_tasks <- function(
   task_plan, task_makefile,
   task_names=NULL, step_names=NULL,
@@ -152,8 +151,7 @@ loop_tasks <- function(
           
           target_succeeded[i] <- TRUE
           num_targets_complete <- num_targets_complete + 1
-          #############
-        }, error = error_function
+        }, error = error_function()
         )
         # try to keep memory under control if possible; might be harder with
         # object targets, not sure if storr keeps them all in memory
@@ -164,6 +162,7 @@ loop_tasks <- function(
       requireNamespace(parallel, quietly = TRUE)
       requireNamespace(doParallel, quietly = TRUE)
       requireNamespace(foreach, quietly = TRUE)
+      `%dopar%` <- foreach::`%dopar`
       cl <- parallel::makeCluster(n_cores)
       doParallel::registerDoParallel(cl, n_cores)
       target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete), .combine = c)  %dopar% {
@@ -175,7 +174,7 @@ loop_tasks <- function(
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           return(TRUE)
-        }, error = error_function
+        }, error = error_function()
         )
       }
       num_targets_complete <- sum(target_succeeded)
