@@ -105,13 +105,10 @@ create_task_makefile <- function(
           to_combine <- paste(targets_to_combine, collapse=',\n      ')
           sprintf("%s(I(%s),\n      %s)", finalize_fun[i], target_name[i], to_combine)
     })
-    
-    message(sprintf(
-      "run all tasks with\n%s:\n  command: scmake(remake_file='%s')",
-      target_name, makefile))
-    
   })
-  
+  message(sprintf(
+    "run all tasks with\n%s:\n  command: scmake(remake_file='%s')\n",
+    target_name, makefile))
   
   # Gather info about how this function is being called
   this_fun <- as.character(sys.call(0)[[1]])
