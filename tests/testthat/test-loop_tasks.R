@@ -76,3 +76,38 @@ test_that("loop_tasks skips files initially", {
   
   cleanup_tasks_demo(dirinfo)
 })
+
+test_that("loop_tasks can force rebuild", {
+  dirinfo <- setup_tasks_demo()
+  
+  # Kick off first build of loop tasks
+  task_plan <- scmake("task_plan")
+  scmake('models.yml')
+  expect_true(file.exists('models.yml'))
+  options('scipiper.test_verbose'=TRUE)
+  loop_tasks(task_plan, 'models.yml')
+  expect_true(all(file.exists("AZ.ind", "CA.ind", "CO.ind", "models.ind")))
+  
+  # Now, force a rebuild in loop_tasks
+  options('scipiper.test_verbose'=TRUE)
+  output <- capture_messages(loop_tasks(task_plan, 'models.yml', force=TRUE))
+  expect_true(all(file.exists("AZ.ind", "CA.ind", "CO.ind", "models.ind")))
+  start_final_phase <- grep('### Final check', output)
+  initial_phase <- output[seq_len(start_final_phase-1)]
+  final_phase <- output[start_final_phase:length(output)]
+  
+  # Expect AZ.ind, CA.ind, and CO.ind to be built during the initial phase
+  expect_true(any(grepl('processing AZ', initial_phase)))
+  expect_true(any(grepl('processing CA', initial_phase)))
+  expect_true(any(grepl('processing CO', initial_phase)))
+  expect_false(all(grepl('sc_indicate\\("./models.ind"', initial_phase)))
+  
+  # Expect models.ind to be built during the final phase
+  expect_false(all(grepl('Building AZ', final_phase)))
+  expect_false(all(grepl('Building CA', final_phase)))
+  expect_false(all(grepl('Building CO', final_phase)))
+  expect_true(any(grepl('sc_indicate\\("./models.ind"', final_phase)))
+  
+  options('scipiper.test_verbose'=NULL)
+  cleanup_tasks_demo(dirinfo)
+})
