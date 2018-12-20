@@ -3,14 +3,14 @@ process <- function(task, resource_C) {
   if(isTRUE(getOption('scipiper.test_verbose'))) {
     message(sprintf("   - processing %s, resource_C=%s", task, resource_C))
   }
-  if(rnorm(1) < 0.1) stop("processing failed")
+  if(task != 'CA' && rnorm(1) < 0.1) stop("processing failed")
   return(sprintf('PROCESSED_%s', task))
 }
 visualize <- function(prep, capital) {
   if(isTRUE(getOption('scipiper.test_verbose'))) {
     message(sprintf("   - visualizing with prep=%s, capital=%s", prep, capital))
   }
-  if(rnorm(1) < 0.1) stop("visualizing failed")
+  if(prep != 'PROCESSED_CA' && rnorm(1) < 0.1) stop("visualizing failed")
   return(sprintf('PLOTTED_%s', substring(prep, 1, 2)))
 }
 report <- function(task, prep, plot) {
