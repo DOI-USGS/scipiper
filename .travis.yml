@@ -11,10 +11,11 @@ matrix:
       r: devel
       env: R_CODECOV=true
 
+r_build_args: '--no-build-vignettes --no-manual'
+r_check_args: '--ignore-vignettes --no-examples'
+
 env:
    global:
-     - R_BUILD_ARGS="--no-build-vignettes --no-manual"
-     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
      
