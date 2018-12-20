@@ -97,9 +97,12 @@ test_that("loop_tasks can force rebuild", {
   final_phase <- output[start_final_phase:length(output)]
   
   # Expect AZ.ind, CA.ind, and CO.ind to be built during the initial phase
-  expect_true(any(grepl('processing AZ', initial_phase)))
-  expect_true(any(grepl('processing CA', initial_phase)))
-  expect_true(any(grepl('processing CO', initial_phase)))
+  # Right now, progress bars don't output messages during non-interactive executions, 
+  # so we have to look for deletions of the ind files rather than building the new ones
+  # expect_true(any(grepl('processing AZ', initial_phase)))
+  expect_true(any(grepl('file.remove\\("./AZ.ind"', initial_phase)))
+  expect_true(any(grepl('file.remove\\("./CA.ind"', initial_phase)))
+  expect_true(any(grepl('file.remove\\("./CO.ind"', initial_phase)))
   expect_false(all(grepl('sc_indicate\\("./models.ind"', initial_phase)))
   
   # Expect models.ind to be built during the final phase
