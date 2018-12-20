@@ -33,6 +33,19 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   cleanup_tasks_demo(dirinfo)
 })
 
+test_that("parallel loop_tasks completes while handling errors", {
+  dirinfo <- setup_tasks_demo()
+  # with verbose=TRUE, should see errors but also completion
+  # error messages don't seem to be passed in from parallel processes?
+  set.seed(100)
+  options('scipiper.test_verbose'=TRUE)
+  output <- capture_messages(scmake('models_parallel.ind'))
+  expect_true(all(file.exists('models_parallel.ind','AZ.ind','CA.ind','CO.ind')), info='all files get created')
+  expect_true(grepl('Build completed', tail(output, 1)), info='completes successfully')
+  expect_gt(length(grep('Starting loop attempt', output)), 1) # at least two loop attempts
+  cleanup_tasks_demo(dirinfo)
+})
+
 test_that("with verbose=FALSE, should see just one progress bar per loop attempt", {
   
   # skip this whole bundle of tests with an explanation
@@ -76,3 +89,5 @@ test_that("loop_tasks skips files initially", {
   
   cleanup_tasks_demo(dirinfo)
 })
+
+
