@@ -21,7 +21,7 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   set.seed(100)
   options('scipiper.test_verbose'=TRUE)
   output <- capture_messages(scmake('tmp/models.ind'))
-  expect_true(all(file.exists('tmp/models.ind','AZ.ind','CA.ind','CO.ind')), info='all files get created')
+  expect_true(all(file.exists('tmp/models.ind','tmp/AZ.ind','tmp/CA.ind','tmp/CO.ind')), info='all files get created')
   expect_true(grepl('Build completed', tail(output, 1)), info='completes successfully')
   expect_gt(length(grep('Starting loop attempt', output)), 1) # at least two loop attempts
   az_viz_attempts <- grep('- visualizing with prep=PROCESSED_AZ', output)
