@@ -3,6 +3,7 @@
 #' Helper function to sprintf a bunch of key-value (string-variableVector) pairs,
 #' then paste them together with a good separator for contructing remake recipes.
 #'
+#' @param ... list of sprintf arguments seperated by commas
 #' @param sep separator for the list of arguments, defaults to new line
 #'
 #' @export

@@ -7,6 +7,8 @@
 psprintf(..., sep = "\\n      ")
 }
 \arguments{
+\item{...}{list of sprintf arguments seperated by commas}
+
 \item{sep}{separator for the list of arguments, defaults to new line}
 }
 \description{
