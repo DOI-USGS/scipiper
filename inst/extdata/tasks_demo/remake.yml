@@ -45,4 +45,4 @@ targets:
   
   test_fail:
     command: stop(I("A wild error appears --- hopefully the build files still get written"))
-    depends: models.ind
+    depends: log/models.ind
