@@ -3,8 +3,10 @@ knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
 knitr::opts_knit$set(root.dir = tempdir())
 
 ## ----libs, message=FALSE-------------------------------------------------
-library(scipiper)
-library(dplyr)
+suppressPackageStartupMessages({
+  library(scipiper)
+  library(dplyr)
+})
 
 ## ----step_funs_shhh, echo=FALSE------------------------------------------
 cat("

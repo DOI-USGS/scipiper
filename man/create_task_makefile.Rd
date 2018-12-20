@@ -31,6 +31,10 @@ defaults at \code{remake::file_extensions()}. Inclusion of \code{'ind'} is
 recommended because this indicator file extension is commonly used by
 scipiper.}
 
+\item{ind_complete}{logical. Should there be a summary target that creates an
+indicator file whose contents are the filename and hash of all of the final
+steps of all tasks?}
+
 \item{ind_dir}{directory path specifing the location where an overall job
 indicator file should be written once all tasks and steps are complete.
 This file will always be named after the makefile, but with the indicator

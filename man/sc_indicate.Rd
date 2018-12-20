@@ -16,9 +16,10 @@ file (possibly retrieved as a hash from the remote cache). If you have the
 data_file locally and don't yet have a hash, just specify the \code{data_file}
 argument instead.}
 
-\item{data_file}{optional. file name of the data file whose presence is being
-indicated. if given, the hash of the data file will be included in the
-indicator file as the \code{hash} element.}
+\item{data_file}{optional. file name(s) of the data file(s) whose presence is being
+indicated. if length one, the hash of the data file will be included in the
+indicator file as the \code{hash} element. if given as a multi-file vector,
+the file names and \code{hash} elements will be paired in the output.}
 
 \item{hash_depends}{logical. If TRUE, this call will look through
 \code{depends_makefile} for a recipe for \code{depends_target}, will generate a hash

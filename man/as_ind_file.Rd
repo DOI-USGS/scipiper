@@ -19,5 +19,7 @@ generated.
 \examples{
 as_ind_file('mydata.rds') # 'mydata.rds.ind'
 as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
-as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
+\dontrun{
+as_ind_file('mydata.rds.ind') # Error: "data_file contains indicator files: mydata.rds.ind"
+}
 }
