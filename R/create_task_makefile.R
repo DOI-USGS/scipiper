@@ -10,10 +10,6 @@
 #'
 #' @param task_plan a task plan as produced by `create_task_plan()`
 #' @param makefile character name of the remake file to create
-#' @param ind_dir directory path specifing the location where an overall job
-#'   indicator file should be written once all tasks and steps are complete.
-#'   This file will always be named after the makefile, but with the indicator
-#'   file extension (ind_ext) instead of '.yml' as a suffix
 #' @param include character vector of any remake .yml files to include within
 #'   this one. If any files must be quoted in the remake file, quote them with
 #'   inner single quotes, e.g. `c("unquoted", "'quoted file name.tsv'")`
@@ -25,10 +21,12 @@
 #'   defaults at `remake::file_extensions()`. Inclusion of `'ind'` is
 #'   recommended because this indicator file extension is commonly used by
 #'   scipiper.
-#' @param ind_ext the indicator file extension to use in creating the job
-#'   indicator file
 #' @param template_file character name of the mustache template to render into
 #'   `makefile`. The default is recommended
+#' @param target_name a file path (or vector of file paths) specifying final target(s) 
+#'   to be created by `finalize_fun`
+#' @param finalize_fun a string function name (or vector of function names, of equal 
+#'   length to `target_name`)
 #' @return the file name of the makefile that was created (can be displayed with
 #'   `cat(readLines(makefile), sep="\n")`).
 #' @export
@@ -62,10 +60,9 @@
 create_task_makefile <- function(
   task_plan, makefile,
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
-  ind_dir=attr(task_plan, 'ind_dir'),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
   target_name, 
-  finalize_fun = "sc_indicate") {
+  finalize_fun = "c") {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -75,10 +72,15 @@ create_task_makefile <- function(
   # actually writing to ind_file)
   job_name <- tools::file_path_sans_ext(basename(makefile))
   if(missing(target_name)){
-    # check that !length(finalize_fun) > 1
     ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the target_name
+    ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the target_name
     target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))
   }
+  
+  if (length(target_name) != length(finalize_fun)){
+    stop('when specifying function names for `finalize_fun`, an equal number of `target_name`(s) need to be specified', call. = FALSE)
+  }
+  
   job_steps <- attr(task_plan, 'final_steps')
   
   targets_to_combine <- unlist(lapply(task_plan, function(task) {
@@ -103,7 +105,7 @@ create_task_makefile <- function(
         target_name = paste0(target_name[i], "_promise"), 
         command = {
           to_combine <- paste(targets_to_combine, collapse=',\n      ')
-          sprintf("%s(I(%s),\n      %s)", finalize_fun[i], target_name[i], to_combine)
+          sprintf("%s(I(\"%s\"),\n      %s)", finalize_fun[i], target_name[i], to_combine) # use PR #90 when it is merged
     })
   })
   message(sprintf(
