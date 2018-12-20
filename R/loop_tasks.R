@@ -177,7 +177,7 @@ loop_tasks <- function(
       `%dopar%` <- foreach::`%dopar%`
       cl <- parallel::makeCluster(n_cores)
       doParallel::registerDoParallel(cl, n_cores)
-      target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete), .combine = c)  %dopar% {
+      target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete))  %dopar% {
         tryCatch({
           # get the names of the target and the task
           target_num_overall <- incomplete_targets[i]
@@ -186,9 +186,12 @@ loop_tasks <- function(
           # the main action: run the task-step
           scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
           return(TRUE)
-        }, error = error_function
+        }, error = function(e) {
+          error_function(e)
+          return(FALSE)}
         )
       }
+      target_succeeded <- as.logical(target_succeeded) #convert list to vector
       num_targets_complete <- sum(target_succeeded)
       # revise and recount the list of incomplete targets for the next while loop iteration
       incomplete_targets <- incomplete_targets[!target_succeeded]
@@ -201,7 +204,7 @@ loop_tasks <- function(
           frac_complete, 
           tokens = list(what = sprintf('  Finished try %s, %s targets left', this_try, num_targets_incomplete)))
       }
-      
+      parallel::stopCluster(cl)
     }
     this_try <- this_try + 1
     
