@@ -71,8 +71,11 @@ loop_tasks <- function(
   # sometimes, a user knows that something needs to get rebuilt and doesn't want to wait
   # through the first round of checks for completeness
   if(isTRUE(force)) {
-    # delete the current job target and the targets that are being looped through
-    scdel(target_names=job_target, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+    # delete the current job target if not NA
+    if(!is.na(job_target)) {
+      scdel(target_names=job_target, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+    }
+    # delete the targets that are being looped through
     scdel(target_names=targets, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
   }
   
