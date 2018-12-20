@@ -15,7 +15,7 @@ sources:
 
 file_extensions: "ind" # in addition to remake::file_extensions()
 
-target_default: log/models.ind
+target_default: models.ind
 
 targets:
   
@@ -40,9 +40,9 @@ targets:
   # The key to this multi-task job is that the models.ind command appeals to a
   # decoupled makefile, 'models.yml', which is created by this makefile but
   # never `include`d.
-  log/models.ind:
+  models.ind:
     command: loop_tasks(task_plan, 'models.yml')
   
   test_fail:
     command: stop(I("A wild error appears --- hopefully the build files still get written"))
-    depends: log/models.ind
+    depends: models.ind

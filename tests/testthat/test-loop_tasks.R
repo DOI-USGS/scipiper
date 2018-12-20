@@ -20,8 +20,8 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   # with verbose=TRUE, should see errors but also completion
   set.seed(100)
   options('scipiper.test_verbose'=TRUE)
-  output <- capture_messages(scmake('log/models.ind'))
-  expect_true(all(file.exists('log/models.ind','log/AZ.ind','log/CA.ind','log/CO.ind')), info='all files get created')
+  output <- capture_messages(scmake('models.ind'))
+  expect_true(all(file.exists('models.ind','AZ.ind','CA.ind','CO.ind')), info='all files get created')
   expect_true(grepl('Build completed', tail(output, 1)), info='completes successfully')
   expect_gt(length(grep('Starting loop attempt', output)), 1) # at least two loop attempts
   az_viz_attempts <- grep('- visualizing with prep=PROCESSED_AZ', output)
@@ -47,7 +47,7 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
   # one that's not written over by a \r)
   set.seed(100)
   options('scipiper.test_verbose'=NULL)
-  output <- capture_messages(scmake('log/models.ind'))
+  output <- capture_messages(scmake('models.ind'))
   pb_lines <- grep('\\[=*>*-*\\]', output)
   r_lines <- grep('\r', output)
   final_pb_lines <- output[pb_lines[-which((pb_lines+1) %in% r_lines)]]
@@ -62,12 +62,11 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
 test_that("loop_tasks skips files initially", {
   dirinfo <- setup_tasks_demo()
   
-  # if we already have log/CA.ind, the inital looping phase shouldn't try to build
+  # if we already have CA.ind, the inital looping phase shouldn't try to build
   # CA, but if it's out of date, the final looping phase should
-  dir.create("log")
-  writeLines('out-of-date file', 'log/CA.ind')
+  writeLines('out-of-date file', 'CA.ind')
   options('scipiper.test_verbose'=TRUE)
-  output <- capture_messages(scmake('log/models.ind'))
+  output <- capture_messages(scmake('models.ind'))
   start_final_phase <- grep('### Final check', output)
   initial_phase <- output[seq_len(start_final_phase-1)]
   final_phase <- output[start_final_phase:length(output)]

@@ -51,7 +51,7 @@ demo_task_plan <- function(task_config) {
     task_names=c('AZ','CA','CO'),
     task_steps=list(step1, step2, step3),
     final_steps='report',
-    ind_dir='log',
+    ind_dir='.',
     add_complete=TRUE)
   return(task_plan)
 }
