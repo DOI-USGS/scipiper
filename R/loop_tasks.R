@@ -37,6 +37,9 @@
 #'   resulting build/status files.
 #' @param verbose define the format of task messages. Use TRUE for progress bar
 #'   for the status of each task, and FALSE for no output
+#' @param force logical. If TRUE, targets specified by task_names (NULL for all 
+#'   tasks) and step_names (NULL for the final step) will be deleted with `scdel`
+#'   before being built.
 #' @export
 #' @import progress
 loop_tasks <- function(
@@ -44,7 +47,7 @@ loop_tasks <- function(
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
   ind_ext=getOption('scipiper.ind_ext'),
-  verbose=TRUE) {
+  verbose=TRUE, force=FALSE) {
   
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
@@ -65,6 +68,17 @@ loop_tasks <- function(
     sapply(unname(task$steps[step_names]), `[[`, 'target_name')
   }))
   num_targets_overall <- length(targets)
+  
+  # sometimes, a user knows that something needs to get rebuilt and doesn't want to wait
+  # through the first round of checks for completeness
+  if(isTRUE(force)) {
+    # delete the current job target if not NA
+    if(!is.na(job_target)) {
+      scdel(target_names=job_target, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+    }
+    # delete the targets that are being looped through
+    scdel(target_names=targets, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+  }
   
   # a heuristic check for completeness: returns a vector of indices into target
   # that are known to be incomplete. any target that remake knows to be complete
