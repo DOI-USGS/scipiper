@@ -30,10 +30,18 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   expect_equal(length(az_viz_attempts), length(az_viz_errors)+1, info='1 more attempt than num errors')
   expect_true(max(az_viz_attempts) > max(az_viz_errors), info='last one should be processing, not error')
   
-  # reset so we can try again with verbose=NULL
-  scdel(scipiper::list_all_targets('models.yml'),'models.yml')
-  scdel('log/models.ind')
+  cleanup_tasks_demo(dirinfo)
+})
+
+test_that("with verbose=FALSE, should see just one progress bar per loop attempt", {
   
+  # skip this whole bundle of tests with an explanation
+  skip(paste(
+    'progress package seems not to print progress bars in the test environment, so',
+    'this test bundle works locally as of 12/19/18 but fails with devtools::test()'))
+
+  dirinfo <- setup_tasks_demo()
+
   # with verbose=FALSE, should see just one progress bar per loop attempt (shows
   # up in output as a consecutive series of written-over progress bars with just
   # one that's not written over by a \r)
@@ -45,7 +53,7 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   final_pb_lines <- output[pb_lines[-which((pb_lines+1) %in% r_lines)]]
   expect_equal(length(final_pb_lines), 1)
   expect_true(all(grepl('All tasks complete', final_pb_lines)))
-  
+
   # to manually view output, including hidden lines:
   # cat(gsub('\r', '\n', output), sep='')
   cleanup_tasks_demo(dirinfo)

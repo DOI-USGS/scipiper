@@ -31,7 +31,11 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
-#' @param vebose define the format of task messages. Use TRUE for progress bar 
+#' @param ind_ext the indicator file extension passed to `scmake`, identifying
+#'   those files for which build/status information will be shared via
+#'   git-committable files in the build/status folder. You should git commit the
+#'   resulting build/status files.
+#' @param verbose define the format of task messages. Use TRUE for progress bar
 #'   for the status of each task, and FALSE for no output
 #' @param force logical. if TRUE, the target_names will be deleted with `scdel`
 #'   before being built.
