@@ -37,7 +37,8 @@
 #'   resulting build/status files.
 #' @param verbose define the format of task messages. Use TRUE for progress bar
 #'   for the status of each task, and FALSE for no output
-#' @param force logical. if TRUE, the target_names will be deleted with `scdel`
+#' @param force logical. If TRUE, targets specified by task_names (NULL for all 
+#'   tasks) and step_names (NULL for the final step) will be deleted with `scdel`
 #'   before being built.
 #' @export
 #' @import progress
