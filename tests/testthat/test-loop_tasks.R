@@ -74,7 +74,7 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
 
 test_that("loop_tasks skips files initially", {
   dirinfo <- setup_tasks_demo()
-  
+  set.seed(100)
   # if we already have CA.ind, the inital looping phase shouldn't try to build
   # CA, but if it's out of date, the final looping phase should
   writeLines('out-of-date file', 'CA.ind')
