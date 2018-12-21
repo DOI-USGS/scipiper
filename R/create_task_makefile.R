@@ -79,7 +79,7 @@ create_task_makefile <- function(
     target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))
   }
   
-  if (length(target_name) != length(finalize_fun)){
+  if (!is.null(finalize_fun) & length(target_name) != length(finalize_fun)){
     stop('when specifying function names for `finalize_fun`, an equal number of `target_name`(s) need to be specified', call. = FALSE)
   }
   
@@ -102,7 +102,10 @@ create_task_makefile <- function(
     }
   }
   
-  job <- lapply(seq_len(length(finalize_fun)), function(i){
+  if (is.null(finalize_fun)){
+    stop('currently not implemented')
+  } else {
+    job <- lapply(seq_len(length(finalize_fun)), function(i){
       list(
         target_name = ifelse(as_promises, paste0(target_name[i], "_promise"), target_name[i]), 
         command = {
@@ -113,15 +116,17 @@ create_task_makefile <- function(
           if (is_file){
             ifelse(as_promises, {
               sprintf("%s(I('%s'),\n      %s)", finalize_fun[i], target_name[i], to_combine)
-              }, {
-                sprintf("%s(target_name,\n      %s)", finalize_fun[i], to_combine)
-              })
+            }, {
+              sprintf("%s(target_name,\n      %s)", finalize_fun[i], to_combine)
+            })
           } else {
             combine_str <- "%s(\n      %s)"
             sprintf(combine_str, finalize_fun[i], to_combine) # use PR #90 when it is merged
           }
+        })
     })
-  })
+  }
+  
   message(sprintf(
     "run all tasks with\n%s:\n  command: scmake(remake_file='%s')\n",
     target_name, makefile))
