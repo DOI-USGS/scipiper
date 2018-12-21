@@ -27,6 +27,7 @@
 #'   to be created by `finalize_fun`
 #' @param finalize_fun a string function name (or vector of function names, of equal 
 #'   length to `target_name`)
+#' @param as_promises ... details here...
 #' @return the file name of the makefile that was created (can be displayed with
 #'   `cat(readLines(makefile), sep="\n")`).
 #' @export
@@ -62,7 +63,8 @@ create_task_makefile <- function(
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
   target_name, 
-  finalize_fun = "c") {
+  finalize_fun = NULL, 
+  as_promises = TRUE) {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -102,10 +104,22 @@ create_task_makefile <- function(
   
   job <- lapply(seq_len(length(finalize_fun)), function(i){
       list(
-        target_name = paste0(target_name[i], "_promise"), 
+        target_name = ifelse(as_promises, paste0(target_name[i], "_promise"), target_name[i]), 
         command = {
           to_combine <- paste(targets_to_combine, collapse=',\n      ')
-          sprintf("%s(I(\"%s\"),\n      %s)", finalize_fun[i], target_name[i], to_combine) # use PR #90 when it is merged
+          pos_extensions <- unique(c(remake::file_extensions(), file_extensions))
+          is_file <- remake:::target_is_file(target_name[i], file_extensions = pos_extensions)
+          # hide the object/file changes as input when using `promises`
+          if (is_file){
+            ifelse(as_promises, {
+              sprintf("%s(I('%s'),\n      %s)", finalize_fun[i], target_name[i], to_combine)
+              }, {
+                sprintf("%s(target_name,\n      %s)", finalize_fun[i], to_combine)
+              })
+          } else {
+            combine_str <- "%s(\n      %s)"
+            sprintf(combine_str, finalize_fun[i], to_combine) # use PR #90 when it is merged
+          }
     })
   })
   message(sprintf(
