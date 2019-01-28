@@ -6,10 +6,8 @@
 \usage{
 create_task_makefile(task_plan, makefile, include = c(),
   packages = c(), sources = c(), file_extensions = c("ind"),
-  ind_complete = NA, ind_dir = attr(task_plan, "ind_dir"),
-  ind_ext = getOption("scipiper.ind_ext"),
   template_file = system.file("extdata/task_makefile.mustache", package =
-  "scipiper"))
+  "scipiper"), target_name, finalize_fun = NULL, as_promises = TRUE)
 }
 \arguments{
 \item{task_plan}{a task plan as produced by \code{create_task_plan()}}
@@ -31,20 +29,16 @@ defaults at \code{remake::file_extensions()}. Inclusion of \code{'ind'} is
 recommended because this indicator file extension is commonly used by
 scipiper.}
 
-\item{ind_complete}{logical. Should there be a summary target that creates an
-indicator file whose contents are the filename and hash of all of the final
-steps of all tasks?}
-
-\item{ind_dir}{directory path specifing the location where an overall job
-indicator file should be written once all tasks and steps are complete.
-This file will always be named after the makefile, but with the indicator
-file extension (ind_ext) instead of '.yml' as a suffix}
-
-\item{ind_ext}{the indicator file extension to use in creating the job
-indicator file}
-
 \item{template_file}{character name of the mustache template to render into
 \code{makefile}. The default is recommended}
+
+\item{target_name}{a file path (or vector of file paths) specifying final target(s)
+to be created by \code{finalize_fun}}
+
+\item{finalize_fun}{a string function name (or vector of function names, of equal
+length to \code{target_name})}
+
+\item{as_promises}{... details here...}
 }
 \value{
 the file name of the makefile that was created (can be displayed with

@@ -107,9 +107,10 @@ create_task_makefile <- function(
   } else {
     job <- lapply(seq_len(length(finalize_fun)), function(i){
       list(
-        target_name = ifelse(as_promises, paste0(target_name[i], "_promise"), target_name[i]), 
+        target_name = ifelse(as_promises, paste0(basename(target_name[i]), "_promise"), target_name[i]), 
         command = {
-          to_combine <- paste(targets_to_combine, collapse=',\n      ')
+          # TODO: if the combine targets are objects, they shouldn't be quoted!
+          to_combine <- paste(paste0("'", targets_to_combine, "'"), collapse=',\n      ')
           pos_extensions <- unique(c(remake::file_extensions(), file_extensions))
           is_file <- remake:::target_is_file(target_name[i], file_extensions = pos_extensions)
           # hide the object/file changes as input when using `promises`
