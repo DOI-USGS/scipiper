@@ -58,6 +58,8 @@
 #'   task_plan, makefile=file.path(tempdir(), 'states.yml'),
 #'   file_extensions=c('ind'), packages='mda.streams')
 #' cat(readLines(task_makefile), sep='\n')
+#' @importFrom methods getPackageName
+#' @importFrom utils packageVersion
 create_task_makefile <- function(
   task_plan, makefile,
   include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
@@ -147,6 +149,8 @@ create_task_makefile <- function(
     target_default = job_name,
     include = include,
     has_include = length(include) > 0,
+    has_scipiper_version = TRUE, 
+    scipiper_version = utils::packageVersion(methods::getPackageName()),
     packages = packages,
     has_packages = length(packages) > 0,
     sources = sources,
