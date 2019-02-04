@@ -36,12 +36,18 @@ targets:
   
   models.yml:
     command: demo_task_makefile(target_name, task_plan)
+    
+  models_parallel.yml:
+    command: demo_task_makefile(target_name, task_plan)
 
   # The key to this multi-task job is that the models.ind command appeals to a
   # decoupled makefile, 'models.yml', which is created by this makefile but
   # never `include`d.
   models.ind:
     command: loop_tasks(task_plan, 'models.yml')
+    
+  models_parallel.ind:
+    command: loop_tasks(task_plan, 'models_parallel.yml', n_cores = I(4))
   
   test_fail:
     command: stop(I("A wild error appears --- hopefully the build files still get written"))

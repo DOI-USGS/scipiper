@@ -18,18 +18,31 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   dirinfo <- setup_tasks_demo()
   
   # with verbose=TRUE, should see errors but also completion
-  set.seed(100)
+  set.seed(10)
   options('scipiper.test_verbose'=TRUE)
   output <- capture_messages(scmake('models.ind'))
   expect_true(all(file.exists('models.ind','AZ.ind','CA.ind','CO.ind')), info='all files get created')
   expect_true(grepl('Build completed', tail(output, 1)), info='completes successfully')
   expect_gt(length(grep('Starting loop attempt', output)), 1) # at least two loop attempts
-  az_viz_attempts <- grep('- visualizing with prep=PROCESSED_AZ', output)
-  az_viz_errors <- grep('\\* Error in visualize\\(AZ_prep, "Phoenix"\\)', output)
+  az_viz_attempts <- grep('- processing AZ, resource_C=C', output)
+  az_viz_errors <- grep('\\* Error in process\\("AZ", "C"\\)', output)
   expect_gt(length(az_viz_errors), 0) # at least one error in visualizing AZ
   expect_equal(length(az_viz_attempts), length(az_viz_errors)+1, info='1 more attempt than num errors')
   expect_true(max(az_viz_attempts) > max(az_viz_errors), info='last one should be processing, not error')
   
+  cleanup_tasks_demo(dirinfo)
+})
+
+test_that("parallel loop_tasks completes while handling errors", {
+  dirinfo <- setup_tasks_demo()
+  # with verbose=TRUE, should see errors but also completion
+  # error messages don't seem to be passed in from parallel processes?
+  set.seed(100)
+  options('scipiper.test_verbose'=TRUE)
+  output <- capture_messages(scmake('models_parallel.ind'))
+  expect_true(all(file.exists('models_parallel.ind','AZ.ind','CA.ind','CO.ind')), info='all files get created')
+  expect_true(grepl('Build completed', tail(output, 1)), info='completes successfully')
+  expect_gt(length(grep('Starting loop attempt', output)), 1) # at least two loop attempts
   cleanup_tasks_demo(dirinfo)
 })
 
@@ -61,7 +74,7 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
 
 test_that("loop_tasks skips files initially", {
   dirinfo <- setup_tasks_demo()
-  
+  set.seed(100)
   # if we already have CA.ind, the inital looping phase shouldn't try to build
   # CA, but if it's out of date, the final looping phase should
   writeLines('out-of-date file', 'CA.ind')

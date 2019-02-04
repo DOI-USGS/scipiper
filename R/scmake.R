@@ -48,7 +48,7 @@ scmake <- function(
   
   start_time <- Sys.time()
   if(verbose) message('Starting build at ', start_time)
-  out <- tryCatch({
+  out <- withCallingHandlers({
     remake::make(
       target_names=target_names, ..., verbose=verbose,
       allow_missing_packages=allow_missing_packages, remake_file=remake_file)
