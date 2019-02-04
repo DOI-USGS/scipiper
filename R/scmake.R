@@ -208,6 +208,18 @@ sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_ta
     return(invisible(NULL))
   }
 }
+
+#' Create an indicator file that contains hashes of other files
+#'
+#'
+#' @param ind_file file name of the indicator file to write
+#' @param ... files to combine into a single indicator file
+#' 
+#' @details light wrapper on `sc_indicate`
+combine_to_ind <- function(ind_file, ...){
+  sc_indicate(ind_file = ind_file, data_file = c(...))
+} 
+
 #' Retrieve the data file declared by an indicator
 #'
 #' Identifies the data file's name by removing the indicator extension, then

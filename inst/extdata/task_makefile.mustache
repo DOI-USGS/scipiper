@@ -5,6 +5,7 @@
 # using scipiper package version {{scipiper_version}}
 {{/has_scipiper_version}}
 
+
 target_default: {{target_default}}
 
 {{#has_include}}
@@ -58,6 +59,7 @@ targets:
 {{/steps}}
 {{/tasks}}
 
+{{#has_finalize_funs}}
   # --- Overall job --- #
 
 {{#job}}
@@ -65,3 +67,4 @@ targets:
     command: {{command}}
     
 {{/job}}
+{{/has_finalize_funs}}

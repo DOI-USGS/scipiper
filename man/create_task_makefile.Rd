@@ -5,9 +5,10 @@
 \title{Create a .yml makefile for a multi-task job}
 \usage{
 create_task_makefile(task_plan, makefile, include = c(),
-  packages = c(), sources = c(), file_extensions = c("ind"),
+  packages = "scipiper", sources = c(), file_extensions = c("ind"),
   template_file = system.file("extdata/task_makefile.mustache", package =
-  "scipiper"), target_name, finalize_fun = NULL, as_promises = TRUE)
+  "scipiper"), target_name, finalize_fun = "combine_to_ind",
+  as_promises = TRUE)
 }
 \arguments{
 \item{task_plan}{a task plan as produced by \code{create_task_plan()}}
@@ -36,13 +37,14 @@ scipiper.}
 to be created by \code{finalize_fun}}
 
 \item{finalize_fun}{a string function name (or vector of function names, of equal
-length to \code{target_name})}
+length to \code{target_name}). Using NULL for \code{finalize_fun} will turn the
+final steps from the task plan into depends for the default/all target.}
 
 \item{as_promises}{... details here...}
 }
 \value{
-the file name of the makefile that was created (can be displayed with
-\code{cat(readLines(makefile), sep="\n")}).
+the file name of the makefile that was created,
+or the string output (if makefile = NULL)
 }
 \description{
 Create a .yml makefile (for use with remake or scipiper) for a set of tasks
