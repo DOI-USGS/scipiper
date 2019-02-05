@@ -19,7 +19,7 @@
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css" data-origin="pandoc">
+<style type="text/css">
 div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
@@ -55,29 +55,7 @@ code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
 code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-
 </style>
-<script>
-// apply pandoc div.sourceCode style to pre.sourceCode instead
-(function() {
-  var sheets = document.styleSheets;
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
-    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
-      var rule = rules[j];
-      // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
-      var style = rule.style.cssText;
-      // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
-      // replace div.sourceCode by a pre.sourceCode rule
-      sheets[i].deleteRule(j);
-      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
-    }
-  }
-})();
-</script>
 
 
 
@@ -107,19 +85,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h2>Basic task file generation</h2>
 <p>Suppose you want to run the following 3 steps for each of a bunch of different states. Here are some dummy functions representing those steps:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># step 1: prepare some data given the info in prep_name, arg2, file 'A.txt', and R object 'B'</span>
-prep &lt;-<span class="st"> </span><span class="cf">function</span>(prep_name) {
+prep &lt;-<span class="st"> </span>function(prep_name) {
   <span class="kw">message</span>(<span class="kw">sprintf</span>(<span class="st">'preparing %s'</span>, prep_name))
   <span class="kw">return</span>(prep_name)
 }
 
 <span class="co"># step 2: visualize the data</span>
-visualize &lt;-<span class="st"> </span><span class="cf">function</span>(plot_name, state_data, state_capital) {
+visualize &lt;-<span class="st"> </span>function(plot_name, state_data, state_capital) {
   <span class="kw">message</span>(<span class="kw">sprintf</span>(<span class="st">'visualizing %s - %s'</span>, plot_name, state_capital))
   <span class="kw">file.create</span>(plot_name, <span class="dt">showWarnings=</span><span class="ot">FALSE</span>)
 }
 
 <span class="co"># step 3: create the report</span>
-report &lt;-<span class="st"> </span><span class="cf">function</span>(report_name) {
+report &lt;-<span class="st"> </span>function(report_name) {
   <span class="kw">message</span>(<span class="kw">sprintf</span>(<span class="st">'reporting on %s'</span>, report_name))
   <span class="kw">file.create</span>(report_name, <span class="dt">showWarnings=</span><span class="ot">FALSE</span>)
 }</code></pre></div>
@@ -127,9 +105,7 @@ report &lt;-<span class="st"> </span><span class="cf">function</span>(report_nam
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">task_config &lt;-<span class="st"> </span><span class="kw">data_frame</span>(
   <span class="dt">id=</span><span class="kw">c</span>(<span class="st">'WI'</span>,<span class="st">'AZ'</span>,<span class="st">'PA'</span>),
   <span class="dt">capital=</span><span class="kw">c</span>(<span class="st">'Madison'</span>,<span class="st">'Phoenix'</span>,<span class="st">'Harrisburg'</span>)
-)
-## Warning: `data_frame()` is deprecated, use `tibble()`.
-## This warning is displayed once per session.</code></pre></div>
+)</code></pre></div>
 <div id="creating-task_steps" class="section level3">
 <h3>Creating task_steps</h3>
 <p>To use <code>scipiper</code> to run these tasks, first generate a set of instructions, or <code>task_step</code>s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to <code>create_task_step()</code> can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in <code>?create_task_step</code> for list of the arguments each function can see and use.</p>
@@ -146,11 +122,11 @@ step1 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(<sp
 <span class="co">#       state_capital = I('Madison'))</span>
 step2 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(
   <span class="dt">step_name =</span> <span class="st">'plot'</span>,
-  <span class="dt">target_name =</span> <span class="cf">function</span>(task_name, ...) {
+  <span class="dt">target_name =</span> function(task_name, ...) {
     <span class="kw">sprintf</span>(<span class="st">'%s_plot.png'</span>, task_name)
   },
-  <span class="dt">command =</span> <span class="cf">function</span>(target_name, task_name, ...) {
-    capital &lt;-<span class="st"> </span>task_config[task_config<span class="op">$</span>id <span class="op">==</span><span class="st"> </span>task_name, <span class="st">'capital'</span>]
+  <span class="dt">command =</span> function(target_name, task_name, ...) {
+    capital &lt;-<span class="st"> </span>task_config[task_config$id ==<span class="st"> </span>task_name, <span class="st">'capital'</span>]
     <span class="kw">psprintf</span>(
       <span class="st">&quot;visualize(&quot;</span>,
       <span class="st">&quot;plot_name = target_name,&quot;</span>,
@@ -166,13 +142,13 @@ step2 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(
 <span class="co">#    - WI_plot.png</span>
 step3 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(
   <span class="dt">step_name =</span> <span class="st">'report'</span>,
-  <span class="dt">target_name =</span> <span class="cf">function</span>(task_name, ...) {
+  <span class="dt">target_name =</span> function(task_name, ...) {
     <span class="kw">sprintf</span>(<span class="st">'%s.pdf'</span>, task_name)
   },
-  <span class="dt">depends =</span> <span class="cf">function</span>(task_name, ...) {
+  <span class="dt">depends =</span> function(task_name, ...) {
     <span class="kw">sprintf</span>(<span class="st">'%s_plot.png'</span>, task_name)
   },
-  <span class="dt">command =</span> <span class="cf">function</span>(task_name, step_name, ...) {
+  <span class="dt">command =</span> function(task_name, step_name, ...) {
     <span class="kw">sprintf</span>(<span class="st">&quot;report(target_name)&quot;</span>, task_name)
   })</code></pre></div>
 <p>You’ve probably noticed the <code>...</code> in the arguments list of each function you pass to <code>create_task_step</code>. You don’t get to decide what’s available in the <code>...</code>s, but you do get do decide whether you use that information. Above the only named arguments we use are <code>task_name</code> and sometimes <code>step_name</code>, but other named arguments are passed in to these functions when the task step is turned into a task plan (next section). These other arguments allow you to look to other information for this task-step, or to info about previous steps within the task.</p>
@@ -193,8 +169,8 @@ step3 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(
 <p>You can now create a task_plan that wraps the tasks and steps together. In the following call to <code>create_task_plan</code>, a couple of things happen. The main thing is that the steps you identified are organized into an R object that <code>scipiper</code> can use efficiently later. The other thing is that when the default argument <code>add_complete=TRUE</code> is accepted (e.g., by not specifying <code>add_complete</code> at all), a final step gets tacked onto the list. The final step generates an .ind file for each task once all other steps for that task have been completed (or, if <code>final_steps</code> is specified, once those specified steps have been completed).</p>
 <p>The main benefit of this <code>complete</code> step and the corresponding .ind file is speed: iteration over the complete task plan can be more efficient because the presence of an .ind file for a task can be used as a first-cut indication that the task doesn’t need to be built, such that iteration effort can be more efficiently spent on other tasks. The usual way that <code>remake</code> determines which tasks need to be rebuilt can be quite slow for large task lists or large output files, so speed here is a good thing.</p>
 <p>One drawback of the <code>add_complete</code> system and corresponding .ind files is that the speed shortcut only works if the presence of these .ind files is a fairly accurate description of which tasks are up to date. If you build a complete task plan once, change an input, and intend to rebuild, then it’s strongly recommended that you delete the .ind files before calling <code>loop_tasks</code> again. If you don’t, nothing will break, but your build will be slower and will not include automatic retries.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">task_plan_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">create_task_plan</span>(
-  task_config<span class="op">$</span>id,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">task_plan_1 &lt;-<span class="st"> </span><span class="kw">create_task_plan</span>(
+  task_config$id,
   <span class="kw">list</span>(step1, step2, step3),
   <span class="dt">final_steps=</span><span class="st">'report'</span>,
   <span class="dt">ind_dir=</span><span class="st">'states/log'</span>)</code></pre></div>
@@ -204,7 +180,7 @@ step3 &lt;-<span class="st"> </span><span class="kw">create_task_step</span>(
 <h3>Creating a task makefile</h3>
 <p>Here’s how to create a task makefile from a task plan:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">create_task_makefile</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">makefile=</span><span class="st">'task_plan_1.yml'</span>,
   <span class="dt">include=</span><span class="kw">c</span>(),
   <span class="dt">packages=</span><span class="kw">c</span>(<span class="st">'ggplot2'</span>),
@@ -309,28 +285,28 @@ targets:
 <h3>Executing a task plan/makefile</h3>
 <p>You can use <code>loop_tasks</code> with the <code>task_plan</code> and the <code>task_makefile</code> to run all the steps in all the tasks:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>)
 ## 
                                                                                
 ### Starting loop attempt 1 of 30 with 3 of 3 tasks remaining:
 ## 
-  Building WI [<span class="op">--------------------------------------------------------</span>]   <span class="dv">0</span>%  preparing WI
+  Building WI [--------------------------------------------------------]   <span class="dv">0</span>%  preparing WI
 ## visualizing WI_plot.png - Madison
 ## reporting on WI.pdf
 ## 
-  Building AZ [<span class="op">==</span><span class="er">================&gt;</span><span class="op">-------------------------------------</span>]  <span class="dv">33</span>%  preparing AZ
+  Building AZ [==<span class="er">================&gt;</span>-------------------------------------]  <span class="dv">33</span>%  preparing AZ
 ## visualizing AZ_plot.png - Phoenix
 ## reporting on AZ.pdf
 ## 
-  Building PA [<span class="op">==</span><span class="er">==================================&gt;</span><span class="op">-------------------</span>]  <span class="dv">67</span>%  preparing PA
+  Building PA [==<span class="er">==================================&gt;</span>-------------------]  <span class="dv">67</span>%  preparing PA
 ## visualizing PA_plot.png - Harrisburg
 ## reporting on PA.pdf
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2019-02-04 18:06:55
+## ### Final check for completeness of all targets
+## Starting build at 2019-02-05 14:28:10
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -345,7 +321,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-02-04 18:06:55
+## Finished build at 2019-02-05 14:28:11
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>The benefits of using <code>loop_tasks</code> to run all the remake targets in task_plan_1.yml are:</p>
 <ol style="list-style-type: decimal">
@@ -362,46 +338,46 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 <h3>Forcing rebuild for one task-step</h3>
 <p>If we try to <code>scmake</code> any of the targets in the task makefile without changing any of the inputs, <code>remake</code> correctly recognizes that they’re up to date already, and the target is not rebuilt. For example, because we ran <code>loop_tasks</code> above, <code>AZ_plot.png</code> is already <code>OK</code> when we try to build it again:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
-## Starting build at 2019-02-04 18:06:55
+## Starting build at 2019-02-05 14:28:11
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [    OK ] AZ_plot.png
-## Finished build at 2019-02-04 18:06:55
+## Finished build at 2019-02-05 14:28:11
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>One way to force the rebuild of a single target is to use <code>scdel</code>, like this:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scdel</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
 ## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)</code></pre></div>
 <p>Now when we <code>scmake</code> that target again, <code>AZ_plot.png</code> gets rebuilt:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
-## Starting build at 2019-02-04 18:06:55
+## Starting build at 2019-02-05 14:28:11
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
 ## visualizing AZ_plot.png - Phoenix
-## Finished build at 2019-02-04 18:06:55
+## Finished build at 2019-02-05 14:28:11
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)
 ## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)
-## Starting build at 2019-02-04 18:06:55
+## Starting build at 2019-02-05 14:28:11
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
 ## visualizing AZ_plot.png - Phoenix
-## Finished build at 2019-02-04 18:06:55
+## Finished build at 2019-02-05 14:28:11
 ## Build completed in 0.00 minutes</code></pre></div>
 </div>
 <div id="forcing-rebuild-for-all-task-steps" class="section level3">
 <h3>Forcing rebuild for all task-steps</h3>
 <p>Similar to the one-target example, above, if we run the same <code>loop_tasks</code> command twice, nothing will get rebuilt the second time. Instead, all items will say <code>OK</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>)
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2019-02-04 18:06:55
+## ### Final check for completeness of all targets
+## Starting build at 2019-02-05 14:28:11
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -416,7 +392,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [    OK ] task_plan_1
-## Finished build at 2019-02-04 18:06:55
+## Finished build at 2019-02-05 14:28:11
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use <code>scdel</code> with the <code>target_names</code> argument set to <code>list_all_targets([remake_file])</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scdel</span>(<span class="dt">target_names=</span><span class="kw">list_all_targets</span>(<span class="st">'task_plan_1.yml'</span>), <span class="dt">remake_file=</span><span class="st">'task_plan_1.yml'</span>)
@@ -435,28 +411,28 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## (   DEL ) task_plan_1       |  rm(&quot;task_plan_1&quot;)</code></pre></div>
 <p>Now when we run the entire loop, everything gets rebuilt:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>)
 ## 
                                                                                
 ### Starting loop attempt 1 of 30 with 3 of 3 tasks remaining:
 ## 
-  Building WI [<span class="op">--------------------------------------------------------</span>]   <span class="dv">0</span>%  preparing WI
+  Building WI [--------------------------------------------------------]   <span class="dv">0</span>%  preparing WI
 ## visualizing WI_plot.png - Madison
 ## reporting on WI.pdf
 ## 
-  Building AZ [<span class="op">==</span><span class="er">================&gt;</span><span class="op">-------------------------------------</span>]  <span class="dv">33</span>%  preparing AZ
+  Building AZ [==<span class="er">================&gt;</span>-------------------------------------]  <span class="dv">33</span>%  preparing AZ
 ## visualizing AZ_plot.png - Phoenix
 ## reporting on AZ.pdf
 ## 
-  Building PA [<span class="op">==</span><span class="er">==================================&gt;</span><span class="op">-------------------</span>]  <span class="dv">67</span>%  preparing PA
+  Building PA [==<span class="er">==================================&gt;</span>-------------------]  <span class="dv">67</span>%  preparing PA
 ## visualizing PA_plot.png - Harrisburg
 ## reporting on PA.pdf
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2019-02-04 18:06:56
+## ### Final check for completeness of all targets
+## Starting build at 2019-02-05 14:28:13
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -471,7 +447,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-02-04 18:06:56
+## Finished build at 2019-02-05 14:28:13
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>Again, the less-typing solution is to force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="kw">list_all_targets</span>(<span class="st">'task_plan_1.yml'</span>), <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)
@@ -488,7 +464,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## (   DEL ) PA.pdf            |  file.remove(&quot;PA.pdf&quot;)
 ## (   DEL ) states/log/PA.ind |  file.remove(&quot;states/log/PA.ind&quot;)
 ## (   DEL ) task_plan_1       |  rm(&quot;task_plan_1&quot;)
-## Starting build at 2019-02-04 18:06:57
+## Starting build at 2019-02-05 14:28:13
 ## &lt;  MAKE &gt; WI_prep
 ## &lt;  MAKE &gt; WI_plot.png
 ## &lt;  MAKE &gt; WI.pdf
@@ -524,7 +500,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## reporting on PA.pdf
 ## [ BUILD ] states/log/PA.ind |  sc_indicate(&quot;states/log/PA.ind&quot;)
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-02-04 18:06:57
+## Finished build at 2019-02-05 14:28:13
 ## Build completed in 0.01 minutes</code></pre></div>
 </div>
 </div>
@@ -548,7 +524,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## (   DEL ) task_plan_1       |  rm(&quot;task_plan_1&quot;)</code></pre></div>
 <p>You can specify an intersection of tasks and steps that you want to run. For example, let’s only run the prep step for PA first:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>,
   <span class="dt">task_names=</span><span class="st">'PA'</span>,
   <span class="dt">step_names=</span><span class="st">'prep'</span>)
@@ -556,35 +532,35 @@ All tasks complete [<span class="op">==</span><span class="er">=================
                                                                                
 ### Starting loop attempt 1 of 30 with 1 of 1 tasks remaining:
 ## 
-  Building PA [<span class="op">--------------------------------------------------------</span>]   <span class="dv">0</span>%  preparing PA
+  Building PA [--------------------------------------------------------]   <span class="dv">0</span>%  preparing PA
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
+## ### Final check for completeness of all targets
 ## Set task_names=NULL, step_names=NULL to build the job target.
 ## Until then, expect this error:
 ##   'command for [target] did not create file'</code></pre></div>
 <p>Note that an error is thrown at the end to prevent the indicator file from being created. This is useful because it means we can keep running <code>loop_tasks</code> on subsets of the batch until everything is done.</p>
 <p>Alternatively, you can run a step (and any dependencies to that step) for all tasks. Here let’s run only the plotting steps (and therefore also the prepping steps) for all states:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>,
   <span class="dt">step_names=</span><span class="st">'plot'</span>)
 ## 
                                                                                
 ### Starting loop attempt 1 of 30 with 3 of 3 tasks remaining:
 ## 
-  Building WI [<span class="op">--------------------------------------------------------</span>]   <span class="dv">0</span>%  preparing WI
+  Building WI [--------------------------------------------------------]   <span class="dv">0</span>%  preparing WI
 ## visualizing WI_plot.png - Madison
 ## 
-  Building AZ [<span class="op">==</span><span class="er">================&gt;</span><span class="op">-------------------------------------</span>]  <span class="dv">33</span>%  preparing AZ
+  Building AZ [==<span class="er">================&gt;</span>-------------------------------------]  <span class="dv">33</span>%  preparing AZ
 ## visualizing AZ_plot.png - Phoenix
 ## 
-  Building PA [<span class="op">==</span><span class="er">==================================&gt;</span><span class="op">-------------------</span>]  <span class="dv">67</span>%  visualizing PA_plot.png <span class="op">-</span><span class="st"> </span>Harrisburg
+  Building PA [==<span class="er">==================================&gt;</span>-------------------]  <span class="dv">67</span>%  visualizing PA_plot.png -<span class="st"> </span>Harrisburg
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
+## ### Final check for completeness of all targets
 ## Checking file 1 of 3: WI_plot.png
 ## Checking file 2 of 3: AZ_plot.png
 ## Checking file 3 of 3: PA_plot.png
@@ -593,20 +569,20 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ##   'command for [target] did not create file'</code></pre></div>
 <p>Or you can run a complete task, or handful of tasks, without touching the others. Here we run PA and AZ only:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>,
   <span class="dt">task_names=</span><span class="kw">c</span>(<span class="st">'PA'</span>,<span class="st">'AZ'</span>))
 ## 
                                                                                
 ### Starting loop attempt 1 of 30 with 2 of 2 tasks remaining:
 ## 
-  Building PA [<span class="op">--------------------------------------------------------</span>]   <span class="dv">0</span>%  reporting on PA.pdf
+  Building PA [--------------------------------------------------------]   <span class="dv">0</span>%  reporting on PA.pdf
 ## 
-  Building AZ [<span class="op">==</span><span class="er">=========================&gt;</span><span class="op">----------------------------</span>]  <span class="dv">50</span>%  reporting on AZ.pdf
+  Building AZ [==<span class="er">=========================&gt;</span>----------------------------]  <span class="dv">50</span>%  reporting on AZ.pdf
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
+## ### Final check for completeness of all targets
 ## Checking file 1 of 2: states/log/PA.ind
 ## Checking file 2 of 2: states/log/AZ.ind
 ## Set task_names=NULL, step_names=NULL to build the job target.
@@ -614,18 +590,18 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ##   'command for [target] did not create file'</code></pre></div>
 <p>Now if we run the full loop without constraints, the only things left to build are the WI report, the final indicator for each task (built silently) and the final indicator file for the whole batch (target <code>task_plan_1</code>).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">loop_tasks</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">1</span>,
+  <span class="dt">task_plan=</span>task_plan_1,
   <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>)
 ## 
                                                                                
 ### Starting loop attempt 1 of 30 with 1 of 3 tasks remaining:
 ## 
-  Building WI [<span class="op">==</span><span class="er">==================================&gt;</span><span class="op">-------------------</span>]  <span class="dv">67</span>%  reporting on WI.pdf
+  Building WI [==<span class="er">==================================&gt;</span>-------------------]  <span class="dv">67</span>%  reporting on WI.pdf
 ## 
-All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
+All tasks complete [==<span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
-## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2019-02-04 18:06:59
+## ### Final check for completeness of all targets
+## Starting build at 2019-02-05 14:28:16
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -640,20 +616,20 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-02-04 18:06:59
+## Finished build at 2019-02-05 14:28:16
 ## Build completed in 0.00 minutes</code></pre></div>
 </div>
 <div id="indicator-files-options" class="section level2">
 <h2>Indicator files options</h2>
 <p>If you have a really lightweight project and want to skip the indicator files, you can do so. To skip the <code>complete</code> step and accompanying .ind files, set <code>add_complete=FALSE</code>. If you also intend not to create a final indicator file for the entire task batch, you can also skip setting <code>ind_dir</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">task_plan_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">create_task_plan</span>(
-  task_config<span class="op">$</span>id,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">task_plan_2 &lt;-<span class="st"> </span><span class="kw">create_task_plan</span>(
+  task_config$id,
   <span class="kw">list</span>(step1, step2, step3),
   <span class="dt">final_steps=</span><span class="st">'report'</span>,
   <span class="dt">add_complete=</span><span class="ot">FALSE</span>)</code></pre></div>
 <p>To avoid creating an indicator file when the entire batch is complete, set <code>ind_complete=FALSE</code> in <code>create_task_makefile</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">create_task_makefile</span>(
-  <span class="dt">task_plan=</span>task_plan_<span class="dv">2</span>,
+  <span class="dt">task_plan=</span>task_plan_2,
   <span class="dt">makefile=</span><span class="st">'task_plan_2.yml'</span>,
   <span class="dt">include=</span><span class="kw">c</span>(),
   <span class="dt">packages=</span><span class="kw">c</span>(<span class="st">'ggplot2'</span>),
