@@ -1,43 +1,83 @@
+## Shared Cache {.tabset .tabset-fade .tabset-pills}
+
+Alison Appling, 
+July 31, 2018 
+
 ---
 title: "Shared cache"
 author: "Alison Appling"
 date: "July 31, 2018"
 output: rmarkdown::html_vignette
+  toc: true
+  toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{Shared cache}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
+
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
 knitr::opts_knit$set(root.dir = tempdir())
 ```
 
-## Setup
 
-```{r libs, message=FALSE}
-library(scipiper)
-library(dplyr)
+### Terms and concept
+
+####Terms
+
+* `Data files`: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
+* `Indicator files`: git-versioned files that promise the analyst that the data file exists remotely 
+* `Build status files`: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date) 
+* `Target`: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be indicator files. 
+
+####Concept
+
+A **s**hared **c**ache (**sc** of `scmake`) is a cloud data storage location where raw, intermediate, and/or final data products from an analysis project are contributed to and accessible by multiple analysts. Not all scipiper projects will use a shared cache.
+
+`Data files` only _need_ to be local when the analyst is computing with the `data file`. `Indicator files` (`.ind`) represent the remote shared cache among project participants. This allows analyst #1 to compute part of the project, upload output in the project's shared cache, and analyst #2 can use the output from analyst #1 without redoing the computing performed by analyst #1 
+
+Workflow dependencies are connected via the `indicator files`. Recipes (e.g. R scripts) used to create the `indicator files` pull down the `data files` from the shared cache using `scipiper` functions such as `gd_get()`. 
+
+
+Example of `.ind` file dependency where the function `select_sites()` uses `gd_get()` and the indicator file `1_data/out/compiled_data.rds.ind` as a dependency to pull down the data file (`compiled_data.rds`) from the shared cache.
+```{r, eval=FALSE}
+target_default: 1_data
+
+sources: 
+  - 1_data/src/gather_data.R
+  - 1_data/src/select_sites.R
+
+targets:
+
+  1_data:
+    depends:
+      - 1_data/out/compiled_data.rds.ind
+      - 1_data/out/selected_sites.rds.ind
+
+  1_data/out/compiled_data.rds.ind:
+    command: gather_stream_data(
+      ind_file = target_name,
+      state = I("WI"), 
+      gd_config = 'lib/cfg/gd_config.yml')
+
+  1_data/out/selected_sites.rds.ind:
+    command: select_sites(
+      ind_file = target_name,
+      input_ind_file = '1_data/out/compiled_data.rds.ind',
+      gd_config = 'lib/cfg/gd_config.yml')
+
 ```
 
-## Shared cache
-
-A shared cache is a cloud data storage location where raw, intermediate, and/or final data products from an analysis project are contributed to and accessible by multiple analysts. Not all scipiper projects will use a shared cache.
-
-### Pros and Cons
-
-Advantages of a shared cache:
-* Not every analyst needs to build every target, saving on total processing time.
-* Targets that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.
-* Intermediate and final products can be immediately visible to anyone who has access to the shared cache, whether they are contributing to the analysis or simply inspecting/using the output.
-
-Disadvantages of a shared cache (as currently implemented):
-* In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the data) and the git repository (the metadata). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project.
-* Though we've done much to ensure this doesn't happen, it's conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.
-* Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.
-
 ### Guidelines
+
+####How many targets should I use per data file?
+
+* 3 target method: `data file`, `indicator file`, 
+  create, push, retrieve a data file 
+* 2 targets 
+  create+push, retrieve a data file 
 
 Projects using a shared cache should follow these guidelines:
 
@@ -50,3 +90,20 @@ Projects using a shared cache should follow these guidelines:
 * `git commit` all .ind files (with occasional exception of .ind files within a task plan; those require additional thought). `git ignore` all data files.
 
 * To force a rebuild, either use the `force=TRUE` argument to `scmake()` or use `scdel()` to delete indicator files. There's seldom any benefit to deleting data files (by any method); usually deleting the indicator files is plenty. When deleting indicator files, `force=TRUE` or `scdel()` are preferable to directly deleting the .ind files because if only the .ind files are deleted, the scipiper database may fail to update properly when the .ind files are rebuilt.
+
+
+### Pros and Cons 
+
+####Advantages of a shared cache:
+
+* Not every analyst needs to build every target, saving on total processing time.
+* Targets that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.
+* Intermediate and final products can be immediately visible to anyone who has access to the shared cache, whether they are contributing to the analysis or simply inspecting/using the output.
+
+####Disadvantages of a shared cache (as currently implemented):
+
+* In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the data) and the git repository (the metadata). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project.
+* Though we've done much to ensure this doesn't happen, it's conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.
+* Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.
+
+##
