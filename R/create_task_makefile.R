@@ -28,7 +28,10 @@
 #' @param finalize_fun a string function name (or vector of function names, of equal 
 #'   length to `target_name`). Using NULL for `finalize_fun` will turn the 
 #'   final steps from the task plan into depends for the default/all target.
-#' @param as_promises ... details here...
+#' @param as_promises hides the actual `target_name` file/object from remake, and uses a 
+#'   dummy target name instead, with suffix "_promise". This allows us to avoid cyclic 
+#'   dependencies. Naming convention for `_promise` variables is to drop any dir structure 
+#'   from the `target_name`
 #' @return the file name of the makefile that was created, 
 #'   or the string output (if makefile = NULL)
 #' @export
@@ -75,14 +78,20 @@ create_task_makefile <- function(
   # conflicting with other targets) and allows the calling remake file to use
   # ind_file as a target (even though this target is the one responsible for
   # actually writing to ind_file)
-  if (is.null(makefile) & missing(target_name)){
-    stop('target_name must be specified when makefile is NULL')
-  }
+  
   # default is to use the makefile naming to assign job name
   # when makefile isn't used (string output), we use the target_name to create default job name
-  job_name <- ifelse(is.null(makefile), 
-                     paste0(tools::file_path_sans_ext(basename(target_name)), '_all'), 
-                     tools::file_path_sans_ext(basename(makefile))) 
+  if (is.null(makefile)){
+    if (missing(target_name)){
+      job_name <- "all_tasks"
+    } else {
+      job_name <- paste0(tools::file_path_sans_ext(basename(target_name)), '_all')
+    }
+  } else {
+    job_name <- tools::file_path_sans_ext(basename(makefile))
+  }
+
+  
   
   if(missing(target_name)){
     ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the target_name
@@ -91,7 +100,7 @@ create_task_makefile <- function(
   }
   
   if (!is.null(finalize_fun) & length(target_name) != length(finalize_fun)){
-    stop('when specifying function names for `finalize_fun`, an equal number of `target_name`(s) need to be specified', call. = FALSE)
+    stop('when specifying function names for `finalize_fun`, an equal number of `target_name`(s) need to be specified')
   }
   
   job_steps <- attr(task_plan, 'final_steps')
@@ -112,13 +121,14 @@ create_task_makefile <- function(
       tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
     }
   }
+  
   pos_extensions <- unique(c(remake::file_extensions(), file_extensions))
   
-  formatted_final_targets <- sapply(X = targets_to_combine, function(x){
-    if (remake:::target_is_file(x, file_extensions = pos_extensions)){
-      paste0("'", x, "'")
+  formatted_final_targets <- sapply(X = targets_to_combine, function(target){
+    if (remake:::target_is_file(target, file_extensions = pos_extensions)){
+      paste0("'", target, "'")
     } else {
-      x
+      target
     }
   })
   
@@ -147,7 +157,7 @@ create_task_makefile <- function(
             })
           } else {
             combine_str <- "%s(\n      %s)"
-            sprintf(combine_str, finalize_fun[i], to_combine) # use PR #90 when it is merged
+            sprintf(combine_str, finalize_fun[i], to_combine) 
           }
         })
     })

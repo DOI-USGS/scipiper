@@ -40,7 +40,10 @@ to be created by \code{finalize_fun}}
 length to \code{target_name}). Using NULL for \code{finalize_fun} will turn the
 final steps from the task plan into depends for the default/all target.}
 
-\item{as_promises}{... details here...}
+\item{as_promises}{hides the actual \code{target_name} file/object from remake, and uses a
+dummy target name instead, with suffix "_promise". This allows us to avoid cyclic
+dependencies. Naming convention for \code{_promise} variables is to drop any dir structure
+from the \code{target_name}}
 }
 \value{
 the file name of the makefile that was created,
