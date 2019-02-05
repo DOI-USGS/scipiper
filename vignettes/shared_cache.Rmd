@@ -1,6 +1,6 @@
 ## Shared Cache {.tabset .tabset-fade .tabset-pills}
 
-Alison Appling, July 31, 2018 
+Alison Appling, July 31, 2018;  
 Jake Zwart, February 4, 2019
 
 ---
@@ -17,8 +17,10 @@ vignette: >
 ---
 <head>
 <style>
-sym {color: red;}
-sol {color: blue;}
+data {color: #CA3542;}
+ind {color: #FEBC38;}
+build {color: #697F98;} 
+target {color: #37AFA9}
 </style>
 </head>
 
@@ -33,23 +35,24 @@ knitr::opts_knit$set(root.dir = tempdir())
 
 ####Terms
 
-* `Data files`: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
-* `Indicator files`: git-versioned files that promise the analyst that the data file exists remotely 
-* `Build status files`: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date) 
-* `Target`: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be indicator files. 
+* <data>**Data files**</data>: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
+* <ind>**Indicator files**</ind>: git-versioned files that promise the analyst that the data file exists remotely 
+* <build>**Build status files**</build>: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date) 
+* <target>**Target**</target>: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be <ind>indicator files</ind>. 
 
 ####Concept
 
 A **s**hared **c**ache (**sc** of `scmake`) is a cloud data storage location where raw, intermediate, and/or final data products from an analysis project are contributed to and accessible by multiple analysts. Not all scipiper projects will use a shared cache.
 
-`Data files` only _need_ to be local when the analyst is computing with the `data file`. `Indicator files` (`.ind`) represent the remote shared cache among project participants. This allows analyst #1 to compute part of the project, upload output in the project's shared cache, and analyst #2 can use the output from analyst #1 without redoing the computing performed by analyst #1 
+<data>**Data files**</data> only _need_ to be local when the analyst is computing with the <data>**data file**</data>. <ind>**Indicator files**</ind> (`.ind`) represent the remote shared cache among project participants. This allows analyst #1 to compute part of the project, upload output in the project's shared cache, and analyst #2 can use the output from analyst #1 without redoing the computing performed by analyst #1 
 
-Workflow dependencies are connected via the `indicator files`. Recipes (e.g. R scripts) used to create the `indicator files` pull down the `data files` from the shared cache using `scipiper` functions such as `gd_get()`. 
+Workflow dependencies are connected via the <ind>**indicator files**</ind>. Recipes (e.g. R scripts) used to create the <ind>**indicator files**</ind> pull down the <data>**data files**</data> from the shared cache using `scipiper` functions such as `gd_get()`. 
 
+<build>**Build files**</build> tell remake if the <ind>**indicator files**</ind> (and other <target>**targets**</target> that are <data>**data files**</data>) and their dependencies are up-to-date. <target>**Targets**</target> that are not saved as <ind>**indicator**</ind> or <data>**data**</data> files (e.g. R objects) will not have a <build>**build status file**</build> and will be excuted every time it is called.  
 
-Example of `.ind` file dependency where the function `select_sites()` uses `gd_get()` and the indicator file `1_data/out/compiled_data.rds.ind` as a dependency to pull down the data file (`compiled_data.rds`) from the shared cache.
-```{r, eval=FALSE}
-target_default: 1_data
+Example of `.ind` file dependency where the function `select_sites()` uses `gd_get()` and the <ind>**indicator file**</ind> `1_data/out/compiled_data.rds.ind` as a dependency to pull down the <data>**data file**</data> (`compiled_data.rds`) from the shared cache. 
+<pre>
+target_default: <target>1_data</target>
 
 sources: 
   - 1_data/src/gather_data.R
@@ -57,58 +60,100 @@ sources:
 
 targets:
 
-  1_data:
-    depends:
-      - 1_data/out/compiled_data.rds.ind
-      - 1_data/out/selected_sites.rds.ind
+  <target>1_data:</target>
+     depends:
+      - <ind>1_data/out/compiled_data.rds.ind</ind>
+      - <ind>1_data/out/selected_sites.rds.ind</ind>
 
-  1_data/out/compiled_data.rds.ind:
+  <ind>1_data/out/compiled_data.rds.ind:</ind>
     command: gather_stream_data(
       ind_file = target_name,
       state = I("WI"), 
       gd_config = 'lib/cfg/gd_config.yml')
 
-  1_data/out/selected_sites.rds.ind:
+  <ind>1_data/out/selected_sites.rds.ind:</ind>
     command: select_sites(
       ind_file = target_name,
-      input_ind_file = '1_data/out/compiled_data.rds.ind',
+      input_ind_file = <ind>'1_data/out/compiled_data.rds.ind'</ind>,
       gd_config = 'lib/cfg/gd_config.yml')
+</pre>
 
-```
 
 ### Guidelines
 
-####How many targets should I use per data file?
+####Projects using a shared cache should follow these guidelines:
 
-* 3 target method: `data file`, `indicator file`, 
-  create, push, retrieve a data file 
-* 2 targets 
-  create+push, retrieve a data file 
+* Use <ind>**indicator files**</ind> (usually an `.ind` suffix) to represent most or all of the chain of connected <target>**targets**</target> within your remake files. Each `.ind` file should be one of two products of a recipe (e.g. R script), where the other product is the creation of a <data>**data file**</data>, either locally and/or in the shared cache.
 
-Projects using a shared cache should follow these guidelines:
+* Always build <target>**targets**</target> using `scipiper::scmake()` rather than `remake::make()`. Though the functions are outwardly very similar, `scmake()` maintains an extra layer of metadata that allows multiple users to share a single project <build>**build status**</build> (e.g., "file x.rds.ind is up to date; file y.rds.ind is out of date"). In a shared-cache project, you should not even need to load the `remake` package directly.
 
-* Use indicator files (usually an `.ind` suffix) to represent most or all of the chain of connected targets within your remake files. Each .ind file should be one of two products of a recipe, where the other product is the creation of a data file, either locally and/or in the shared cache.
+* Generally avoid using R objects as `remake/scmake` <target>**targets**</target>...but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of <data>**data**</data> as input, that target should usually be a file rather than an R object.
 
-* Always build targets using `scipiper::scmake()` rather than `remake::make()`. Though the functions are outwardly very similar, `scmake()` maintains an extra layer of metadata that allows multiple users to share a single project status (e.g., "file x.rds.ind is up to date; file y.rds.ind is out of date"). In a shared-cache project, you should not even need to load the `remake` package directly.
+* `git commit` all <ind>indicator files</ind> (with occasional exception of <ind>indicator files</ind> within a task plan; those require additional thought). `git ignore` all <data>**data files**</data>.
 
-* Generally avoid using R objects as `remake/scmake` targets...but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of data as input, that target should usually be a file rather than an R object.
+* To force a rebuild, either use the `force=TRUE` argument to `scmake()` or use `scdel()` to delete <ind>**indicator files**</ind>. There's seldom any benefit to deleting <data>**data files**</data> (by any method); usually deleting the <ind>**indicator files**</ind> is plenty. When deleting <ind>**indicator files**</ind>, `force=TRUE` or `scdel()` are preferable to directly deleting the `.ind` files because if only the `.ind` files are deleted, the `scipiper` database may fail to update properly when the `.ind` files are rebuilt.
 
-* `git commit` all .ind files (with occasional exception of .ind files within a task plan; those require additional thought). `git ignore` all data files.
+####How many <target>targets</target> should I use per <data>data file</data>?
 
-* To force a rebuild, either use the `force=TRUE` argument to `scmake()` or use `scdel()` to delete indicator files. There's seldom any benefit to deleting data files (by any method); usually deleting the indicator files is plenty. When deleting indicator files, `force=TRUE` or `scdel()` are preferable to directly deleting the .ind files because if only the .ind files are deleted, the scipiper database may fail to update properly when the .ind files are rebuilt.
+* 2 <target>targets</target> method: 
+  <p>- create an <ind>**indicator file**</ind> and push a <data>**data file**</data>; 
+     - retrive the <data>**data file**</data> 
+</p>
+
+<pre>
+targets:
+
+  <ind>1_data/out/compiled_data.rds.ind:</ind>
+    command: gather_stream_data(
+      ind_file = target_name,
+      state = I("WI"), 
+      gd_config = 'lib/cfg/gd_config.yml')
+  <data>1_data/out/compiled_data.rds:</data>
+    command: gd_get(<ind>'1_data/out/compiled_data.rds.ind'</ind>, config_file='lib/cfg/gd_config.yml')
+
+</pre>
+
+* 3 <target>target</target> method: 
+  <p>- create an <ind>**indicator file**</ind> 
+     - push a <data>**data file**</data>; 
+     - retrive the <data>**data file**</data> 
+</p>
+
+<pre>
+targets:
+
+  <ind>1_data/tmp/compiled_data.rds.ind:</ind>
+    command: gather_stream_data(
+      ind_file = target_name,
+      state = I("WI"), 
+      gd_config = 'lib/cfg/gd_config.yml')
+      
+  <ind>1_data/out/compiled_data.rds.ind:</ind>
+    command: gd_put(
+      remote_ind = target_name,
+      local_source = <ind>'1_data/tmp/compiled_data.rds.ind'</ind>,
+      mock_get = I('move'),
+      on_exists = I('replace'))
+      
+  <data>1_data/out/compiled_data.rds:</data>
+    command: gd_get(<ind>'1_data/out/compiled_data.rds.ind'</ind>, config_file='lib/cfg/gd_config.yml')
+
+</pre>
+
+
 
 
 ### Pros and Cons 
 
 ####Advantages of a shared cache:
 
-* Not every analyst needs to build every target, saving on total processing time.
-* Targets that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.
+* Not every analyst needs to build every <target>**target**</target>, saving on total processing time.
+* <target>**Targets**</target> that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.
 * Intermediate and final products can be immediately visible to anyone who has access to the shared cache, whether they are contributing to the analysis or simply inspecting/using the output.
 
 ####Disadvantages of a shared cache (as currently implemented):
 
-* In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the data) and the git repository (the metadata). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project.
+* In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the <data>**data**</data>) and the git repository (the metadata; <ind>**indicator**</ind> and <build>**build status**</build> files). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project. See *Common Pitfalls and Solutions* vignette. 
 * Though we've done much to ensure this doesn't happen, it's conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.
 * Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.
 
