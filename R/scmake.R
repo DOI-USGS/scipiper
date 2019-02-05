@@ -216,6 +216,7 @@ sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_ta
 #' @param ... files to combine into a single indicator file
 #' 
 #' @details light wrapper on `sc_indicate`
+#' @export
 combine_to_ind <- function(ind_file, ...){
   sc_indicate(ind_file = ind_file, data_file = c(...))
 } 
