@@ -1,7 +1,7 @@
 ## Shared Cache {.tabset .tabset-fade .tabset-pills}
 
-Alison Appling, 
-July 31, 2018 
+Alison Appling, July 31, 2018 
+Jake Zwart, February 4, 2019
 
 ---
 title: "Shared cache"
@@ -15,6 +15,12 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
+<head>
+<style>
+sym {color: red;}
+sol {color: blue;}
+</style>
+</head>
 
   
 ```{r setup, include=FALSE}
