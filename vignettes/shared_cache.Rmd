@@ -4,12 +4,9 @@ Alison Appling, July 31, 2018;
 Jake Zwart, February 4, 2019
 
 ---
-title: "Shared cache"
 author: "Alison Appling"
 date: "July 31, 2018"
 output: rmarkdown::html_vignette
-  toc: true
-  toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{Shared cache}
   %\VignetteEngine{knitr::rmarkdown}
@@ -27,7 +24,6 @@ target {color: #37AFA9}
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
-knitr::opts_knit$set(root.dir = tempdir())
 ```
 
 
