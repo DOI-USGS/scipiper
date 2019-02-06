@@ -96,7 +96,11 @@ create_task_makefile <- function(
   if(missing(target_name)){
     ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the target_name
     ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the target_name
-    target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))
+    if (is.null(ind_dir)){
+      target_name <- as_ind_file(job_name, ind_ext)
+    } else {
+      target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))  
+    }
   }
   
   if (!is.null(finalize_fun) & length(target_name) != length(finalize_fun)){
