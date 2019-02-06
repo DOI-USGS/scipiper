@@ -231,7 +231,8 @@ loop_tasks(
 
 One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `list_all_targets([remake_file])`.
 ```{r delete_all}
-scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 Now when we run the entire loop, everything gets rebuilt:
@@ -243,7 +244,8 @@ loop_tasks(
 
 Again, the less-typing solution is to force a rebuild with the `force=TRUE` argument to `scmake`:
 ```{r force_all}
-scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 
@@ -253,7 +255,8 @@ Not analyses will go smoothly the first time you try. You can use `loop_tasks` t
 
 Before we can demonstrate, we'll need to delete all output files and remake status information again:
 ```{r delete_all2}
-scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
@@ -301,7 +304,7 @@ task_plan_2 <- create_task_plan(
   add_complete=FALSE)
 ```
 
-To avoid creating an indicator file when the entire batch is complete, set `ind_complete=FALSE` in `create_task_makefile`:
+To avoid combining the outputs of a task plan when the entire batch is complete, set `finalize_fun = NULL` in `create_task_makefile`:
 
 ```{r makefile2, results='markup'}
 create_task_makefile(
@@ -311,7 +314,7 @@ create_task_makefile(
   packages=c('ggplot2'),
   sources=c('script.R'),
   file_extensions=c('ind'),
-  ind_complete=FALSE)
+  finalize_fun = NULL)
 ```
 
 Now here are the contents of task_plan_2.yml, which will not create any `.ind` files:

@@ -361,6 +361,22 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
   targets
 }
 
+#' list targets in remake file that are fake/dummy/group targets
+#' 
+#' @param remake_file filename of the remake YAML file from which targets should
+#'   be collected
+#'   
+#' @details this is an internal file. We may want to make it recursive, but I
+#'   don't see a use-case right now for that. 
+list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
+  # load the remake file as a yaml and as remake loads it
+  remake_list <- yaml::yaml.load_file(remake_file)
+  
+  # get all explicitly defined targets
+  targets <- names(remake_list$targets)
+  targets[sapply(remake_list$targets, FUN = function(x) is.null(x$command), USE.NAMES = FALSE)]
+}
+
 #' Produce a table describing the remake build status relative to 1+ targets
 #'
 #' @param target_names character vector of targets for which to determine build
