@@ -31,9 +31,9 @@ knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
 
 ####Terms
 
-* <data>**Data files**</data>: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
-* <ind>**Indicator files**</ind>: git-versioned files that promise the analyst that the data file exists remotely 
-* <build>**Build status files**</build>: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date) 
+* <data>**Data file**</data>: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
+* <ind>**Indicator file**</ind>: git-versioned files that promise the analyst that the data file exists remotely 
+* <build>**Build status file**</build>: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date) 
 * <target>**Target**</target>: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be <ind>indicator files</ind>. 
 
 ####Concept
@@ -65,13 +65,13 @@ targets:
     command: gather_stream_data(
       ind_file = target_name,
       state = I("WI"), 
-      gd_config = 'lib/cfg/gd_config.yml')
+      gd_config = <data>'lib/cfg/gd_config.yml'</data>)
 
   <ind>1_data/out/selected_sites.rds.ind:</ind>
     command: select_sites(
       ind_file = target_name,
       input_ind_file = <ind>'1_data/out/compiled_data.rds.ind'</ind>,
-      gd_config = 'lib/cfg/gd_config.yml')
+      gd_config = <data>'lib/cfg/gd_config.yml'</data>)
 </pre>
 
 
@@ -85,58 +85,67 @@ targets:
 
 * Generally avoid using R objects as `remake/scmake` <target>**targets**</target>...but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of <data>**data**</data> as input, that target should usually be a file rather than an R object.
 
-* `git commit` all <ind>indicator files</ind> (with occasional exception of <ind>indicator files</ind> within a task plan; those require additional thought). `git ignore` all <data>**data files**</data>.
+* `git commit` all <ind>**indicator files**</ind> and <build>**build files**</build> (with occasional exception of <ind>**indicator files**</ind> within a task plan; those require additional thought). `git ignore` all <data>**data files**</data> *except* those that are  necessary to pipeline basic functions (e.g. <data>**gd_config.yml**</data>). 
 
 * To force a rebuild, either use the `force=TRUE` argument to `scmake()` or use `scdel()` to delete <ind>**indicator files**</ind>. There's seldom any benefit to deleting <data>**data files**</data> (by any method); usually deleting the <ind>**indicator files**</ind> is plenty. When deleting <ind>**indicator files**</ind>, `force=TRUE` or `scdel()` are preferable to directly deleting the `.ind` files because if only the `.ind` files are deleted, the `scipiper` database may fail to update properly when the `.ind` files are rebuilt.
 
 ####How many <target>targets</target> should I use per <data>data file</data>?
 
-* 2 <target>targets</target> method: 
-  <p>- create an <ind>**indicator file**</ind> and push a <data>**data file**</data>; 
-     - retrive the <data>**data file**</data> 
-</p>
+#####3 <target>**target**</target> method: 
+1. create a <data>**data file**</data> 
+2. push a <data>**data file**</data> and create an <ind>**indicator file**</ind> 
+3. retrive the <data>**data file**</data> 
+
+######Advantages
+- <data>**Data**</data> and <ind>**indicator**</ind> file creation is verbose and clear
+- Helps with fault tolerance by splitting tasks into multiple targets 
+- This method may be necessary when using standard functions for data creation or retrieval  
 
 <pre>
 targets:
 
-  <ind>1_data/out/compiled_data.rds.ind:</ind>
+  <data>1_data/tmp/nitrate_data_pull.rds.ind:</data>
     command: gather_stream_data(
-      ind_file = target_name,
-      state = I("WI"), 
-      gd_config = 'lib/cfg/gd_config.yml')
-  <data>1_data/out/compiled_data.rds:</data>
-    command: gd_get(<ind>'1_data/out/compiled_data.rds.ind'</ind>, config_file='lib/cfg/gd_config.yml')
+      file = target_name,
+      siteNumber = I('01118500'),
+      parameterCd = I('00630'),
+      startDate = I('1980-01-01'),
+      endDate = I('2016-01-01'))
 
-</pre>
-
-* 3 <target>target</target> method: 
-  <p>- create an <ind>**indicator file**</ind> 
-     - push a <data>**data file**</data>; 
-     - retrive the <data>**data file**</data> 
-</p>
-
-<pre>
-targets:
-
-  <ind>1_data/tmp/compiled_data.rds.ind:</ind>
-    command: gather_stream_data(
-      ind_file = target_name,
-      state = I("WI"), 
-      gd_config = 'lib/cfg/gd_config.yml')
-      
-  <ind>1_data/out/compiled_data.rds.ind:</ind>
+  <ind>1_data/out/nitrate_data_pull.rds.ind:</ind>
     command: gd_put(
       remote_ind = target_name,
-      local_source = <ind>'1_data/tmp/compiled_data.rds.ind'</ind>,
-      mock_get = I('move'),
-      on_exists = I('replace'))
+      local_source = <data>'1_data/tmp/nitrate_data_pull.rds.ind'</data>,
+      gd_config = <data>'lib/cfg/gd_config.yml'</data>)
       
-  <data>1_data/out/compiled_data.rds:</data>
-    command: gd_get(<ind>'1_data/out/compiled_data.rds.ind'</ind>, config_file='lib/cfg/gd_config.yml')
+  <data>1_data/out/nitrate_data_pull.rds:</data>
+    command: gd_get(<ind>'1_data/out/nitrate_data_pull.rds.ind'</ind>, config_file = <data>'lib/cfg/gd_config.yml'</data>)
 
 </pre>
 
+#####2 <target>**target**</target> method: 
+1. push a <data>**data file**</data> and create an <ind>**indicator file**</ind> 
+2. retrive the <data>**data file**</data> 
 
+######Advantages
+- More concise code and fewer <ind>**indicator**</ind> and <build>**build status**</build> files, thereby reducing the size of the repository 
+
+<pre>
+targets:
+
+  <ind>1_data/out/compiled_data.rds.ind:</ind>
+    command: gather_and_push_stream_data(
+      ind_file = target_name,
+      siteNumber = I('01118500'),
+      parameterCd = I('00630'),
+      startDate = I('1980-01-01'),
+      endDate = I('2016-01-01'), 
+      gd_config = <data>'lib/cfg/gd_config.yml'</data>)
+      
+  <data>1_data/out/compiled_data.rds:</data>
+    command: gd_get(<ind>'1_data/out/compiled_data.rds.ind'</ind>, config_file = <data>'lib/cfg/gd_config.yml'</data>)
+
+</pre>
 
 
 ### Pros and Cons 
