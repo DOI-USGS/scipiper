@@ -116,13 +116,13 @@ test_that("loop_tasks can force rebuild", {
   expect_true(any(grepl('file.remove\\("./AZ.ind"', initial_phase)))
   expect_true(any(grepl('file.remove\\("./CA.ind"', initial_phase)))
   expect_true(any(grepl('file.remove\\("./CO.ind"', initial_phase)))
-  expect_false(all(grepl('sc_indicate\\("./models.ind"', initial_phase)))
+  expect_false(any(grepl('combine_to_ind', initial_phase))) #\\("./models.ind"
   
   # Expect models.ind to be built during the final phase
   expect_false(all(grepl('Building AZ', final_phase)))
   expect_false(all(grepl('Building CA', final_phase)))
   expect_false(all(grepl('Building CO', final_phase)))
-  expect_true(any(grepl('sc_indicate\\("./models.ind"', final_phase)))
+  expect_true(any(grepl('combine_to_ind', final_phase))) #\\("./models.ind"
   
   options('scipiper.test_verbose'=NULL)
   cleanup_tasks_demo(dirinfo)
