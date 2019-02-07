@@ -42,7 +42,7 @@ test_that("can create task_makefile as string with defaults", {
 
 test_that("can create task_makefile with named target", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=NULL, target_name = 'my_states',
+    task_plan, makefile=NULL, final_targets = 'my_states',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'))
   remake_list <- yaml::yaml.load(task_makefile)
   expect_equal(tail(names(remake_list$targets), 1), "my_states_promise")
@@ -53,7 +53,7 @@ test_that("can create task_makefile with named target", {
 
 test_that("can create task_makefile with named target and remake_file", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = 'my_states',
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'))
   remake_list <- yaml::yaml.load_file(task_makefile)
   expect_equal(tail(names(remake_list$targets), 1), "my_states_promise")
@@ -64,7 +64,7 @@ test_that("can create task_makefile with named target and remake_file", {
 
 test_that("can create task_makefile with named target and remake_file w/o promises", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = 'my_states',
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), as_promises = FALSE)
   remake_list <- yaml::yaml.load_file(task_makefile)
   expect_equal(tail(names(remake_list$targets), 1), "my_states")
@@ -72,14 +72,14 @@ test_that("can create task_makefile with named target and remake_file w/o promis
 
 test_that("can't create task_makefile with unequal target names and combiners", {
   expect_error(task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = 'my_states',
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), as_promises = FALSE, 
     finalize_fun = c('combine_these','combine_those')))
 })
 
 test_that("task_makefiles with multiple combiners", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = c('these_states','those_states'),
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = c('these_states','those_states'),
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), as_promises = FALSE, 
     finalize_fun = c('combine_these','combine_those'))
   remake_list <- yaml::yaml.load_file(task_makefile)
@@ -88,7 +88,7 @@ test_that("task_makefiles with multiple combiners", {
                "combine_those( 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
   
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = c('these_states','those_states'),
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = c('these_states','those_states'),
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), 
     finalize_fun = c('combine_these','combine_those'))
   remake_list <- yaml::yaml.load_file(task_makefile)
@@ -97,7 +97,7 @@ test_that("task_makefiles with multiple combiners", {
 
 test_that("task_makefiles with promises w/ mix of files and objects", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), target_name = c('out/these_state_files.csv','those_states'),
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = c('out/these_state_files.csv','those_states'),
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), 
     finalize_fun = c('combine_these','combine_those'))
   remake_list <- yaml::yaml.load_file(task_makefile)

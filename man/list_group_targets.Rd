@@ -17,3 +17,4 @@ list targets in remake file that are fake/dummy/group targets
 this is an internal file. We may want to make it recursive, but I
 don't see a use-case right now for that.
 }
+\keyword{internal}

@@ -368,6 +368,7 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
 #'   
 #' @details this is an internal file. We may want to make it recursive, but I
 #'   don't see a use-case right now for that. 
+#' @keywords internal
 list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
   # load the remake file as a yaml and as remake loads it
   remake_list <- yaml::yaml.load_file(remake_file)

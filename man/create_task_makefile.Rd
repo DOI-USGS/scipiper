@@ -7,7 +7,7 @@
 create_task_makefile(task_plan, makefile, include = c(),
   packages = "scipiper", sources = c(), file_extensions = c("ind"),
   template_file = system.file("extdata/task_makefile.mustache", package =
-  "scipiper"), target_name, finalize_fun = "combine_to_ind",
+  "scipiper"), final_targets, finalize_funs = "combine_to_ind",
   as_promises = TRUE)
 }
 \arguments{
@@ -33,17 +33,17 @@ scipiper.}
 \item{template_file}{character name of the mustache template to render into
 \code{makefile}. The default is recommended}
 
-\item{target_name}{a file path (or vector of file paths) specifying final target(s)
-to be created by \code{finalize_fun}}
+\item{final_targets}{a file path or object name (or vector of either) specifying final target(s)
+to be created by \code{finalize_funs}}
 
-\item{finalize_fun}{a string function name (or vector of function names, of equal
-length to \code{target_name}). Using NULL for \code{finalize_fun} will turn the
+\item{finalize_funs}{a string function name (or vector of function names, of equal
+length to \code{final_targets}). Using NULL for \code{finalize_funs} will turn the
 final steps from the task plan into depends for the default/all target.}
 
-\item{as_promises}{hides the actual \code{target_name} file/object from remake, and uses a
+\item{as_promises}{hides the actual \code{final_targets} file/object from remake, and uses a
 dummy target name instead, with suffix "_promise". This allows us to avoid cyclic
 dependencies. Naming convention for \code{_promise} variables is to drop any dir structure
-from the \code{target_name}}
+from the \code{final_targets}}
 }
 \value{
 the file name of the makefile that was created,

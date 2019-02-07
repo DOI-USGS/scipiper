@@ -23,15 +23,15 @@
 #'   scipiper.
 #' @param template_file character name of the mustache template to render into
 #'   `makefile`. The default is recommended
-#' @param target_name a file path (or vector of file paths) specifying final target(s) 
-#'   to be created by `finalize_fun`
-#' @param finalize_fun a string function name (or vector of function names, of equal 
-#'   length to `target_name`). Using NULL for `finalize_fun` will turn the 
+#' @param final_targets a file path or object name (or vector of either) specifying final target(s) 
+#'   to be created by `finalize_funs`
+#' @param finalize_funs a string function name (or vector of function names, of equal 
+#'   length to `final_targets`). Using NULL for `finalize_funs` will turn the 
 #'   final steps from the task plan into depends for the default/all target.
-#' @param as_promises hides the actual `target_name` file/object from remake, and uses a 
+#' @param as_promises hides the actual `final_targets` file/object from remake, and uses a 
 #'   dummy target name instead, with suffix "_promise". This allows us to avoid cyclic 
 #'   dependencies. Naming convention for `_promise` variables is to drop any dir structure 
-#'   from the `target_name`
+#'   from the `final_targets`
 #' @return the file name of the makefile that was created, 
 #'   or the string output (if makefile = NULL)
 #' @export
@@ -68,8 +68,8 @@ create_task_makefile <- function(
   task_plan, makefile,
   include=c(), packages='scipiper', sources=c(), file_extensions=c('ind'),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
-  target_name, 
-  finalize_fun = 'combine_to_ind', 
+  final_targets, 
+  finalize_funs = 'combine_to_ind', 
   as_promises = TRUE) {
   
   # prepare the overall job task: list every step of every job as a dependency.
@@ -80,12 +80,12 @@ create_task_makefile <- function(
   # actually writing to ind_file)
   
   # default is to use the makefile naming to assign job name
-  # when makefile isn't used (string output), we use the target_name to create default job name
+  # when makefile isn't used (string output), we use the final_targets to create default job name
   if (is.null(makefile)){
-    if (missing(target_name)){
+    if (missing(final_targets) || length(final_targets) != 1){
       job_name <- "all_tasks"
     } else {
-      job_name <- paste0(tools::file_path_sans_ext(basename(target_name)), '_all')
+      job_name <- paste0(tools::file_path_sans_ext(basename(final_targets)), '_all')
     }
   } else {
     job_name <- tools::file_path_sans_ext(basename(makefile))
@@ -93,18 +93,18 @@ create_task_makefile <- function(
 
   
   
-  if(missing(target_name)){
-    ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the target_name
-    ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the target_name
+  if(missing(final_targets)){
+    ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the final_targets
+    ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the final_targets
     if (is.null(ind_dir)){
-      target_name <- as_ind_file(job_name, ind_ext)
+      final_targets <- as_ind_file(job_name, ind_ext)
     } else {
-      target_name <- file.path(ind_dir, as_ind_file(job_name, ind_ext))  
+      final_targets <- file.path(ind_dir, as_ind_file(job_name, ind_ext))  
     }
   }
   
-  if (!is.null(finalize_fun) & length(target_name) != length(finalize_fun)){
-    stop('when specifying function names for `finalize_fun`, an equal number of `target_name`(s) need to be specified')
+  if (!is.null(finalize_funs) & length(final_targets) != length(finalize_funs)){
+    stop('when specifying function names for `finalize_funs`, an equal number of `final_targetss` need to be specified')
   }
   
   job_steps <- attr(task_plan, 'final_steps')
@@ -136,7 +136,7 @@ create_task_makefile <- function(
     }
   })
   
-  if (is.null(finalize_fun)){
+  if (is.null(finalize_funs)){
     # when there is no finalize fun, the "jobs" are the final step targs and they have no new commands
     job <- lapply(seq_len(length(formatted_final_targets)), function(i){
       list(
@@ -146,22 +146,22 @@ create_task_makefile <- function(
     has_finalize_funs <- FALSE
   } else {
     has_finalize_funs <- TRUE
-    job <- lapply(seq_len(length(finalize_fun)), function(i){
+    job <- lapply(seq_len(length(finalize_funs)), function(i){
       list(
-        target_name = ifelse(as_promises, paste0(basename(target_name[i]), "_promise"), target_name[i]), 
+        target_name = ifelse(as_promises, paste0(basename(final_targets[i]), "_promise"), final_targets[i]), 
         command = {
           to_combine <- paste(formatted_final_targets, collapse=',\n      ')
-          target_is_file <- remake:::target_is_file(target_name[i], file_extensions = pos_extensions)
+          target_is_file <- remake:::target_is_file(final_targets[i], file_extensions = pos_extensions)
           # hide the object/file changes as input when using `promises`
           if (target_is_file){
             ifelse(as_promises, {
-              sprintf("%s(I('%s'),\n      %s)", finalize_fun[i], target_name[i], to_combine)
+              sprintf("%s(I('%s'),\n      %s)", finalize_funs[i], final_targets[i], to_combine)
             }, {
-              sprintf("%s(target_name,\n      %s)", finalize_fun[i], to_combine)
+              sprintf("%s(target_name,\n      %s)", finalize_funs[i], to_combine)
             })
           } else {
             combine_str <- "%s(\n      %s)"
-            sprintf(combine_str, finalize_fun[i], to_combine) 
+            sprintf(combine_str, finalize_funs[i], to_combine) 
           }
         })
     })
@@ -205,9 +205,23 @@ create_task_makefile <- function(
     makefile <- yml
   } else {
     cat(yml, file=makefile)
-    message(sprintf(
-      "run all tasks with\n%s:\n  command: scmake(remake_file='%s')\n",
-      target_name, makefile))
+    if(has_finalize_funs) {
+      how_to_run <- paste0(
+        "Run all tasks and finalizers with:\n",
+        paste(sapply(seq_along(job), function(job_id) {
+          finalizer <- job[[job_id]]
+          parent_target_name <- if(as_promises) final_targets[[job_id]] else sprintf("your_target_name_%d", job_id)
+          sprintf(
+            "%s:\n  command: scmake(I('%s'), remake_file='%s')",
+            parent_target_name, finalizer$target_name, normalizePath(makefile, winslash='/'))
+        }), collapse='\n')
+      )
+    } else {
+      how_to_run <- sprintf(
+        "Run all tasks with\n%s:\n  command: scmake(remake_file='%s')\n",
+        final_targets, makefile)
+    }
+    message(how_to_run)
   }
   # write the makefile and return the file path
   
