@@ -91,8 +91,6 @@ create_task_makefile <- function(
     job_name <- tools::file_path_sans_ext(basename(makefile))
   }
 
-  
-  
   if(missing(final_targets)){
     ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the final_targets
     ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the final_targets
@@ -104,7 +102,7 @@ create_task_makefile <- function(
   }
   
   if (!is.null(finalize_funs) & length(final_targets) != length(finalize_funs)){
-    stop('when specifying function names for `finalize_funs`, an equal number of `final_targetss` need to be specified')
+    stop('when specifying function names for `finalize_funs`, an equal number of `final_targets` need to be specified')
   }
   
   job_steps <- attr(task_plan, 'final_steps')
@@ -160,6 +158,9 @@ create_task_makefile <- function(
               sprintf("%s(target_name,\n      %s)", finalize_funs[i], to_combine)
             })
           } else {
+            if (finalize_funs[i] == 'combine_to_ind')
+              stop('cannot use an object target for combine_to_ind(), must specify a file target',
+                   '\nyou used ', final_targets[i])
             combine_str <- "%s(\n      %s)"
             sprintf(combine_str, finalize_funs[i], to_combine) 
           }

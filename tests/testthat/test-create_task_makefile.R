@@ -40,6 +40,34 @@ test_that("can create task_makefile as string with defaults", {
                "combine_to_ind(I('states/log/all_tasks.ind'), 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
 })
 
+test_that("errors when object target and combine_to_ind used", {
+  expect_error(create_task_makefile(final_targets = 'my_object',
+    task_plan, makefile=NULL,
+    file_extensions=c('ind'), packages=c('scipiper','mda.streams')))
+  
+  expect_error(create_task_makefile(final_targets = c('my_object','my_file.ind'),
+                                    task_plan, makefile=NULL,
+                                    file_extensions=c('ind'), packages=c('scipiper','mda.streams')))
+  expect_error(create_task_makefile(final_targets = c('my_object','my_file.ind'),
+                                    task_plan, makefile=NULL,
+                                    file_extensions=c('ind'), packages=c('scipiper','mda.streams'),
+                                    finalize_funs = c('combine_to_ind','my_combiner')))
+  expect_error(create_task_makefile(final_targets = c('my_object','my_file.ind'),
+                                    task_plan, makefile=NULL,
+                                    file_extensions=c('ind'), packages=c('scipiper','mda.streams'), as_promises = F))
+  expect_error(create_task_makefile(final_targets = c('my_object','my_file.ind'),
+                                    task_plan, makefile=NULL,
+                                    file_extensions=c('ind'), packages=c('scipiper','mda.streams'),
+                                    finalize_funs = c('combine_to_ind','my_combiner'), as_promises = F))
+  task_makefile <- create_task_makefile(final_targets = c('my_object','my_file.ind'),
+                       task_plan, makefile=NULL,
+                       file_extensions=c('ind'), packages=c('scipiper','mda.streams'),
+                       finalize_funs = c('my_combiner', 'combine_to_ind'))
+  remake_list <- yaml::yaml.load(task_makefile)
+  expect_equal(tail(names(remake_list$targets), 1), "my_object_promise")
+  expect_equal(head(names(remake_list$targets), 1), "my_file.ind_promise")
+})
+
 test_that("can create task_makefile with named target", {
   task_makefile <- create_task_makefile(
     task_plan, makefile=NULL, final_targets = 'my_states',
