@@ -64,38 +64,38 @@ test_that("errors when object target and combine_to_ind used", {
                        file_extensions=c('ind'), packages=c('scipiper','mda.streams'),
                        finalize_funs = c('my_combiner', 'combine_to_ind'))
   remake_list <- yaml::yaml.load(task_makefile)
-  expect_equal(tail(names(remake_list$targets), 1), "my_object_promise")
-  expect_equal(head(names(remake_list$targets), 1), "my_file.ind_promise")
+  expect_equal(tail(names(remake_list$targets), 1), "my_file.ind_promise")
+  expect_equal(tail(head(names(remake_list$targets), -1), 1), "my_object_promise")
 })
 
 test_that("can create task_makefile with named target", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=NULL, final_targets = 'my_states',
+    task_plan, makefile=NULL, final_targets = 'my_states.ind',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'))
   remake_list <- yaml::yaml.load(task_makefile)
-  expect_equal(tail(names(remake_list$targets), 1), "my_states_promise")
+  expect_equal(tail(names(remake_list$targets), 1), "my_states.ind_promise")
   expect_equal(head(names(remake_list$targets), 1), "my_states_all")
   expect_equal(tail(remake_list$targets, 1)[[1]]$command, 
-               "combine_to_ind( 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
+               "combine_to_ind(I('my_states.ind'), 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
 })
 
 test_that("can create task_makefile with named target and remake_file", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states',
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states.ind',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'))
   remake_list <- yaml::yaml.load_file(task_makefile)
-  expect_equal(tail(names(remake_list$targets), 1), "my_states_promise")
+  expect_equal(tail(names(remake_list$targets), 1), "my_states.ind_promise")
   expect_equal(head(names(remake_list$targets), 1), "states")
   expect_equal(tail(remake_list$targets, 1)[[1]]$command, 
-               "combine_to_ind( 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
+               "combine_to_ind(I('my_states.ind'), 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
 })
 
 test_that("can create task_makefile with named target and remake_file w/o promises", {
   task_makefile <- create_task_makefile(
-    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states',
+    task_plan, makefile=file.path(tempdir(), 'states.yml'), final_targets = 'my_states.ind',
     file_extensions=c('ind'), packages=c('scipiper','mda.streams'), as_promises = FALSE)
   remake_list <- yaml::yaml.load_file(task_makefile)
-  expect_equal(tail(names(remake_list$targets), 1), "my_states")
+  expect_equal(tail(names(remake_list$targets), 1), "my_states.ind")
 })
 
 test_that("can't create task_makefile with unequal target names and combiners", {
