@@ -11,6 +11,8 @@
 #'   before try `i` will be a uniform random value selected from the range
 #'   `(min_wait_frac*max_wait_times[i], max_wait_times[i])`. Modeled loosely on
 #'   https://github.com/r-lib/httr/blob/master/R/retry.R.
+#' @param verbose logical. Should informational messages be printed?
+#' @importFrom stats runif
 retry_patiently <- function(expr, max_wait_times=c(0, 3^c(0:4)), min_wait_frac=0.5, verbose=FALSE) {
   expr <- substitute(expr)
   env <- parent.frame(1)

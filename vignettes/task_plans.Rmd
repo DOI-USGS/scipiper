@@ -17,8 +17,10 @@ knitr::opts_knit$set(root.dir = tempdir())
 ## Setup
 
 ```{r libs, message=FALSE}
-library(scipiper)
-library(dplyr)
+suppressPackageStartupMessages({
+  library(scipiper)
+  library(dplyr)
+})
 ```
 
 ## Basic task file generation
@@ -71,7 +73,10 @@ step1 <- create_task_step(step_name = 'prep')
 
 # step2 creates recipes like this:
 # WI_plot.png:
-#   command: visualize(target_name, 'WI_prep', I('Madison'))
+#   command: visualize(
+#       plot_name = target_name, 
+#       state_data = WI_prep,
+#       state_capital = I('Madison'))
 step2 <- create_task_step(
   step_name = 'plot',
   target_name = function(task_name, ...) {
@@ -79,7 +84,12 @@ step2 <- create_task_step(
   },
   command = function(target_name, task_name, ...) {
     capital <- task_config[task_config$id == task_name, 'capital']
-    sprintf("visualize(target_name, %s_prep, I('%s'))", task_name, capital)
+    psprintf(
+      "visualize(",
+      "plot_name = target_name,",
+      "state_data = %s_prep,"=task_name,
+      "state_capital = I('%s'))"=capital
+      )
   })
 
 # step3 creates recipes like this:
@@ -148,10 +158,9 @@ create_task_makefile(
   task_plan=task_plan_1,
   makefile='task_plan_1.yml',
   include=c(),
-  packages=c('ggplot2'),
+  packages=c('ggplot2','scipiper'),
   sources=c('script.R'),
-  file_extensions=c('ind'),
-  ind_complete=TRUE)
+  file_extensions=c('ind'))
 ```
 
 Here are the contents of task_plan_1.yml:
@@ -222,7 +231,8 @@ loop_tasks(
 
 One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `list_all_targets([remake_file])`.
 ```{r delete_all}
-scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 Now when we run the entire loop, everything gets rebuilt:
@@ -234,7 +244,8 @@ loop_tasks(
 
 Again, the less-typing solution is to force a rebuild with the `force=TRUE` argument to `scmake`:
 ```{r force_all}
-scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 
@@ -244,7 +255,8 @@ Not analyses will go smoothly the first time you try. You can use `loop_tasks` t
 
 Before we can demonstrate, we'll need to delete all output files and remake status information again:
 ```{r delete_all2}
-scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
+non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
+scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
 ```
 
 You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
@@ -292,7 +304,7 @@ task_plan_2 <- create_task_plan(
   add_complete=FALSE)
 ```
 
-To avoid creating an indicator file when the entire batch is complete, set `ind_complete=FALSE` in `create_task_makefile`:
+To avoid combining the outputs of a task plan when the entire batch is complete, set `finalize_fun = NULL` in `create_task_makefile`:
 
 ```{r makefile2, results='markup'}
 create_task_makefile(
@@ -302,7 +314,7 @@ create_task_makefile(
   packages=c('ggplot2'),
   sources=c('script.R'),
   file_extensions=c('ind'),
-  ind_complete=FALSE)
+  finalize_fun = NULL)
 ```
 
 Now here are the contents of task_plan_2.yml, which will not create any `.ind` files:

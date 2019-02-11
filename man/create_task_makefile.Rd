@@ -5,11 +5,10 @@
 \title{Create a .yml makefile for a multi-task job}
 \usage{
 create_task_makefile(task_plan, makefile, include = c(),
-  packages = c(), sources = c(), file_extensions = c("ind"),
-  ind_complete = NA, ind_dir = attr(task_plan, "ind_dir"),
-  ind_ext = getOption("scipiper.ind_ext"),
+  packages = "scipiper", sources = c(), file_extensions = c("ind"),
   template_file = system.file("extdata/task_makefile.mustache", package =
-  "scipiper"))
+  "scipiper"), final_targets, finalize_funs = "combine_to_ind",
+  as_promises = TRUE)
 }
 \arguments{
 \item{task_plan}{a task plan as produced by \code{create_task_plan()}}
@@ -31,20 +30,24 @@ defaults at \code{remake::file_extensions()}. Inclusion of \code{'ind'} is
 recommended because this indicator file extension is commonly used by
 scipiper.}
 
-\item{ind_dir}{directory path specifing the location where an overall job
-indicator file should be written once all tasks and steps are complete.
-This file will always be named after the makefile, but with the indicator
-file extension (ind_ext) instead of '.yml' as a suffix}
-
-\item{ind_ext}{the indicator file extension to use in creating the job
-indicator file}
-
 \item{template_file}{character name of the mustache template to render into
 \code{makefile}. The default is recommended}
+
+\item{final_targets}{a file path or object name (or vector of either) specifying final target(s)
+to be created by \code{finalize_funs}}
+
+\item{finalize_funs}{a string function name (or vector of function names, of equal
+length to \code{final_targets}). Using NULL for \code{finalize_funs} will turn the
+final steps from the task plan into depends for the default/all target.}
+
+\item{as_promises}{hides the actual \code{final_targets} file/object from remake, and uses a
+dummy target name instead, with suffix "_promise". This allows us to avoid cyclic
+dependencies. Naming convention for \code{_promise} variables is to drop any dir structure
+from the \code{final_targets}}
 }
 \value{
-the file name of the makefile that was created (can be displayed with
-\code{cat(readLines(makefile), sep="\n")}).
+the file name of the makefile that was created,
+or the string output (if makefile = NULL)
 }
 \description{
 Create a .yml makefile (for use with remake or scipiper) for a set of tasks

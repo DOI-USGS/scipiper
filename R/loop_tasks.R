@@ -31,8 +31,17 @@
 #'   failed task. Especially useful if the error was likely to be inconsistent
 #'   (e.g., a temporary network issue) and might not occur again if we wait a
 #'   while
-#' @param vebose define the format of task messages. Use TRUE for progress bar 
+#' @param ind_ext the indicator file extension passed to `scmake`, identifying
+#'   those files for which build/status information will be shared via
+#'   git-committable files in the build/status folder. You should git commit the
+#'   resulting build/status files.
+#' @param verbose define the format of task messages. Use TRUE for progress bar
 #'   for the status of each task, and FALSE for no output
+#' @param n_cores integer How many cores should be utilized when executing the task plan? 
+#' Defaults to one (no parallelization).
+#' @param force logical. If TRUE, targets specified by task_names (NULL for all 
+#'   tasks) and step_names (NULL for the final step) will be deleted with `scdel`
+#'   before being built.
 #' @export
 #' @import progress
 loop_tasks <- function(
@@ -40,10 +49,15 @@ loop_tasks <- function(
   task_names=NULL, step_names=NULL,
   num_tries=30, sleep_on_error=0,
   ind_ext=getOption('scipiper.ind_ext'),
-  verbose=TRUE) {
+  verbose=TRUE,
+  force=FALSE,
+  n_cores=1) {
   
+  stopifnot(n_cores >= 1)
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
+  
+  default_is_group <- target_default %in% list_group_targets(task_makefile)
   if(is.null(task_names) && is.null(step_names)) {
     job_target <- target_default
   } else {
@@ -61,6 +75,18 @@ loop_tasks <- function(
     sapply(unname(task$steps[step_names]), `[[`, 'target_name')
   }))
   num_targets_overall <- length(targets)
+  
+  # sometimes, a user knows that something needs to get rebuilt and doesn't want to wait
+  # through the first round of checks for completeness
+  if(isTRUE(force)) {
+    # delete the current job target if not NA or a group target 
+    # (remake can only delete "file" or "object" targets)
+    if(!is.na(job_target) & !default_is_group) {
+      scdel(target_names=job_target, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+    }
+    # delete the targets that are being looped through
+    scdel(target_names=targets, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
+  }
   
   # a heuristic check for completeness: returns a vector of indices into target
   # that are known to be incomplete. any target that remake knows to be complete
@@ -106,7 +132,6 @@ loop_tasks <- function(
       }
       break
     }
-    
     # if there are remaining targets, try to run them
     if (verbose){
       loop_start_msg <- sprintf(
@@ -114,57 +139,94 @@ loop_tasks <- function(
         this_try, num_tries, num_targets_incomplete, num_targets_overall)
       pb$message(loop_start_msg)
     }
-    this_try <- this_try + 1
     
-    # prepare a vector to record successes/failures within this loop
-    target_succeeded <- rep(FALSE, num_targets_incomplete)
-    
-    # attempt to build each of the incomplete targets
-    for(i in seq_len(num_targets_incomplete)) {
-      tryCatch({
-        # get the names of the target and the task
-        target_num_overall <- incomplete_targets[i]
-        target <- targets[target_num_overall]
-        task_name <- task_names[target_num_overall]
-        
-        # update the progress bar
-        if (verbose){
-          pb$update(
-            num_targets_complete/num_targets_overall, 
-            tokens = list(what = sprintf('  Building %s', task_name)))
-        }
-        
-        # the main action: run the task-step
-        scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
-        
-        # if it worked, note the success
-        target_succeeded[i] <- TRUE
-        num_targets_complete <- num_targets_complete + 1
-        
-      }, error=function(e) {
-        if(verbose){
-          pb$message(sprintf(
-            "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
-            deparse(e$call), e$message, target, task_makefile))
-        }
+    error_function <- function(e) {
+      if(verbose && !pb$finished){
+        pb$message(sprintf(
+          "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+          deparse(e$call), e$message, target, task_makefile))
+      } else if(verbose && pb$finished) {
+        message(sprintf(
+          "* Error in %s: %s; debug with scmake(\"%s\", \"%s\")", 
+          deparse(e$call), e$message, target, task_makefile))
+      }
         
         # sleep for a while if requested
-        if(sleep_on_error > 0) {
-          Sys.sleep(sleep_on_error)
-        }
-      })
-
-      # try to keep memory under control if possible; might be harder with
-      # object targets, not sure if storr keeps them all in memory
-      gc()
+      if(sleep_on_error > 0) {
+        Sys.sleep(sleep_on_error)
+      }
     }
-    
-    # revise and recount the list of incomplete targets for the next while loop iteration
-    incomplete_targets <- incomplete_targets[!target_succeeded]
-    num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+    if(n_cores == 1) {
+      # prepare a vector to record successes/failures within this loop
+      target_succeeded <- rep(FALSE, num_targets_incomplete)
+      # attempt to build each of the incomplete targets
+      for(i in seq_len(num_targets_incomplete)) {
+        tryCatch({
+          # get the names of the target and the task
+          target_num_overall <- incomplete_targets[i]
+          target <- targets[target_num_overall]
+          task_name <- task_names[target_num_overall]
+          
+          # update the progress bar
+          if (verbose){
+            pb$update(
+              num_targets_complete/num_targets_overall, 
+              tokens = list(what = sprintf('  Building %s', task_name)))
+          }
+          # the main action: run the task-step
+          scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
+          
+          target_succeeded[i] <- TRUE
+          num_targets_complete <- num_targets_complete + 1
+        }, error = error_function
+        )
+        # try to keep memory under control if possible; might be harder with
+        # object targets, not sure if storr keeps them all in memory
+        gc()
+      } 
+      # revise and recount the list of incomplete targets for the next while loop iteration
+      incomplete_targets <- incomplete_targets[!target_succeeded]
+      num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+    }else {
+      #parallelized
+      requireNamespace('parallel', quietly = TRUE)
+      requireNamespace('doParallel', quietly = TRUE)
+      requireNamespace('foreach', quietly = TRUE)
+      `%dopar%` <- foreach::`%dopar%`
+      cl <- parallel::makeCluster(n_cores)
+      doParallel::registerDoParallel(cl, n_cores)
+      target_succeeded <- foreach::foreach(i=seq_len(num_targets_incomplete))  %dopar% {
+        tryCatch({
+          # get the names of the target and the task
+          target_num_overall <- incomplete_targets[i]
+          target <- targets[target_num_overall]
+          
+          # the main action: run the task-step
+          scmake(target, task_makefile, ind_ext=ind_ext, verbose=FALSE)
+          return(TRUE)
+        }, error = function(e) {
+          error_function(e)
+          return(FALSE)}
+        )
+      }
+      target_succeeded <- as.logical(target_succeeded) #convert list to vector
+      num_targets_complete <- sum(target_succeeded)
+      # revise and recount the list of incomplete targets for the next while loop iteration
+      incomplete_targets <- incomplete_targets[!target_succeeded]
+      num_targets_incomplete <- length(incomplete_targets) # count of remaining targets to try in this loop
+      # update the progress bar, if there are targets left.  If all targets complete, 
+      # pb will be updated at top of while loop before breaking from loop
+      frac_complete <- num_targets_complete/num_targets_overall
+      if (verbose && frac_complete < 1){
+        pb$update(
+          frac_complete, 
+          tokens = list(what = sprintf('  Finished try %s, %s targets left', this_try, num_targets_incomplete)))
+      }
+      parallel::stopCluster(cl)
+    }
+    this_try <- this_try + 1
     
   }
-  
   # check for completeness the quick way one last time; if we didn't make it
   # this far even according to our heuristic (values in incomplete_targets,
   # based on file presence and success/failure of individual task builds), then

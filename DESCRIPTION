@@ -1,14 +1,15 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.15
+Version: 0.0.16
 Date: 2018-08-10
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"),
              person("Jordan", "Read", email = "jread@usgs.gov", role = "ctb"))
 Description: Functions to organize a data analysis repository and ensure that data flows smoothly.
 Depends:
-    R (>= 3.3.2)
+    R (>= 3.3)
 Imports:
+  digest,
   dplyr,
   methods,
   readr,
@@ -19,10 +20,14 @@ Imports:
   progress,
   yaml
 Suggests:
+  aws.s3,
+  aws.signature,
+  doParallel,
+  foreach,
   googledrive,
   knitr,
-  aws.signature,
-  aws.s3,
+  parallel,
+  rmarkdown,
   testthat
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials

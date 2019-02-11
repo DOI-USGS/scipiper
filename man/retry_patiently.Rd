@@ -18,6 +18,8 @@ tries.}
 before try \code{i} will be a uniform random value selected from the range
 \code{(min_wait_frac*max_wait_times[i], max_wait_times[i])}. Modeled loosely on
 https://github.com/r-lib/httr/blob/master/R/retry.R.}
+
+\item{verbose}{logical. Should informational messages be printed?}
 }
 \description{
 Waits progressively longer before each next try (at least by default; wait

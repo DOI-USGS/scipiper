@@ -19,7 +19,7 @@
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
+<style type="text/css" data-origin="pandoc">
 div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
@@ -55,7 +55,29 @@ code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
 code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
 </style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -76,8 +98,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <div id="setup" class="section level2">
 <h2>Setup</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(scipiper)
-<span class="kw">library</span>(dplyr)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">suppressPackageStartupMessages</span>({
+  <span class="kw">library</span>(scipiper)
+  <span class="kw">library</span>(dplyr)
+})</code></pre></div>
 </div>
 <div id="basic-task-file-generation" class="section level2">
 <h2>Basic task file generation</h2>
@@ -287,7 +311,7 @@ targets:
 All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
 ## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2018-08-10 08:54:06
+## Starting build at 2018-12-19 12:45:25
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -302,7 +326,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2018-08-10 08:54:06
+## Finished build at 2018-12-19 12:45:25
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>The benefits of using <code>loop_tasks</code> to run all the remake targets in task_plan_1.yml are:</p>
 <ol style="list-style-type: decimal">
@@ -319,33 +343,33 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 <h3>Forcing rebuild for one task-step</h3>
 <p>If we try to <code>scmake</code> any of the targets in the task makefile without changing any of the inputs, <code>remake</code> correctly recognizes that they’re up to date already, and the target is not rebuilt. For example, because we ran <code>loop_tasks</code> above, <code>AZ_plot.png</code> is already <code>OK</code> when we try to build it again:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
-## Starting build at 2018-08-10 08:54:06
+## Starting build at 2018-12-19 12:45:25
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [    OK ] AZ_plot.png
-## Finished build at 2018-08-10 08:54:06
+## Finished build at 2018-12-19 12:45:25
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>One way to force the rebuild of a single target is to use <code>scdel</code>, like this:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scdel</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
 ## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)</code></pre></div>
 <p>Now when we <code>scmake</code> that target again, <code>AZ_plot.png</code> gets rebuilt:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)
-## Starting build at 2018-08-10 08:54:06
+## Starting build at 2018-12-19 12:45:25
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [ BUILD ] AZ_plot.png       |  visualize(&quot;AZ_plot.png&quot;, AZ_prep, &quot;Phoen...
 ## visualizing AZ_plot.png - Phoenix
-## Finished build at 2018-08-10 08:54:06
+## Finished build at 2018-12-19 12:45:25
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)
 ## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)
-## Starting build at 2018-08-10 08:54:06
+## Starting build at 2018-12-19 12:45:25
 ## &lt;  MAKE &gt; AZ_plot.png
 ## [    OK ] AZ_prep
 ## [ BUILD ] AZ_plot.png       |  visualize(&quot;AZ_plot.png&quot;, AZ_prep, &quot;Phoen...
 ## visualizing AZ_plot.png - Phoenix
-## Finished build at 2018-08-10 08:54:06
+## Finished build at 2018-12-19 12:45:25
 ## Build completed in 0.00 minutes</code></pre></div>
 </div>
 <div id="forcing-rebuild-for-all-task-steps" class="section level3">
@@ -358,7 +382,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
 ## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2018-08-10 08:54:07
+## Starting build at 2018-12-19 12:45:25
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -373,7 +397,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [    OK ] task_plan_1
-## Finished build at 2018-08-10 08:54:07
+## Finished build at 2018-12-19 12:45:25
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use <code>scdel</code> with the <code>target_names</code> argument set to <code>list_all_targets([remake_file])</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scdel</span>(<span class="dt">target_names=</span><span class="kw">list_all_targets</span>(<span class="st">'task_plan_1.yml'</span>), <span class="dt">remake_file=</span><span class="st">'task_plan_1.yml'</span>)
@@ -413,7 +437,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
 ## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2018-08-10 08:54:08
+## Starting build at 2018-12-19 12:45:26
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -428,7 +452,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2018-08-10 08:54:08
+## Finished build at 2018-12-19 12:45:26
 ## Build completed in 0.00 minutes</code></pre></div>
 <p>Again, the less-typing solution is to force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">scmake</span>(<span class="kw">list_all_targets</span>(<span class="st">'task_plan_1.yml'</span>), <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)
@@ -445,7 +469,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## (   DEL ) PA.pdf            |  file.remove(&quot;PA.pdf&quot;)
 ## (   DEL ) states/log/PA.ind |  file.remove(&quot;states/log/PA.ind&quot;)
 ## (   DEL ) task_plan_1       |  rm(&quot;task_plan_1&quot;)
-## Starting build at 2018-08-10 08:54:08
+## Starting build at 2018-12-19 12:45:26
 ## &lt;  MAKE &gt; WI_prep
 ## &lt;  MAKE &gt; WI_plot.png
 ## &lt;  MAKE &gt; WI.pdf
@@ -481,7 +505,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## reporting on PA.pdf
 ## [ BUILD ] states/log/PA.ind |  sc_indicate(&quot;states/log/PA.ind&quot;)
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2018-08-10 08:54:08
+## Finished build at 2018-12-19 12:45:27
 ## Build completed in 0.01 minutes</code></pre></div>
 </div>
 </div>
@@ -582,7 +606,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 All tasks complete [<span class="op">==</span><span class="er">=================================================</span>] <span class="dv">100</span>%  
 ## 
 ## <span class="al">###</span> Final check for completeness of all targets
-## Starting build at 2018-08-10 08:54:10
+## Starting build at 2018-12-19 12:45:29
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -597,7 +621,7 @@ All tasks complete [<span class="op">==</span><span class="er">=================
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2018-08-10 08:54:10
+## Finished build at 2018-12-19 12:45:29
 ## Build completed in 0.00 minutes</code></pre></div>
 </div>
 <div id="indicator-files-options" class="section level2">

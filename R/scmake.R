@@ -48,15 +48,15 @@ scmake <- function(
   
   start_time <- Sys.time()
   if(verbose) message('Starting build at ', start_time)
-  out <- tryCatch({
+  out <- withCallingHandlers({
     remake::make(
-    target_names=target_names, ..., verbose=verbose,
-    allow_missing_packages=allow_missing_packages, remake_file=remake_file)
+      target_names=target_names, ..., verbose=verbose,
+      allow_missing_packages=allow_missing_packages, remake_file=remake_file)
   }, error = function(e) {
     update_build_files(target_names = target_names, remake_file = remake_file, status_pre = status_pre)
-    stop(e$message)
+    stop(e)
   })
-    
+  
   end_time <- Sys.time()
   if(verbose) {
     message('Finished build at ', end_time)
@@ -107,7 +107,7 @@ scdel <- function(
   # make sure target_names is concrete
   if(is.null(target_names)) {
     # collect information about the current remake database. do load sources to get the dependencies right
-    remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+    remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
     target_names <- remake_object$default_target
   }
   
@@ -118,7 +118,7 @@ scdel <- function(
                  verbose = verbose, remake_file=remake_file)
   
   # get info about the remake project
-  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   dbstore <- remake_object$store$db
   
   # for every deleted target that is a status indicator file,
@@ -208,6 +208,19 @@ sc_indicate <- function(ind_file, ..., data_file, hash_depends=FALSE, depends_ta
     return(invisible(NULL))
   }
 }
+
+#' Create an indicator file that contains hashes of other files
+#'
+#'
+#' @param ind_file file name of the indicator file to write
+#' @param ... files to combine into a single indicator file
+#' 
+#' @details light wrapper on `sc_indicate`
+#' @export
+combine_to_ind <- function(ind_file, ...){
+  sc_indicate(ind_file = ind_file, data_file = c(...))
+} 
+
 #' Retrieve the data file declared by an indicator
 #'
 #' Identifies the data file's name by removing the indicator extension, then
@@ -266,7 +279,9 @@ is_ind_file <- function(target_names, ind_ext=getOption("scipiper.ind_ext")) {
 #' @examples 
 #' as_ind_file('mydata.rds') # 'mydata.rds.ind'
 #' as_ind_file('mydata.rds', ind_ext='st') # 'mydata.rds.st'
-#' as_ind_file('mydata.rds.ind') # Error: "data_file is an indicator file already"
+#' \dontrun{
+#' as_ind_file('mydata.rds.ind') # Error: "data_file contains indicator files: mydata.rds.ind"
+#' }
 as_ind_file <- function(data_file, ind_ext=getOption("scipiper.ind_ext")) {
   ind_files <- data_file[which(is_ind_file(data_file, ind_ext=ind_ext))]
   if(length(ind_files) > 0) {
@@ -326,7 +341,7 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
   
   # get all explicitly defined targets
   targets <- names(remake_list$targets)
-
+  
   # exclude remake keyword targets, which can be explicit even though they're
   # usually not
   targets <- setdiff(targets, c('tidy','clean','purge'))
@@ -337,13 +352,30 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
     nested_targets <- unlist(lapply(includes, list_all_targets))
     targets <- c(targets, nested_targets)
   }
-
+  
   # if we wanted to add more info about these targets, we could return the following instead:
-  # remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  # remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   # remake_object$targets[targets]
   
   # return a simple vector of target names
   targets
+}
+
+#' list targets in remake file that are fake/dummy/group targets
+#' 
+#' @param remake_file filename of the remake YAML file from which targets should
+#'   be collected
+#'   
+#' @details this is an internal file. We may want to make it recursive, but I
+#'   don't see a use-case right now for that. 
+#' @keywords internal
+list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
+  # load the remake file as a yaml and as remake loads it
+  remake_list <- yaml::yaml.load_file(remake_file)
+  
+  # get all explicitly defined targets
+  targets <- names(remake_list$targets)
+  targets[sapply(remake_list$targets, FUN = function(x) is.null(x$command), USE.NAMES = FALSE)]
 }
 
 #' Produce a table describing the remake build status relative to 1+ targets
@@ -365,7 +397,7 @@ list_all_targets <- function(remake_file=getOption('scipiper.remake_file'), recu
 #' }
 get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper.remake_file')) {
   # collect information about the current remake database. do load sources to get the dependencies right
-  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
   # make sure target_names is concrete
   if(is.null(target_names)) target_names <- remake_object$default_target
@@ -378,8 +410,8 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
   # remake::make, and the code is full of caveats that make me wonder if they
   # believe it...but it's the nearest thing to a current status report that I've
   # found so far
-  graph <- remake:::remake_dependency_graph(remake_object)
-  status <- as.data.frame(remake:::remake_status(remake_object, target_names, graph))
+  graph <- ('remake' %:::% 'remake_dependency_graph')(remake_object)
+  status <- as.data.frame(('remake' %:::% 'remake_status')(remake_object, target_names, graph))
   status$target <- rownames(status)
   rownames(status) <- NULL
   
@@ -391,7 +423,7 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
     status$is_current <- status$hash <- status$time <- status$fixed <- as.character(NA)
     for(i in seq_len(nrow(status))) {
       tryCatch({
-        status[i,'is_current'] <- remake:::remake_is_current(remake_object, status$target[i])
+        status[i,'is_current'] <- ('remake' %:::% 'remake_is_current')(remake_object, status$target[i])
         remeta <- remake_object$store$db$get(status$target[i])
         status[i,'hash'] <- as.character(remeta$hash)
         status[i,'time'] <- as.character(POSIX2char(remeta$time))
@@ -416,7 +448,7 @@ YAMLify_build_status <- function(target_names, remake_file=getOption('scipiper.r
   if(!dir.exists('build/status')) dir.create('build/status', recursive=TRUE)
   
   # get info about the remake project
-  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   dbstore <- remake_object$store$db
   
   # figure out which of target_names to export: we stick to files that have keys
@@ -464,7 +496,7 @@ RDSify_build_status <- function(new_only=FALSE, remake_file=getOption('scipiper.
   # get info about the remake project. calling remake:::remake gives us info and
   # simultaneously ensures there's a directory to receive the export (creates
   # the .remake dir as a storr)
-  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
   dbstore <- remake_object$store$db
   
   # figure out which build/status files to import. don't import info for targets

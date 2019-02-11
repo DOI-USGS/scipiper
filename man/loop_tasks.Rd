@@ -6,7 +6,8 @@
 \usage{
 loop_tasks(task_plan, task_makefile, task_names = NULL,
   step_names = NULL, num_tries = 30, sleep_on_error = 0,
-  ind_ext = getOption("scipiper.ind_ext"), verbose = TRUE)
+  ind_ext = getOption("scipiper.ind_ext"), verbose = TRUE,
+  force = FALSE, n_cores = 1)
 }
 \arguments{
 \item{task_plan}{task plan as created by \code{create_task_plan()}}
@@ -27,8 +28,20 @@ failed task. Especially useful if the error was likely to be inconsistent
 (e.g., a temporary network issue) and might not occur again if we wait a
 while}
 
-\item{vebose}{define the format of task messages. Use TRUE for progress bar
+\item{ind_ext}{the indicator file extension passed to \code{scmake}, identifying
+those files for which build/status information will be shared via
+git-committable files in the build/status folder. You should git commit the
+resulting build/status files.}
+
+\item{verbose}{define the format of task messages. Use TRUE for progress bar
 for the status of each task, and FALSE for no output}
+
+\item{force}{logical. If TRUE, targets specified by task_names (NULL for all
+tasks) and step_names (NULL for the final step) will be deleted with \code{scdel}
+before being built.}
+
+\item{n_cores}{integer How many cores should be utilized when executing the task plan?
+Defaults to one (no parallelization).}
 }
 \description{
 {
