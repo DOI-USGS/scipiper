@@ -134,6 +134,7 @@ data {color: #CA3542;}
 ind {color: #FEBC38;}
 build {color: #697F98;} 
 target {color: #37AFA9}
+yml {color: #56B4E9}
 </style>
 </head>
 <div id="terms-and-concept" class="section level3">
@@ -145,6 +146,7 @@ target {color: #37AFA9}
 <li><ind><strong>Indicator file</strong></ind>: git-versioned files that promise the analyst that the data file exists remotely</li>
 <li><build><strong>Build status file</strong></build>: git-versioned files that represent the collective project build status (e.g. which targets have been built and/or are up-to-date)</li>
 <li><target><strong>Target</strong></target>: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be <ind>indicator files</ind>.</li>
+<li><yml><strong>YAML file</strong></yml>: human and machine readable file used to layout the project workflow, packages needed, and <target>target</target> dependencies. YAML stands for <em>YAML Ain’t Markup Language</em> to distinguish its purpose as data-oriented, rather than document markup.</li>
 </ul>
 </div>
 <div id="concept" class="section level4">
@@ -153,7 +155,7 @@ target {color: #37AFA9}
 <p><data><strong>Data files</strong></data> only <em>need</em> to be local when the analyst is computing with the <data><strong>data file</strong></data>. <ind><strong>Indicator files</strong></ind> (<code>.ind</code>) represent the remote shared cache among project participants. This allows analyst #1 to compute steps <code>A</code> and <code>B</code> (e.g. streamflow data pull [step <code>A</code>] and aggreagation [step <code>B</code>]), upload output from steps <code>A</code> and <code>B</code> to the project’s shared cache, and analyst #2 can use the output from step <code>B</code> without redoing the computing performed by analyst #1.</p>
 <p>Workflow dependencies are connected via the <ind><strong>indicator files</strong></ind>. Recipes (e.g. R function) that push <data><strong>data files</strong></data> to the shared cache create <ind><strong>indicator files</strong></ind>, and these <ind><strong>indicator files</strong></ind> can be used in other recipes to pull down <data><strong>data files</strong></data> from the shared cache using <code>scipiper</code> functions such as <code>gd_get()</code> (if data is not already available locally).</p>
 <p><build><strong>Build files</strong></build> tell remake if the <ind><strong>indicator files</strong></ind> and their dependencies are up-to-date. <target><strong>Targets</strong></target> that are not saved as <ind><strong>indicator</strong></ind> or <data><strong>data</strong></data> files (e.g. R objects) will not have a <build><strong>build status file</strong></build> and will be excuted every time it is called.</p>
-Example of <code>.ind</code> file dependency where the function <code>select_sites()</code> (code snippet below yaml code) uses <code>gd_get()</code> and the <ind><strong>indicator file</strong></ind> <code>1_data/out/compiled_data.rds.ind</code> as a dependency to pull down the <data><strong>data file</strong></data> (<code>compiled_data.rds</code>) from the shared cache.
+Example of <code>.ind</code> file dependency where the function <code>select_sites()</code> (code snippet below <yml><strong>yaml</strong></yml> code) uses <code>gd_get()</code> and the <ind><strong>indicator file</strong></ind> <code>1_data/out/compiled_data.rds.ind</code> as a dependency to pull down the <data><strong>data file</strong></data> (<code>compiled_data.rds</code>) from the shared cache.
 <pre>
 target_default: <target>1_data</target>
 
@@ -213,9 +215,9 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 <div id="projects-using-a-shared-cache-should-follow-these-guidelines" class="section level4">
 <h4>Projects using a shared cache should follow these guidelines:</h4>
 <ul>
-<li><p>Use <ind><strong>indicator files</strong></ind> (usually an <code>.ind</code> suffix) to represent most or all of the chain of connected <target><strong>targets</strong></target> within your remake files. Each <code>.ind</code> file should be one of two products of a recipe (e.g. R function call), where the other product is the creation of a <data><strong>data file</strong></data>, either locally and/or in the shared cache. The <ind><strong>indicator files</strong></ind> are the only products that are declared to <code>remake</code>, while the <data><strong>data files</strong></data> remain hidden. This allows the <ind><strong>indicator files</strong></ind> to indirectly represent the <data><strong>data files</strong></data> to <code>remake</code> thereby enabling compatibility between <code>remake</code> and the shared cache.</p></li>
+<li><p>Use <ind><strong>indicator files</strong></ind> (usually an <code>.ind</code> suffix) to represent most or all of the chain of connected <target><strong>targets</strong></target> within your remake files. Each <code>.ind</code> file should be one of two products of a recipe (e.g. R function call), where the other product is the creation of a <data><strong>data file</strong></data>, either locally and/or in the shared cache. The <ind><strong>indicator files</strong></ind> are the only products that are declared to <code>remake</code>, while the <data><strong>data files</strong></data> remain hidden. This allows the <ind><strong>indicator files</strong></ind> to indirectly represent the <data><strong>data files</strong></data> to <code>remake</code> thereby enabling compatibility between <code>remake</code> and the shared cache. <target><strong>Targets</strong></target> that probably don’t need <ind><strong>indicator files</strong></ind> are those that are quick to produce (e.g. &lt; 5 seconds, or quicker than downloading from the shared cache) or configuration files.</p></li>
 <li><p>Always build <target><strong>targets</strong></target> using <code>scipiper::scmake()</code> rather than <code>remake::make()</code>. Though the functions are outwardly very similar, <code>scmake()</code> maintains an extra layer of metadata that allows multiple users to share a single project <build><strong>build status</strong></build> (e.g., “file x.rds.ind is up to date; file y.rds.ind is out of date”). In a shared-cache project, you should not even need to load the <code>remake</code> package directly.</p></li>
-<li><p>Generally avoid using R objects as <code>remake/scmake</code> <target><strong>targets</strong></target>…but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of <data><strong>data</strong></data> as input, that target should usually be a file rather than an R object.</p></li>
+<li><p>Generally avoid using R objects as shared cache <target><strong>targets</strong></target>…but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of <data><strong>data</strong></data> as input, that target should usually be a file rather than an R object.</p></li>
 <li><p><code>git commit</code> all <ind><strong>indicator files</strong></ind> and <build><strong>build files</strong></build> (with occasional exception of <ind><strong>indicator files</strong></ind> within a task plan; those require additional thought). <code>git ignore</code> all <data><strong>data files</strong></data> unless they are small enough to store in git/GitHub, such as small, text-based, and typically hand-curated <data><strong>data files</strong></data> (e.g. a <data><strong>data file</strong></data> that matches NHD lake ID’s to collaborator-provided <data><strong>data files</strong></data>). <data><strong>Data files</strong></data> that are necessary to pipeline basic functions should also be committed (e.g. <data><strong>gd_config.yml</strong></data>).</p></li>
 <li><p>To force a rebuild, either use the <code>force=TRUE</code> argument to <code>scmake()</code> or use <code>scdel()</code> to delete <ind><strong>indicator files</strong></ind>. There’s seldom any benefit to deleting <data><strong>data files</strong></data> (by any method); usually deleting the <ind><strong>indicator files</strong></ind> is plenty. When deleting <ind><strong>indicator files</strong></ind>, <code>force=TRUE</code> or <code>scdel()</code> are preferable to directly deleting the <code>.ind</code> files because if only the <code>.ind</code> files are deleted, the <code>scipiper</code> database may fail to update properly when the <code>.ind</code> files are rebuilt.</p></li>
 </ul>
@@ -227,7 +229,7 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 <ol style="list-style-type: decimal">
 <li>create a <data><strong>data file</strong></data></li>
 <li>push a <data><strong>data file</strong></data> and create an <ind><strong>indicator file</strong></ind></li>
-<li>retrive the <data><strong>data file</strong></data></li>
+<li>retrieve the <data><strong>data file</strong></data></li>
 </ol>
 <div id="advantages" class="section level6">
 <h6>Advantages</h6>
@@ -263,7 +265,7 @@ targets:
 <h5>2 <target><strong>target</strong></target> method:</h5>
 <ol style="list-style-type: decimal">
 <li>push a <data><strong>data file</strong></data> and create an <ind><strong>indicator file</strong></ind></li>
-<li>retrive the <data><strong>data file</strong></data></li>
+<li>retrieve the <data><strong>data file</strong></data></li>
 </ol>
 <div id="advantages-1" class="section level6">
 <h6>Advantages</h6>
