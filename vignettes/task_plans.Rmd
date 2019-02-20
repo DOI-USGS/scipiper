@@ -1,31 +1,49 @@
+## Task Plans {.tabset .tabset-fade .tabset-pills}
+
+Alison Appling May 23, 2018;
+Lindsay Platt February 20, 2019
+
 ---
-title: "Task plans"
-author: "Alison Appling"
-date: "May 23, 2018"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Task plans}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
+
+<head>
+<style>
+data {color: #CA3542;}
+ind {color: #FEBC38;}
+build {color: #697F98;} 
+target {color: #37AFA9}
+yml {color: #56B4E9}
+</style>
+</head>
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
-knitr::opts_knit$set(root.dir = tempdir())
+library(scipiper)
+library(dplyr)
 ```
 
-## Setup
+## What are task plans?
 
-```{r libs, message=FALSE}
-suppressPackageStartupMessages({
-  library(scipiper)
-  library(dplyr)
-})
-```
+Suppose you want to create the same figure for each state in the United States. To create these figures in an R script, we would likely write a `for` loop or use `lapply`, iterating over the states. In `scipiper`, we could add the targets and associated commands in our makefile once for Alabama and then copy/paste/edit for the remaining states. That would be time consuming, and extremely prone to human error. This is where task plans, and the associated functions, `create_task_step`, `create_task_plan`, `create_task_makefile`, and `loop_tasks` come in handy. Instead of adding these repeating targets to define these steps for each state by hand, we can use a few clever functions to auto-generate a separate makefile!
+
+* A **task** is each element that is being repeated, so for the example above, each state is a task. 
+* A **task step** is a function that will be used to create a target for each task; there can be multiple task steps. Use the `create_task_step` function to setup each of your steps.
+* A **task plan** is an expanded R list defining all the steps for each task. Use the `create_task_plan` function to ingest the task step functions and the tasks themselves to create the instructions for each target to build.
+* A **task makefile** is auto-generated from a task plan and contains all of the task targets. Use the `create_task_makefile` to turn the task plan into the task makefile.
+
+To incorporate this into the rest of your `scipiper` analysis, add a target for your task plan, task makefile, and final output from the task makefile. The command for your task plan target should be a custom function that contains one or more `create_task_step` functions and the `create_task_plan` function, returning only the result of `create_task_plan`. The command for the task makefile target is `create_task_makefile`. And finally, the command for the final target can be either `loop_tasks` or `scmake` to make the final target in the auto-generated makefile.
+
+To follow examples, continue below. To see this in action, you can go to the storm gif frame setup in [vizstorm-GIF](https://github.com/USGS-VIZLAB/vizstorm-GIF/blob/master/6_visualize.yml), the timestep frame setup in [gage-conditions-gif](https://github.com/USGS-VIZLAB/gage-conditions-gif/blob/master/6_visualize.yml), or the inventory task pattern in [nawqa_wqp](https://github.com/USGS-R/nawqa_wqp/blob/master/1_wqpdata.yml). Note that these are in-sync with the task plan workflow as of February 2019, but might be outdated in the future.
 
 ## Basic task file generation
 
 Suppose you want to run the following 3 steps for each of a bunch of different states. Here are some dummy functions representing those steps:
+
 ```{r step_funs_shhh, echo=FALSE}
 cat("
 ## @knitr step_funs
@@ -55,6 +73,7 @@ knitr::read_chunk('script.R')
 ```
 
 Here are the states and state capitals for which you want to run the above steps:
+
 ```{r tasks}
 task_config <- data_frame(
   id=c('WI','AZ','PA'),
