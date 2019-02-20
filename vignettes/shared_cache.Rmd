@@ -1,6 +1,6 @@
 ## Shared Cache {.tabset .tabset-fade .tabset-pills}
 
-Alison Appling, July 31, 2018;  
+Alison Appling, July 31, 2018  
 Jake Zwart, February 4, 2019
 
 ---
