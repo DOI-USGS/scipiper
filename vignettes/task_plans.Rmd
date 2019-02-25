@@ -89,6 +89,7 @@ task_config <- data_frame(
 #### Creating task_steps
 
 To use `scipiper` to run these tasks, first generate a set of instructions, or `task_step`s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to `create_task_step()` can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in `?create_task_step` for list of the arguments each function can see and use.
+
 ```{r task_steps}
 # step1 creates recipes like this:
 # WI_prep:
@@ -137,9 +138,13 @@ step3 <- create_task_step(
 You've probably noticed the `...` in the arguments list of each function you pass to `create_task_step`. You don't get to decide what's available in the `...`s, but you do get do decide whether you use that information. Above the only named arguments we use are `task_name` and sometimes `step_name`, but other named arguments are passed in to these functions when the task step is turned into a task plan (next section). These other arguments allow you to look to other information for this task-step, or to info about previous steps within the task.
 
 • If you're writing a `target_name`, you have access to the evaluated `step_name` for this task-step. Therefore, your function definition can be `function(...)` or `function(step_name, ...)` depending on whether you plan to use the step_name information or not. It'll get passed in regardless of whether you include that argument in the definition.
+
 • If you're writing a `depends` function, you have access to the evaluated `target_name` and `step_name`. Therefore, your function definition can be either of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`
+
 • If you're writing a `command` function, you have access to the evaluated `target_name`, `step_name`, and `depends`. Therefore, your function definition can be any of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`, or `function(target_name, step_name, depends, ...)`
+
 • You can also get the evaluated values of `step_name`, `target_name`, `depends`, or `command` for any of the preceding steps for this task; all of these are available elements of the `steps` argument, which is a list named `steps`. Therefore, your function definition can be any of these: `function(steps, ...)`, `function(target_name, steps, ...)`, `function(target_name, step_name, steps, ...)`, or `function(target_name, step_name, depends, steps, ...)`. This is most useful if you're defining the 2nd, 3rd, etc. step, because then there's information to look back at. For example, if step 2 uses the target from step 1 as input, and if step 1 is named "prepare", then your definition for step 2 might look something like this:
+
 ```
 step2 <- create_task_step(
   step_name = 'plot',
@@ -151,6 +156,7 @@ step2 <- create_task_step(
   }
 )
 ```
+
 As illustrated above, referencing the previous step's output can be handy for multi-step tasks where each step depends on output from the previous step.
 
 
@@ -226,21 +232,25 @@ To use the baked-in retries effectively, simply ensure that the functions called
 #### Forcing rebuild for one task-step
 
 If we try to `scmake` any of the targets in the task makefile without changing any of the inputs, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. For example, because we ran `loop_tasks` above, `AZ_plot.png` is already `OK` when we try to build it again:
+
 ```{r try_rebuild_one}
 scmake('AZ_plot.png', 'task_plan_1.yml')
 ```
 
 One way to force the rebuild of a single target is to use `scdel`, like this:
+
 ```{r delete_one}
 scdel('AZ_plot.png', 'task_plan_1.yml')
 ```
 
 Now when we `scmake` that target again, `AZ_plot.png` gets rebuilt:
+
 ```{r rebuild_one}
 scmake('AZ_plot.png', 'task_plan_1.yml')
 ```
 
 Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the `force=TRUE` argument to `scmake`:
+
 ```{r force_one}
 scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
 ```
@@ -248,6 +258,7 @@ scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
 #### Forcing rebuild for all task-steps
 
 Similar to the one-target example, above, if we run the same `loop_tasks` command twice, nothing will get rebuilt the second time. Instead, all items will say `OK`:
+
 ```{r try_rebuild_all}
 loop_tasks(
   task_plan=task_plan_1,
@@ -255,11 +266,13 @@ loop_tasks(
 ```
 
 One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `list_all_targets([remake_file])`.
+
 ```{r delete_all}
 scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 ```
 
 Now when we run the entire loop, everything gets rebuilt:
+
 ```{r rebuild_all}
 loop_tasks(
   task_plan=task_plan_1,
@@ -267,6 +280,7 @@ loop_tasks(
 ```
 
 Again, the less-typing solution is to force a rebuild with the `force=TRUE` argument to `scmake`:
+
 ```{r force_all}
 scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
 ```
@@ -277,11 +291,13 @@ scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
 Not analyses will go smoothly the first time you try. You can use `loop_tasks` to run just a few task-steps at a time at first, debugging before you launch a full batch.
 
 Before we can demonstrate, we'll need to delete all output files and remake status information again:
+
 ```{r delete_all2}
 scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 ```
 
 You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
+
 ```{r loop_task_step_only}
 loop_tasks(
   task_plan=task_plan_1,
@@ -292,6 +308,7 @@ loop_tasks(
 Note that an error is thrown at the end to prevent the indicator file from being created. This is useful because it means we can keep running `loop_tasks` on subsets of the batch until everything is done.
 
 Alternatively, you can run a step (and any dependencies to that step) for all tasks. Here let's run only the plotting steps (and therefore also the prepping steps) for all states:
+
 ```{r loop_steps_only}
 loop_tasks(
   task_plan=task_plan_1,
@@ -300,6 +317,7 @@ loop_tasks(
 ```
 
 Or you can run a complete task, or handful of tasks, without touching the others. Here we run PA and AZ only:
+
 ```{r loop_tasks_only}
 loop_tasks(
   task_plan=task_plan_1,
@@ -308,6 +326,7 @@ loop_tasks(
 ```
 
 Now if we run the full loop without constraints, the only things left to build are the WI report, the final indicator for each task (built silently) and the final indicator file for the whole batch (target `task_plan_1`).
+
 ```{r loop_remainder}
 loop_tasks(
   task_plan=task_plan_1,
