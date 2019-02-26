@@ -265,26 +265,14 @@ loop_tasks(
   task_makefile='task_plan_1.yml')
 ```
 
-One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `scdel` with the `target_names` argument set to `list_all_targets([remake_file])`.
-
-```{r delete_all}
-scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
-```
-
-Now when we run the entire loop, everything gets rebuilt:
+One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `force=TRUE` argument to `loop_tasks`. This will automatically use `scdel` with all `target_names` in `task_plan_1.yml`. Now when we run the entire loop, everything gets rebuilt:
 
 ```{r rebuild_all}
 loop_tasks(
   task_plan=task_plan_1,
-  task_makefile='task_plan_1.yml')
+  task_makefile='task_plan_1.yml',
+  force = TRUE)
 ```
-
-Again, the less-typing solution is to force a rebuild with the `force=TRUE` argument to `scmake`:
-
-```{r force_all}
-scmake(list_all_targets('task_plan_1.yml'), 'task_plan_1.yml', force=TRUE)
-```
-
 
 ### Developing a successful loop
 
