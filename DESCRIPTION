@@ -28,7 +28,8 @@ Suggests:
   knitr,
   parallel,
   rmarkdown,
-  testthat
+  testthat,
+  ggplot2
 License: file LICENSE
 Copyright: This software is in the public domain because it contains materials
     that originally came from the United States Geological Survey, an agency of
