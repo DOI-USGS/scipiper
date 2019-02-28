@@ -103,12 +103,10 @@ build {color: #697F98;}
 target {color: #37AFA9}
 yml {color: #56B4E9}
 </style>
-<div id="terms-and-concept" class="section level3">
-<h3 class="hasAnchor">
-<a href="#terms-and-concept" class="anchor"></a>Terms and Concept</h3>
-<div id="terms" class="section level4">
-<h4 class="hasAnchor">
-<a href="#terms" class="anchor"></a>Terms</h4>
+<div id="terms-and-concept" class="section level1">
+<h1 class="hasAnchor">
+<a href="#terms-and-concept" class="anchor"></a>Terms and Concept</h1>
+<p>##Terms</p>
 <ul>
 <li>
 <data><strong>Data file</strong></data>: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results)</li>
@@ -121,10 +119,7 @@ yml {color: #56B4E9}
 <li>
 <yml><strong>YAML file</strong></yml>: human and machine readable file used to layout the project workflow, packages needed, and <target>target</target> dependencies. YAML stands for <em>YAML Ain’t Markup Language</em> to distinguish its purpose as data-oriented, rather than document markup.</li>
 </ul>
-</div>
-<div id="concept" class="section level4">
-<h4 class="hasAnchor">
-<a href="#concept" class="anchor"></a>Concept</h4>
+<p>##Concept</p>
 <p>A <strong>s</strong>hared <strong>c</strong>ache (<strong>sc</strong> of <code>scmake</code>) is a cloud data storage location where raw, intermediate, and/or final data products from an analysis project are contributed to and accessible by multiple analysts. Not all scipiper projects will use a shared cache.</p>
 <p><data><strong>Data files</strong></data> only <em>need</em> to be local when the analyst is computing with the <data><strong>data file</strong></data>. <ind><strong>Indicator files</strong></ind> (<code>.ind</code>) represent the remote shared cache among project participants. This allows analyst #1 to compute steps <code>A</code> and <code>B</code> (e.g. streamflow data pull [step <code>A</code>] and aggreagation [step <code>B</code>]), upload output from steps <code>A</code> and <code>B</code> to the project’s shared cache, and analyst #2 can use the output from step <code>B</code> without redoing the computing performed by analyst #1.</p>
 <p>Workflow dependencies are connected via the <ind><strong>indicator files</strong></ind>. Recipes (e.g. R function) that push <data><strong>data files</strong></data> to the shared cache create <ind><strong>indicator files</strong></ind>, and these <ind><strong>indicator files</strong></ind> can be used in other recipes to pull down <data><strong>data files</strong></data> from the shared cache using <code>scipiper</code> functions such as <code><a href="../reference/gd_get.html">gd_get()</a></code> (if data is not already available locally).</p>
@@ -179,27 +174,19 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 
 </pre>
 </div>
-</div>
-<div id="guidelines" class="section level3">
-<h3 class="hasAnchor">
-<a href="#guidelines" class="anchor"></a>Guidelines</h3>
-<div id="projects-using-a-shared-cache-should-follow-these-guidelines" class="section level4">
-<h4 class="hasAnchor">
-<a href="#projects-using-a-shared-cache-should-follow-these-guidelines" class="anchor"></a>Projects using a shared cache should follow these guidelines:</h4>
+<div id="guidelines" class="section level1">
+<h1 class="hasAnchor">
+<a href="#guidelines" class="anchor"></a>Guidelines</h1>
+<p>##Projects using a shared cache should follow these guidelines:</p>
 <ul>
-<li><p>Use <ind><strong>indicator files</strong></ind> (usually an <code>.ind</code> suffix) to represent most or all of the chain of connected <target><strong>targets</strong></target> within your remake files. Each <code>.ind</code> file should be one of two products of a recipe (e.g. R function call), where the other product is the creation of a <data><strong>data file</strong></data>, either locally and/or in the shared cache. The <ind><strong>indicator files</strong></ind> are the only products that are declared to <code>remake</code>, while the <data><strong>data files</strong></data> remain hidden. This allows the <ind><strong>indicator files</strong></ind> to indirectly represent the <data><strong>data files</strong></data> to <code>remake</code> thereby enabling compatibility between <code>remake</code> and the shared cache. <target><strong>Targets</strong></target> that probably don’t need <ind><strong>indicator files</strong></ind> are those that are quick to produce (e.g. &lt; 5 seconds, or quicker than downloading from the shared cache) or configuration files.</p></li>
+<li><p>Use <ind><strong>indicator files</strong></ind> (usually an <code>.ind</code> suffix) to represent most or all of the chain of connected <target><strong>targets</strong></target> within your remake files. Each <code>.ind</code> file should be one of two products of a recipe (e.g. R function call), where the other product is the creation of a <data><strong>data file</strong></data>, either locally and/or in the shared cache. The <ind><strong>indicator files</strong></ind> are the only products that are declared to <code>remake</code>, while the <data><strong>data files</strong></data> remain hidden. This allows the <ind><strong>indicator files</strong></ind> to indirectly represent the <data><strong>data files</strong></data> to <code>remake</code> thereby enabling compatibility between <code>remake</code> and the shared cache. <target><strong>Targets</strong></target> that probably don’t need <ind><strong>indicator files</strong></ind> are those that are quick to produce (e.g. &lt; 5 seconds, or quicker than downloading from the shared cache) or configuration files.</p></li>
 <li><p>Always build <target><strong>targets</strong></target> using <code><a href="../reference/scmake.html">scipiper::scmake()</a></code> rather than <code><a href="https://www.rdocumentation.org/packages/remake/topics/make">remake::make()</a></code>. Though the functions are outwardly very similar, <code><a href="../reference/scmake.html">scmake()</a></code> maintains an extra layer of metadata that allows multiple users to share a single project <build><strong>build status</strong></build> (e.g., “file x.rds.ind is up to date; file y.rds.ind is out of date”). In a shared-cache project, you should not even need to load the <code>remake</code> package directly.</p></li>
 <li><p>Generally avoid using R objects as shared cache <target><strong>targets</strong></target>…but if you must, usually for convenience or conciseness of the workflow plan, recognize that R objects must be built by every analyst. So if a target takes a non-trivial length of time to build, or if it depends on large volumes of <data><strong>data</strong></data> as input, that target should usually be a file rather than an R object.</p></li>
-<li><p><code>git commit</code> all <ind><strong>indicator files</strong></ind> and <build><strong>build files</strong></build> (with occasional exception of <ind><strong>indicator files</strong></ind> within a task plan; those require additional thought). <code>git ignore</code> all <data><strong>data files</strong></data> unless they are small enough to store in git/GitHub, such as small, text-based, and typically hand-curated <data><strong>data files</strong></data> (e.g. a <data><strong>data file</strong></data> that matches NHD lake ID’s to collaborator-provided <data><strong>data files</strong></data>). <data><strong>Data files</strong></data> that are necessary to pipeline basic functions should also be committed (e.g. <data><strong>gd_config.yml</strong></data>).</p></li>
+<li><p><code>git commit</code> all <ind><strong>indicator files</strong></ind> and <build><strong>build files</strong></build> (with occasional exception of <ind><strong>indicator files</strong></ind> within a task plan; those require additional thought). <code>git ignore</code> all <data><strong>data files</strong></data> unless they are small enough to store in git/GitHub, such as small, text-based, and typically hand-curated <data><strong>data files</strong></data> (e.g. a <data><strong>data file</strong></data> that matches NHD lake ID’s to collaborator-provided <data><strong>data files</strong></data>). <data><strong>Data files</strong></data> that are necessary to pipeline basic functions should also be committed (e.g. <data><strong>gd_config.yml</strong></data>).</p></li>
 <li><p>To force a rebuild, either use the <code>force=TRUE</code> argument to <code><a href="../reference/scmake.html">scmake()</a></code> or use <code><a href="../reference/scdel.html">scdel()</a></code> to delete <ind><strong>indicator files</strong></ind>. There’s seldom any benefit to deleting <data><strong>data files</strong></data> (by any method); usually deleting the <ind><strong>indicator files</strong></ind> is plenty. When deleting <ind><strong>indicator files</strong></ind>, <code>force=TRUE</code> or <code><a href="../reference/scdel.html">scdel()</a></code> are preferable to directly deleting the <code>.ind</code> files because if only the <code>.ind</code> files are deleted, the <code>scipiper</code> database may fail to update properly when the <code>.ind</code> files are rebuilt.</p></li>
 </ul>
-</div>
-<div id="how-many-targets-should-i-use-per-data-file" class="section level4">
-<h4 class="hasAnchor">
-<a href="#how-many-targets-should-i-use-per-data-file" class="anchor"></a>How many <target>targets</target> should I use per <data>data file</data>?</h4>
-<div id="target-method" class="section level5">
-<h5 class="hasAnchor">
-<a href="#target-method" class="anchor"></a>3 <target><strong>target</strong></target> method:</h5>
+<p>##How many <target>targets</target> should I use per <data>data file</data>?</p>
+<p>###3 <target><strong>target</strong></target> method:</p>
 <ol style="list-style-type: decimal">
 <li>create a <data><strong>data file</strong></data>
 </li>
@@ -208,14 +195,7 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 <li>retrieve the <data><strong>data file</strong></data>
 </li>
 </ol>
-<div id="advantages" class="section level6">
-<h6>Advantages</h6>
-<ul>
-<li>
-<data><strong>Data</strong></data> and <ind><strong>indicator</strong></ind> file creation is verbose and clear</li>
-<li>Helps with fault tolerance by splitting tasks into multiple targets</li>
-<li>This method may be necessary when using standard functions for data creation or retrieval</li>
-</ul>
+<p>####Advantages - <data><strong>Data</strong></data> and <ind><strong>indicator</strong></ind> file creation is verbose and clear - Helps with fault tolerance by splitting tasks into multiple targets - This method may be necessary when using standard functions for data creation or retrieval</p>
 <pre>
 targets:
 
@@ -237,22 +217,8 @@ targets:
     command: gd_get(<ind>'1_data/out/nitrate_data_pull.rds.ind'</ind>, config_file = <data>'lib/cfg/gd_config.yml'</data>)
 
 </pre>
-</div>
-</div>
-<div id="target-method-1" class="section level5">
-<h5 class="hasAnchor">
-<a href="#target-method-1" class="anchor"></a>2 <target><strong>target</strong></target> method:</h5>
-<ol style="list-style-type: decimal">
-<li>push a <data><strong>data file</strong></data> and create an <ind><strong>indicator file</strong></ind>
-</li>
-<li>retrieve the <data><strong>data file</strong></data>
-</li>
-</ol>
-<div id="advantages-1" class="section level6">
-<h6>Advantages</h6>
-<ul>
-<li>More concise code and fewer <ind><strong>indicator</strong></ind> and <build><strong>build status</strong></build> files, thereby reducing the size of the repository</li>
-</ul>
+<p>###2 <target><strong>target</strong></target> method: 1. push a <data><strong>data file</strong></data> and create an <ind><strong>indicator file</strong></ind> 2. retrieve the <data><strong>data file</strong></data></p>
+<p>####Advantages - More concise code and fewer <ind><strong>indicator</strong></ind> and <build><strong>build status</strong></build> files, thereby reducing the size of the repository</p>
 <pre>
 targets:
 
@@ -270,35 +236,35 @@ targets:
 
 </pre>
 </div>
-</div>
-</div>
-</div>
-<div id="pros-and-cons" class="section level3">
-<h3 class="hasAnchor">
-<a href="#pros-and-cons" class="anchor"></a>Pros and Cons</h3>
-<div id="advantages-of-a-shared-cache" class="section level4">
-<h4 class="hasAnchor">
-<a href="#advantages-of-a-shared-cache" class="anchor"></a>Advantages of a shared cache:</h4>
+<div id="pros-and-cons" class="section level1">
+<h1 class="hasAnchor">
+<a href="#pros-and-cons" class="anchor"></a>Pros and Cons</h1>
+<p>##Advantages of a shared cache:</p>
 <ul>
 <li>Not every analyst needs to build every <target><strong>target</strong></target>, saving on total processing time.</li>
 <li>
 <target><strong>Targets</strong></target> that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.</li>
 <li>Intermediate and final products can be immediately visible to anyone who has access to the shared cache, whether they are contributing to the analysis or simply inspecting/using the output.</li>
 </ul>
-</div>
-<div id="disadvantages-of-a-shared-cache-as-currently-implemented" class="section level4">
-<h4 class="hasAnchor">
-<a href="#disadvantages-of-a-shared-cache-as-currently-implemented" class="anchor"></a>Disadvantages of a shared cache (as currently implemented):</h4>
+<p>##Disadvantages of a shared cache (as currently implemented):</p>
 <ul>
 <li>In a fast-paced collaborative development environment (e.g., a ‘sprint’), it is challenging to maintain synchrony between the shared cache (the <data><strong>data</strong></data>) and the git repository (the metadata; <ind><strong>indicator</strong></ind> and <build><strong>build status</strong></build> files). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project. See <em>Common Pitfalls and Solutions</em> vignette.</li>
 <li>Though we’ve done much to ensure this doesn’t happen, it’s conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.</li>
 <li>Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.</li>
 </ul>
 </div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+        <div id="tocnav">
+      <h2 class="hasAnchor">
+<a href="#tocnav" class="anchor"></a>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+<li><a href="#terms-and-concept">Terms and Concept</a></li>
+      <li><a href="#guidelines">Guidelines</a></li>
+      <li><a href="#pros-and-cons">Pros and Cons</a></li>
+      </ul>
+</div>
       </div>
 
 </div>
