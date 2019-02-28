@@ -11,7 +11,7 @@ vignette: >
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
-knitr::opts_knit$set(root.dir = tempdir())
+# knitr::opts_knit$set(root.dir = tempdir())
 ```
 
 ## Setup
@@ -112,10 +112,10 @@ step3 <- create_task_step(
 
 You've probably noticed the `...` in the arguments list of each function you pass to `create_task_step`. You don't get to decide what's available in the `...`s, but you do get do decide whether you use that information. Above the only named arguments we use are `task_name` and sometimes `step_name`, but other named arguments are passed in to these functions when the task step is turned into a task plan (next section). These other arguments allow you to look to other information for this task-step, or to info about previous steps within the task.
 
-• If you're writing a `target_name`, you have access to the evaluated `step_name` for this task-step. Therefore, your function definition can be `function(...)` or `function(step_name, ...)` depending on whether you plan to use the step_name information or not. It'll get passed in regardless of whether you include that argument in the definition.
-• If you're writing a `depends` function, you have access to the evaluated `target_name` and `step_name`. Therefore, your function definition can be either of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`
-• If you're writing a `command` function, you have access to the evaluated `target_name`, `step_name`, and `depends`. Therefore, your function definition can be any of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`, or `function(target_name, step_name, depends, ...)`
-• You can also get the evaluated values of `step_name`, `target_name`, `depends`, or `command` for any of the preceding steps for this task; all of these are available elements of the `steps` argument, which is a list named `steps`. Therefore, your function definition can be any of these: `function(steps, ...)`, `function(target_name, steps, ...)`, `function(target_name, step_name, steps, ...)`, or `function(target_name, step_name, depends, steps, ...)`. This is most useful if you're defining the 2nd, 3rd, etc. step, because then there's information to look back at. For example, if step 2 uses the target from step 1 as input, and if step 1 is named "prepare", then your definition for step 2 might look something like this:
+* If you're writing a `target_name`, you have access to the evaluated `step_name` for this task-step. Therefore, your function definition can be `function(...)` or `function(step_name, ...)` depending on whether you plan to use the step_name information or not. It'll get passed in regardless of whether you include that argument in the definition.
+* If you're writing a `depends` function, you have access to the evaluated `target_name` and `step_name`. Therefore, your function definition can be either of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`
+* If you're writing a `command` function, you have access to the evaluated `target_name`, `step_name`, and `depends`. Therefore, your function definition can be any of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`, or `function(target_name, step_name, depends, ...)`
+* You can also get the evaluated values of `step_name`, `target_name`, `depends`, or `command` for any of the preceding steps for this task; all of these are available elements of the `steps` argument, which is a list named `steps`. Therefore, your function definition can be any of these: `function(steps, ...)`, `function(target_name, steps, ...)`, `function(target_name, step_name, steps, ...)`, or `function(target_name, step_name, depends, steps, ...)`. This is most useful if you're defining the 2nd, 3rd, etc. step, because then there's information to look back at. For example, if step 2 uses the target from step 1 as input, and if step 1 is named "prepare", then your definition for step 2 might look something like this:
 ```
 step2 <- create_task_step(
   step_name = 'plot',
@@ -182,7 +182,7 @@ unlink('.remake')
 unlink('build')
 ```
 
-```{r loop1a}
+```{r loop1a, eval=FALSE}
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')

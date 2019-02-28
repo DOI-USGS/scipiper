@@ -1,5 +1,15 @@
+Meta
+doc
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 *.Rproj
+vignettes/.remake
+vignettes/build
+vignettes/states
+vignettes/*.pdf
+vignettes/*.yml
+vignettes/*.png
+vignettes/*.R
+vignettes/*.html
