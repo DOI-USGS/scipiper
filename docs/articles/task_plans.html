@@ -341,34 +341,34 @@ targets:
 <a href="#forcing-rebuild-for-one-task-step" class="anchor"></a>Forcing rebuild for one task-step</h3>
 <p>If we try to <code>scmake</code> any of the targets in the task makefile without changing any of the inputs, <code>remake</code> correctly recognizes that they’re up to date already, and the target is not rebuilt. For example, because we ran <code>loop_tasks</code> above, <code>AZ_plot.png</code> is already <code>OK</code> when we try to build it again:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw"><a href="../reference/scmake.html">scmake</a></span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)</a>
-<a class="sourceLine" id="cb10-2" title="2"><span class="co">## Starting build at 2019-02-28 11:40:41</span></a>
+<a class="sourceLine" id="cb10-2" title="2"><span class="co">## Starting build at 2019-02-28 13:38:02</span></a>
 <a class="sourceLine" id="cb10-3" title="3"><span class="co">## &lt;  MAKE &gt; AZ_plot.png</span></a>
 <a class="sourceLine" id="cb10-4" title="4"><span class="co">## [    OK ] AZ_prep</span></a>
 <a class="sourceLine" id="cb10-5" title="5"><span class="co">## [    OK ] AZ_plot.png</span></a>
-<a class="sourceLine" id="cb10-6" title="6"><span class="co">## Finished build at 2019-02-28 11:40:41</span></a>
+<a class="sourceLine" id="cb10-6" title="6"><span class="co">## Finished build at 2019-02-28 13:38:02</span></a>
 <a class="sourceLine" id="cb10-7" title="7"><span class="co">## Build completed in 0.00 minutes</span></a></code></pre></div>
 <p>One way to force the rebuild of a single target is to use <code>scdel</code>, like this:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/scdel.html">scdel</a></span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)</a>
 <a class="sourceLine" id="cb11-2" title="2"><span class="co">## (   DEL ) AZ_plot.png       |  file.remove("AZ_plot.png")</span></a></code></pre></div>
 <p>Now when we <code>scmake</code> that target again, <code>AZ_plot.png</code> gets rebuilt:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="../reference/scmake.html">scmake</a></span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>)</a>
-<a class="sourceLine" id="cb12-2" title="2"><span class="co">## Starting build at 2019-02-28 11:40:41</span></a>
+<a class="sourceLine" id="cb12-2" title="2"><span class="co">## Starting build at 2019-02-28 13:38:02</span></a>
 <a class="sourceLine" id="cb12-3" title="3"><span class="co">## &lt;  MAKE &gt; AZ_plot.png</span></a>
 <a class="sourceLine" id="cb12-4" title="4"><span class="co">## [    OK ] AZ_prep</span></a>
 <a class="sourceLine" id="cb12-5" title="5"><span class="co">## [ BUILD ] AZ_plot.png       |  visualize(plot_name = "AZ_plot.png", sta...</span></a>
 <a class="sourceLine" id="cb12-6" title="6"><span class="co">## [  READ ]                   |  # loading packages</span></a>
 <a class="sourceLine" id="cb12-7" title="7"><span class="co">## visualizing AZ_plot.png - Phoenix</span></a>
-<a class="sourceLine" id="cb12-8" title="8"><span class="co">## Finished build at 2019-02-28 11:40:42</span></a>
-<a class="sourceLine" id="cb12-9" title="9"><span class="co">## Build completed in 0.01 minutes</span></a></code></pre></div>
+<a class="sourceLine" id="cb12-8" title="8"><span class="co">## Finished build at 2019-02-28 13:38:03</span></a>
+<a class="sourceLine" id="cb12-9" title="9"><span class="co">## Build completed in 0.02 minutes</span></a></code></pre></div>
 <p>Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1"><span class="kw"><a href="../reference/scmake.html">scmake</a></span>(<span class="st">'AZ_plot.png'</span>, <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)</a>
 <a class="sourceLine" id="cb13-2" title="2"><span class="co">## (   DEL ) AZ_plot.png       |  file.remove("AZ_plot.png")</span></a>
-<a class="sourceLine" id="cb13-3" title="3"><span class="co">## Starting build at 2019-02-28 11:40:42</span></a>
+<a class="sourceLine" id="cb13-3" title="3"><span class="co">## Starting build at 2019-02-28 13:38:04</span></a>
 <a class="sourceLine" id="cb13-4" title="4"><span class="co">## &lt;  MAKE &gt; AZ_plot.png</span></a>
 <a class="sourceLine" id="cb13-5" title="5"><span class="co">## [    OK ] AZ_prep</span></a>
 <a class="sourceLine" id="cb13-6" title="6"><span class="co">## [ BUILD ] AZ_plot.png       |  visualize(plot_name = "AZ_plot.png", sta...</span></a>
 <a class="sourceLine" id="cb13-7" title="7"><span class="co">## visualizing AZ_plot.png - Phoenix</span></a>
-<a class="sourceLine" id="cb13-8" title="8"><span class="co">## Finished build at 2019-02-28 11:40:42</span></a>
+<a class="sourceLine" id="cb13-8" title="8"><span class="co">## Finished build at 2019-02-28 13:38:04</span></a>
 <a class="sourceLine" id="cb13-9" title="9"><span class="co">## Build completed in 0.00 minutes</span></a></code></pre></div>
 </div>
 <div id="forcing-rebuild-for-all-task-steps" class="section level3">
@@ -380,7 +380,7 @@ targets:
 <a class="sourceLine" id="cb14-3" title="3">  <span class="dt">task_makefile=</span><span class="st">'task_plan_1.yml'</span>)</a>
 <a class="sourceLine" id="cb14-4" title="4"><span class="co">## </span></a>
 <a class="sourceLine" id="cb14-5" title="5"><span class="co">## </span><span class="al">###</span><span class="co"> Final check for completeness of all targets</span></a>
-<a class="sourceLine" id="cb14-6" title="6"><span class="co">## Starting build at 2019-02-28 11:40:43</span></a>
+<a class="sourceLine" id="cb14-6" title="6"><span class="co">## Starting build at 2019-02-28 13:38:05</span></a>
 <a class="sourceLine" id="cb14-7" title="7"><span class="co">## &lt;  MAKE &gt; task_plan_1</span></a>
 <a class="sourceLine" id="cb14-8" title="8"><span class="co">## [    OK ] WI_prep</span></a>
 <a class="sourceLine" id="cb14-9" title="9"><span class="co">## [    OK ] AZ_prep</span></a>
@@ -395,7 +395,7 @@ targets:
 <a class="sourceLine" id="cb14-18" title="18"><span class="co">## [    OK ] PA.pdf</span></a>
 <a class="sourceLine" id="cb14-19" title="19"><span class="co">## [    OK ] states/log/PA.ind</span></a>
 <a class="sourceLine" id="cb14-20" title="20"><span class="co">## [    OK ] task_plan_1</span></a>
-<a class="sourceLine" id="cb14-21" title="21"><span class="co">## Finished build at 2019-02-28 11:40:43</span></a>
+<a class="sourceLine" id="cb14-21" title="21"><span class="co">## Finished build at 2019-02-28 13:38:05</span></a>
 <a class="sourceLine" id="cb14-22" title="22"><span class="co">## Build completed in 0.00 minutes</span></a></code></pre></div>
 <p>One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use <code>scdel</code> with the <code>target_names</code> argument set to <code>list_all_targets([remake_file])</code>.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="../reference/scdel.html">scdel</a></span>(<span class="dt">target_names=</span><span class="kw"><a href="../reference/list_all_targets.html">list_all_targets</a></span>(<span class="st">'task_plan_1.yml'</span>), <span class="dt">remake_file=</span><span class="st">'task_plan_1.yml'</span>)</a>
@@ -428,7 +428,7 @@ targets:
 <a class="sourceLine" id="cb16-13" title="13"><span class="co">## reporting on PA.pdf</span></a>
 <a class="sourceLine" id="cb16-14" title="14"><span class="co">## </span></a>
 <a class="sourceLine" id="cb16-15" title="15"><span class="co">## </span><span class="al">###</span><span class="co"> Final check for completeness of all targets</span></a>
-<a class="sourceLine" id="cb16-16" title="16"><span class="co">## Starting build at 2019-02-28 11:40:46</span></a>
+<a class="sourceLine" id="cb16-16" title="16"><span class="co">## Starting build at 2019-02-28 13:38:08</span></a>
 <a class="sourceLine" id="cb16-17" title="17"><span class="co">## &lt;  MAKE &gt; task_plan_1</span></a>
 <a class="sourceLine" id="cb16-18" title="18"><span class="co">## [    OK ] WI_prep</span></a>
 <a class="sourceLine" id="cb16-19" title="19"><span class="co">## [    OK ] AZ_prep</span></a>
@@ -443,7 +443,7 @@ targets:
 <a class="sourceLine" id="cb16-28" title="28"><span class="co">## [    OK ] PA.pdf</span></a>
 <a class="sourceLine" id="cb16-29" title="29"><span class="co">## [    OK ] states/log/PA.ind</span></a>
 <a class="sourceLine" id="cb16-30" title="30"><span class="co">## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate("states/log/t...</span></a>
-<a class="sourceLine" id="cb16-31" title="31"><span class="co">## Finished build at 2019-02-28 11:40:46</span></a>
+<a class="sourceLine" id="cb16-31" title="31"><span class="co">## Finished build at 2019-02-28 13:38:08</span></a>
 <a class="sourceLine" id="cb16-32" title="32"><span class="co">## Build completed in 0.00 minutes</span></a></code></pre></div>
 <p>Again, the less-typing solution is to force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="kw"><a href="../reference/scmake.html">scmake</a></span>(<span class="kw"><a href="../reference/list_all_targets.html">list_all_targets</a></span>(<span class="st">'task_plan_1.yml'</span>), <span class="st">'task_plan_1.yml'</span>, <span class="dt">force=</span><span class="ot">TRUE</span>)</a>
@@ -460,7 +460,7 @@ targets:
 <a class="sourceLine" id="cb17-12" title="12"><span class="co">## (   DEL ) PA.pdf            |  file.remove("PA.pdf")</span></a>
 <a class="sourceLine" id="cb17-13" title="13"><span class="co">## (   DEL ) states/log/PA.ind |  file.remove("states/log/PA.ind")</span></a>
 <a class="sourceLine" id="cb17-14" title="14"><span class="co">## (   DEL ) task_plan_1       |  rm("task_plan_1")</span></a>
-<a class="sourceLine" id="cb17-15" title="15"><span class="co">## Starting build at 2019-02-28 11:40:47</span></a>
+<a class="sourceLine" id="cb17-15" title="15"><span class="co">## Starting build at 2019-02-28 13:38:09</span></a>
 <a class="sourceLine" id="cb17-16" title="16"><span class="co">## &lt;  MAKE &gt; WI_prep</span></a>
 <a class="sourceLine" id="cb17-17" title="17"><span class="co">## &lt;  MAKE &gt; WI_plot.png</span></a>
 <a class="sourceLine" id="cb17-18" title="18"><span class="co">## &lt;  MAKE &gt; WI.pdf</span></a>
@@ -496,8 +496,8 @@ targets:
 <a class="sourceLine" id="cb17-48" title="48"><span class="co">## reporting on PA.pdf</span></a>
 <a class="sourceLine" id="cb17-49" title="49"><span class="co">## [ BUILD ] states/log/PA.ind |  sc_indicate("states/log/PA.ind")</span></a>
 <a class="sourceLine" id="cb17-50" title="50"><span class="co">## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate("states/log/t...</span></a>
-<a class="sourceLine" id="cb17-51" title="51"><span class="co">## Finished build at 2019-02-28 11:40:48</span></a>
-<a class="sourceLine" id="cb17-52" title="52"><span class="co">## Build completed in 0.02 minutes</span></a></code></pre></div>
+<a class="sourceLine" id="cb17-51" title="51"><span class="co">## Finished build at 2019-02-28 13:38:10</span></a>
+<a class="sourceLine" id="cb17-52" title="52"><span class="co">## Build completed in 0.03 minutes</span></a></code></pre></div>
 </div>
 </div>
 <div id="developing-a-successful-loop" class="section level2">
@@ -575,7 +575,7 @@ targets:
 <a class="sourceLine" id="cb22-5" title="5"><span class="co">## reporting on WI.pdf</span></a>
 <a class="sourceLine" id="cb22-6" title="6"><span class="co">## </span></a>
 <a class="sourceLine" id="cb22-7" title="7"><span class="co">## </span><span class="al">###</span><span class="co"> Final check for completeness of all targets</span></a>
-<a class="sourceLine" id="cb22-8" title="8"><span class="co">## Starting build at 2019-02-28 11:40:53</span></a>
+<a class="sourceLine" id="cb22-8" title="8"><span class="co">## Starting build at 2019-02-28 13:38:15</span></a>
 <a class="sourceLine" id="cb22-9" title="9"><span class="co">## &lt;  MAKE &gt; task_plan_1</span></a>
 <a class="sourceLine" id="cb22-10" title="10"><span class="co">## [    OK ] WI_prep</span></a>
 <a class="sourceLine" id="cb22-11" title="11"><span class="co">## [    OK ] AZ_prep</span></a>
@@ -590,8 +590,8 @@ targets:
 <a class="sourceLine" id="cb22-20" title="20"><span class="co">## [    OK ] PA.pdf</span></a>
 <a class="sourceLine" id="cb22-21" title="21"><span class="co">## [    OK ] states/log/PA.ind</span></a>
 <a class="sourceLine" id="cb22-22" title="22"><span class="co">## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate("states/log/t...</span></a>
-<a class="sourceLine" id="cb22-23" title="23"><span class="co">## Finished build at 2019-02-28 11:40:54</span></a>
-<a class="sourceLine" id="cb22-24" title="24"><span class="co">## Build completed in 0.01 minutes</span></a></code></pre></div>
+<a class="sourceLine" id="cb22-23" title="23"><span class="co">## Finished build at 2019-02-28 13:38:15</span></a>
+<a class="sourceLine" id="cb22-24" title="24"><span class="co">## Build completed in 0.00 minutes</span></a></code></pre></div>
 </div>
 <div id="indicator-files-options" class="section level2">
 <h2 class="hasAnchor">
