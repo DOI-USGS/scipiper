@@ -4,7 +4,7 @@ author: "Alison Appling"
 date: "February 4, 2019"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Shared cache}
+  %\VignetteIndexEntry{Pitfalls}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
