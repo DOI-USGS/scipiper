@@ -1,10 +1,11 @@
-## Shared Cache {.tabset .tabset-fade .tabset-pills}
-
-Alison Appling, July 31, 2018  
-Jake Zwart, February 4, 2019
-
 ---
-output: rmarkdown::html_vignette
+title: Shared Cache
+author: Jake Zwart and Alison Appling
+date: February 4, 2019
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: false
 vignette: >
   %\VignetteIndexEntry{Shared cache}
   %\VignetteEngine{knitr::rmarkdown}
@@ -26,7 +27,7 @@ knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
 ```
 
 
-### Terms and concept
+### Terms and Concept
 
 ####Terms
 
@@ -189,5 +190,3 @@ targets:
 * In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the <data>**data**</data>) and the git repository (the metadata; <ind>**indicator**</ind> and <build>**build status**</build> files). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project. See *Common Pitfalls and Solutions* vignette. 
 * Though we've done much to ensure this doesn't happen, it's conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.
 * Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.
-
-##
