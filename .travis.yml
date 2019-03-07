@@ -11,6 +11,9 @@ matrix:
       r: devel
       env: R_CODECOV=true
 
+r_build_args: '--no-build-vignettes --no-manual'
+r_check_args: '--no-build-vignettes'
+
 env:
    global:
      - NOT_CRAN="true"
