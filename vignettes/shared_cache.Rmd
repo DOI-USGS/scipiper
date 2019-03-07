@@ -1,24 +1,15 @@
+## Shared Cache {.tabset .tabset-fade .tabset-pills}
+
+Alison Appling, July 31, 2018  
+Jake Zwart, February 4, 2019
+
 ---
-title: Shared Cache
-author: Jake Zwart and Alison Appling
-date: February 4, 2019
-output:
-  rmarkdown::html_vignette:
-    toc: true
-    number_sections: false
+output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Shared cache}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
-
-
-
-  
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
-```
-
 <head>
 <style>
 data {color: #CA3542;}
@@ -29,9 +20,15 @@ yml {color: #56B4E9}
 </style>
 </head>
 
-# Terms and Concept
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
+```
 
-##Terms
+
+### Terms and concept
+
+####Terms
 
 * <data>**Data file**</data>: files used as input for or generated as output by computing (e.g. streamgage data, geospatial data, site metadata, modeling results) 
 * <ind>**Indicator file**</ind>: git-versioned files that promise the analyst that the data file exists remotely 
@@ -39,7 +36,7 @@ yml {color: #56B4E9}
 * <target>**Target**</target>: points or steps in the analysis that can be files or R objects. Many of the targets in a shared cache project will be <ind>indicator files</ind>. 
 * <yml>**YAML file**</yml>: human and machine readable file used to layout the project workflow, packages needed, and <target>target</target> dependencies. YAML stands for *YAML Ain't Markup Language* to distinguish its purpose as data-oriented, rather than document markup. 
 
-##Concept
+####Concept
 
 A **s**hared **c**ache (**sc** of `scmake`) is a cloud data storage location where raw, intermediate, and/or final data products from an analysis project are contributed to and accessible by multiple analysts. Not all scipiper projects will use a shared cache.
 
@@ -106,9 +103,9 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 </pre> 
 
 
-# Guidelines
+### Guidelines
 
-##Projects using a shared cache should follow these guidelines:
+####Projects using a shared cache should follow these guidelines:
 
 * Use <ind>**indicator files**</ind> (usually an `.ind` suffix) to represent most or all of the chain of connected <target>**targets**</target> within your remake files. Each `.ind` file should be one of two products of a recipe (e.g. R function call), where the other product is the creation of a <data>**data file**</data>, either locally and/or in the shared cache. The <ind>**indicator files**</ind> are the only products that are declared to `remake`, while the <data>**data files**</data> remain hidden. This allows the <ind>**indicator files**</ind> to indirectly represent the <data>**data files**</data> to `remake` thereby enabling compatibility between `remake` and the shared cache. <target>**Targets**</target> that probably don't need <ind>**indicator files**</ind> are those that are quick to produce (e.g. < 5 seconds, or quicker than downloading from the shared cache) or configuration files. 
 
@@ -120,15 +117,14 @@ select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd
 
 * To force a rebuild, either use the `force=TRUE` argument to `scmake()` or use `scdel()` to delete <ind>**indicator files**</ind>. There's seldom any benefit to deleting <data>**data files**</data> (by any method); usually deleting the <ind>**indicator files**</ind> is plenty. When deleting <ind>**indicator files**</ind>, `force=TRUE` or `scdel()` are preferable to directly deleting the `.ind` files because if only the `.ind` files are deleted, the `scipiper` database may fail to update properly when the `.ind` files are rebuilt. 
 
-##How many <target>targets</target> should I use per <data>data file</data>?
+####How many <target>targets</target> should I use per <data>data file</data>?
 
-###3 <target>**target**</target> method: 
-
+#####3 <target>**target**</target> method: 
 1. create a <data>**data file**</data> 
 2. push a <data>**data file**</data> and create an <ind>**indicator file**</ind> 
 3. retrieve the <data>**data file**</data> 
 
-####Advantages
+######Advantages
 - <data>**Data**</data> and <ind>**indicator**</ind> file creation is verbose and clear
 - Helps with fault tolerance by splitting tasks into multiple targets 
 - This method may be necessary when using standard functions for data creation or retrieval  
@@ -155,11 +151,11 @@ targets:
 
 </pre>
 
-###2 <target>**target**</target> method: 
+#####2 <target>**target**</target> method: 
 1. push a <data>**data file**</data> and create an <ind>**indicator file**</ind> 
 2. retrieve the <data>**data file**</data> 
 
-####Advantages
+######Advantages
 - More concise code and fewer <ind>**indicator**</ind> and <build>**build status**</build> files, thereby reducing the size of the repository 
 
 <pre>
@@ -180,16 +176,18 @@ targets:
 </pre>
 
 
-# Pros and Cons 
+### Pros and Cons 
 
-##Advantages of a shared cache:
+####Advantages of a shared cache:
 
 * Not every analyst needs to build every <target>**target**</target>, saving on total processing time.
 * <target>**Targets**</target> that can only be built on specific operating systems (e.g., Mac) or in specific computing environments (e.g., a cluster) can still be accessible to all analysts for further analysis.
 * Intermediate and final products can be immediately visible to anyone who has access to the shared cache, whether they are contributing to the analysis or simply inspecting/using the output.
 
-##Disadvantages of a shared cache (as currently implemented):
+####Disadvantages of a shared cache (as currently implemented):
 
 * In a fast-paced collaborative development environment (e.g., a 'sprint'), it is challenging to maintain synchrony between the shared cache (the <data>**data**</data>) and the git repository (the metadata; <ind>**indicator**</ind> and <build>**build status**</build> files). Asynchrony is not a deal-breaker but does lead to more rebuilding than would be required for a slower-paced project. See *Common Pitfalls and Solutions* vignette. 
 * Though we've done much to ensure this doesn't happen, it's conceivable that metadata will become corrupt relative to the data. Some monitoring and very occasional full rebuilding is recommended when practical.
 * Old files no longer referenced by the code can accumulate on the shared cache unless manually deleted. Though these will not interfere with ongoing analysis, they can take up storage space unnecessarily.
+
+##
