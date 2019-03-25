@@ -2,7 +2,11 @@
 title: "Target type guidelines"
 author: "David Watkins"
 date: "3/25/2019"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Target types}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
