@@ -13,24 +13,24 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+`scipiper` targets can be indicator files with a [shared cache](shared_cache.html), local data files with or without local indicator files, or simply R objects.  This vignette provides some guidelines for when to use these different patterns.
+
 ## Objectives
-There are two main goals to keep in mind when deciding whether to cache:
+There are two main goals to keep in mind when deciding what style of target to use:
  
  - **Minimize time spend unnecessarily rebuilding targets** --- i.e., those that have already been built locally or by collaborators
  - **Keeping the pipeline simple** --- caching can save lots of build time, but also adds to the code that has to be maintained, can clutter the repo with build and indicator files, etc.
  
  These two can sometimes be in tension, but usually it will be clear which is more important for a given case.
  
-## Factors to consider
+## Key factors to consider
 
- - **Time to create an object** vs **object size**: This is the biggest thing to consider --- is it faster to upload a file to the shared cache and have others download it, or just have others rebuild themselves?  This will somewhat depend on your internet connection.  Don't forget about upload time as well.  Uploading is generally slower than downloading, especially for remote workers with residential internet connections.   
+ - **Time to create an object** vs **object size**: This is the biggest thing to consider --- is it faster to upload a file to the shared cache and have others download it, or just have others rebuild it themselves?  This will somewhat depend on your internet connection.  Don't forget about upload time as well.  Uploading is generally slower than downloading, especially for remote workers with residential internet connections.   
  
  - **How often will a target be updated?**:  Saving a target to disk may be less useful if it is likely to need to be rebuilt before the file on disk is ever used again.
  
  - **Collaborators**: Are all collaborators equipped to rebuild every step in the pipeline, if needed?  If a particular step needs to be done by certain people, say a processing-intensive munging step early in the pipeline, than this file will almost certainly need to be in the remote cache.
  
- 
-
 ## Target choices
 
 **Shared cache data/indicator file**: The target will be only be rebuilt if its dependencies have changed, and the indicator file has not been updated to trigger a download from the remote cache. For longer-running operations that are worthwhile to cache remotely.  See the [shared caching vignette](shared_cache.html) for different implementation options.
