@@ -10,16 +10,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
-
-<head>
-<style>
-data {color: #CA3542;}
-ind {color: #FEBC38;}
-build {color: #697F98;} 
-target {color: #37AFA9}
-yml {color: #56B4E9}
-</style>
-</head>
   
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
@@ -32,14 +22,14 @@ knitr::opts_knit$set(root.dir = tempdir())
 
 ### What are task plans?
 
-Suppose you want to create the same figure for each state in the United States. To create these figures in an R script, we would likely write a `for` loop or use `lapply`, iterating over the states. In `scipiper`, we could add the targets and associated commands in our makefile once for Alabama and then copy/paste/edit for the remaining states. That would be time consuming, and extremely prone to human error. This is where task plans, and the associated functions, `create_task_step`, `create_task_plan`, `create_task_makefile`, and `loop_tasks` come in handy. Instead of adding these repeating targets to define these steps for each state by hand, we can use a few clever functions to auto-generate a separate makefile!
+Suppose you want to create the same figure for each state in the United States. To create these figures in an R script, we would likely write a `for` loop or use `lapply`, iterating over the states. However, these types of patterns can be brittle and result in significant inefficiencies if one iteration fails and disrupts the entire process. This is why we use the `scipiper` pipeline - to defend our data processing against brittle behavior. In `scipiper`, we could add the targets and associated commands in our makefile once for Alabama and then copy/paste/edit for the remaining states. That would be time consuming, and extremely prone to human error. This is where task plans, and the associated functions, `create_task_step`, `create_task_plan`, `create_task_makefile`, and `loop_tasks` come in handy. Instead of adding these repeating targets to define these steps for each state by hand, we can use a few clever functions to auto-generate a separate makefile!
 
 * A **task** is each element that is being repeated. In the example above, each state is a task. 
-* A **task step** is a function that will be used to create a target for each task; there can be multiple task steps. In the example above, the function that creates a single plot for one state would be a task step. Use the `create_task_step` function to setup each of your steps.
+* A **task step** is a function that will be used to create a target for each task; there can be multiple task steps for each task. In the example described above, the function that creates a single plot for one state would be a task step. Use the `create_task_step` function to setup each of your steps.
 * A **task plan** is an expanded R list defining all the steps for each task. Use the `create_task_plan` function to ingest the task step functions and the tasks themselves to create the instructions for each target to build.
 * A **task makefile** is auto-generated from a task plan and contains all of the task targets. Use the `create_task_makefile` to turn the task plan into the task makefile.
 
-To incorporate this into the rest of your `scipiper` analysis, add a target for creating the task plan, creating the task makefile, and executing the task makefile. The command for your task plan target should be a custom function that contains one or more `create_task_step` functions and the `create_task_plan` function. The command for the task makefile target is `create_task_makefile`. And finally, the command for executing the task makefile can be either `loop_tasks` or `scmake` to make the final target in the auto-generated makefile.
+To incorporate task plans into the rest of your `scipiper` analysis, add a target for **1)** creating the task plan, **2)** creating the task makefile, and **3)** executing the task makefile. The command for your task plan target should be a custom function that contains one or more `create_task_step` functions and the `create_task_plan` function. The command for the task makefile target is `create_task_makefile`. And finally, the command for executing the task makefile can be either `loop_tasks` or `scmake` to make the final target in the auto-generated makefile.
 
 To see how all of these pieces connect, see the images below. To follow examples, click through the next sections. You can also run examples yourself using the directories `inst/extdata/tasks_demo` and `inst/extdata/tasks_demo2`. Your working directory will need to be set to the demo directory in order to execute `scmake()` commands. To see this in action in other projects, you can go to the storm gif frame setup in [vizstorm-GIF](https://github.com/USGS-VIZLAB/vizstorm-GIF/blob/master/6_visualize.yml), the timestep frame setup in [gage-conditions-gif](https://github.com/USGS-VIZLAB/gage-conditions-gif/blob/master/6_visualize.yml), or the inventory task pattern in [nawqa_wqp](https://github.com/USGS-R/nawqa_wqp/blob/master/1_wqpdata.yml). Note that these are in-sync with the task plan workflow as of February 2019, but might be outdated in the future.
 
@@ -89,7 +79,7 @@ task_config <- data_frame(
 )
 ```
 
-#### Creating task_steps
+#### Creating task steps
 
 To use `scipiper` to run these tasks, first generate a set of instructions, or `task_step`s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to `create_task_step()` can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in `?create_task_step` for list of the arguments each function can see and use.
 
@@ -229,7 +219,7 @@ To use the baked-in retries effectively, simply ensure that the functions called
 
 ### Forcing rebuilds
 
-#### Forcing rebuild for one task-step
+#### Forcing rebuild for one task step
 
 If we try to `scmake` any of the targets in the task makefile without changing any of the inputs, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. For example, because we ran `loop_tasks` above, `AZ_plot.png` is already `OK` when we try to build it again:
 
@@ -265,7 +255,7 @@ loop_tasks(
   task_makefile='task_plan_1.yml')
 ```
 
-One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `force=TRUE` argument to `loop_tasks`. This will automatically use `scdel` with all `target_names` in `task_plan_1.yml`. Now when we run the entire loop, everything gets rebuilt:
+One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `force=TRUE` argument to `loop_tasks`. This will automatically use `scdel` with all `target_names` in `task_plan_1.yml`. This is sometimes required when your pipeline doesn't capture all of the dependencies. For instance, your first step might be to pull data from WQP. Data is continuously updated online at the WQP, but there might not be anything in your pipeline that tells the data to re-download. In this case, you might need to use `force=TRUE` to re-pull the data. Now when we run the entire loop, everything gets rebuilt:
 
 ```{r rebuild_all}
 loop_tasks(
