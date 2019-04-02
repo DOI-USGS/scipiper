@@ -73,7 +73,7 @@ knitr::read_chunk('script.R')
 Here are the states and state capitals for which you want to run the above steps:
 
 ```{r tasks}
-task_config <- data_frame(
+task_config <- tibble(
   id=c('WI','AZ','PA'),
   capital=c('Madison','Phoenix','Harrisburg')
 )
@@ -212,10 +212,15 @@ The benefits of using `loop_tasks` to run all the remake targets in task_plan_1.
 
 1. baked-in retries during each execution of `loop_tasks`
 2. quicker restarts if `loop_tasks` gets interrupted partway through (e.g., if your computer runs out of battery or crashes)
-3. the ability to easily run subsets of tasks and/or steps while you're developing the analysis (see below)
+3. the ability to easily run subsets of tasks and/or steps while you're developing the analysis (see next section)
 
-To use the baked-in retries effectively, simply ensure that the functions called in your task-steps throw errors (typically with `stop()`) when things go wrong. No need to build retries into the functions themselves because `loop_tasks` will take care of that for you. And if your function isn't the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can set `num_tries=1` in `loop_tasks`.
+To use the baked-in retries effectively, simply ensure that the functions called in your task-steps throw errors (typically with `stop()`) when things go wrong. No need to build retries into the functions themselves because `loop_tasks` will take care of that for you. And if your function isn't the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can set `num_tries=1` in `loop_tasks`. 
 
+Although `loop_tasks` adds useful features for retries, it can be extremely slow for large task makefiles because `get_remake_status(targets, task_makefile)` is called on all possible targets. While improving the speed of `loop_tasks` would be ideal, we don't anticipate that will happen soon. So instead of `loop_tasks`, you can use `scmake` for your whole task plan. Reworking the `loop_tasks` command in the code chunk above, you can do the following:
+
+```{r scmake_instead}
+scmake('task_plan_1', 'task_plan_1.yml')
+```
 
 ### Forcing rebuilds
 
@@ -262,6 +267,12 @@ loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   force = TRUE)
+```
+
+As discussed previously, sometimes `loop_tasks` is very slow and you can use `scmake` to execute all targets of a task makefile instead. Similar to `loop_tasks`, `force=TRUE` can be used in this context. The `scmake` version of the previous code chunk is:
+
+```{r rebuild_all_scmake}
+scmake('task_plan_1', 'task_plan_1.yml', force = TRUE)
 ```
 
 ### Developing a successful loop

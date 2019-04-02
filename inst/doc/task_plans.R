@@ -50,7 +50,7 @@ report <- function(report_name) {
 }
 
 ## ----tasks---------------------------------------------------------------
-task_config <- data_frame(
+task_config <- tibble(
   id=c('WI','AZ','PA'),
   capital=c('Madison','Phoenix','Harrisburg')
 )
@@ -128,6 +128,9 @@ loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')
 
+## ----scmake_instead------------------------------------------------------
+scmake('task_plan_1', 'task_plan_1.yml')
+
 ## ----try_rebuild_one-----------------------------------------------------
 scmake('AZ_plot.png', 'task_plan_1.yml')
 
@@ -150,6 +153,9 @@ loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   force = TRUE)
+
+## ----rebuild_all_scmake--------------------------------------------------
+scmake('task_plan_1', 'task_plan_1.yml', force = TRUE)
 
 ## ----delete_all2---------------------------------------------------------
 scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')

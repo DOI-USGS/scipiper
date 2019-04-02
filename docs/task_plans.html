@@ -232,12 +232,10 @@ report &lt;- function(report_name) {
   file.create(report_name, showWarnings=FALSE)
 }</code></pre>
 <p>Here are the states and state capitals for which you want to run the above steps:</p>
-<pre class="r"><code>task_config &lt;- data_frame(
+<pre class="r"><code>task_config &lt;- tibble(
   id=c('WI','AZ','PA'),
   capital=c('Madison','Phoenix','Harrisburg')
-)
-## Warning: `data_frame()` is deprecated, use `tibble()`.
-## This warning is displayed once per session.</code></pre>
+)</code></pre>
 <div id="creating-task-steps" class="section level4">
 <h4>Creating task steps</h4>
 <p>To use <code>scipiper</code> to run these tasks, first generate a set of instructions, or <code>task_step</code>s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to <code>create_task_step()</code> can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in <code>?create_task_step</code> for list of the arguments each function can see and use.</p>
@@ -436,7 +434,7 @@ targets:
 ## reporting on PA.pdf
 ## 
 ## ### Final check for completeness of all targets
-## Starting build at 2019-04-02 15:22:51
+## Starting build at 2019-04-02 16:01:23
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -451,61 +449,18 @@ targets:
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-04-02 15:22:52
+## Finished build at 2019-04-02 16:01:23
 ## Build completed in 0.00 minutes</code></pre>
 <p>The benefits of using <code>loop_tasks</code> to run all the remake targets in task_plan_1.yml are:</p>
 <ol style="list-style-type: decimal">
 <li>baked-in retries during each execution of <code>loop_tasks</code></li>
 <li>quicker restarts if <code>loop_tasks</code> gets interrupted partway through (e.g., if your computer runs out of battery or crashes)</li>
-<li>the ability to easily run subsets of tasks and/or steps while you’re developing the analysis (see below)</li>
+<li>the ability to easily run subsets of tasks and/or steps while you’re developing the analysis (see next section)</li>
 </ol>
 <p>To use the baked-in retries effectively, simply ensure that the functions called in your task-steps throw errors (typically with <code>stop()</code>) when things go wrong. No need to build retries into the functions themselves because <code>loop_tasks</code> will take care of that for you. And if your function isn’t the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can set <code>num_tries=1</code> in <code>loop_tasks</code>.</p>
-</div>
-</div>
-<div id="forcing-rebuilds" class="section level3">
-<h3>Forcing rebuilds</h3>
-<div id="forcing-rebuild-for-one-task-step" class="section level4">
-<h4>Forcing rebuild for one task step</h4>
-<p>If we try to <code>scmake</code> any of the targets in the task makefile without changing any of the inputs, <code>remake</code> correctly recognizes that they’re up to date already, and the target is not rebuilt. For example, because we ran <code>loop_tasks</code> above, <code>AZ_plot.png</code> is already <code>OK</code> when we try to build it again:</p>
-<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml')
-## Starting build at 2019-04-02 15:22:52
-## &lt;  MAKE &gt; AZ_plot.png
-## [    OK ] AZ_prep
-## [    OK ] AZ_plot.png
-## Finished build at 2019-04-02 15:22:52
-## Build completed in 0.00 minutes</code></pre>
-<p>One way to force the rebuild of a single target is to use <code>scdel</code>, like this:</p>
-<pre class="r"><code>scdel('AZ_plot.png', 'task_plan_1.yml')
-## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)</code></pre>
-<p>Now when we <code>scmake</code> that target again, <code>AZ_plot.png</code> gets rebuilt:</p>
-<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml')
-## Starting build at 2019-04-02 15:22:52
-## &lt;  MAKE &gt; AZ_plot.png
-## [    OK ] AZ_prep
-## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
-## visualizing AZ_plot.png - Phoenix
-## Finished build at 2019-04-02 15:22:52
-## Build completed in 0.00 minutes</code></pre>
-<p>Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
-<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
-## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)
-## Starting build at 2019-04-02 15:22:52
-## &lt;  MAKE &gt; AZ_plot.png
-## [    OK ] AZ_prep
-## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
-## visualizing AZ_plot.png - Phoenix
-## Finished build at 2019-04-02 15:22:53
-## Build completed in 0.00 minutes</code></pre>
-</div>
-<div id="forcing-rebuild-for-all-task-steps" class="section level4">
-<h4>Forcing rebuild for all task-steps</h4>
-<p>Similar to the one-target example, above, if we run the same <code>loop_tasks</code> command twice, nothing will get rebuilt the second time. Instead, all items will say <code>OK</code>:</p>
-<pre class="r"><code>loop_tasks(
-  task_plan=task_plan_1,
-  task_makefile='task_plan_1.yml')
-## 
-## ### Final check for completeness of all targets
-## Starting build at 2019-04-02 15:22:53
+<p>Although <code>loop_tasks</code> adds useful features for retries, it can be extremely slow for large task makefiles because <code>get_remake_status(targets, task_makefile)</code> is called on all possible targets. While improving the speed of <code>loop_tasks</code> would be ideal, we don’t anticipate that will happen soon. So instead of <code>loop_tasks</code>, you can use <code>scmake</code> for your whole task plan. Reworking the <code>loop_tasks</code> command in the code chunk above, you can do the following:</p>
+<pre class="r"><code>scmake('task_plan_1', 'task_plan_1.yml')
+## Starting build at 2019-04-02 16:01:24
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -520,7 +475,69 @@ targets:
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [    OK ] task_plan_1
-## Finished build at 2019-04-02 15:22:53
+## Finished build at 2019-04-02 16:01:24
+## Build completed in 0.00 minutes</code></pre>
+</div>
+</div>
+<div id="forcing-rebuilds" class="section level3">
+<h3>Forcing rebuilds</h3>
+<div id="forcing-rebuild-for-one-task-step" class="section level4">
+<h4>Forcing rebuild for one task step</h4>
+<p>If we try to <code>scmake</code> any of the targets in the task makefile without changing any of the inputs, <code>remake</code> correctly recognizes that they’re up to date already, and the target is not rebuilt. For example, because we ran <code>loop_tasks</code> above, <code>AZ_plot.png</code> is already <code>OK</code> when we try to build it again:</p>
+<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml')
+## Starting build at 2019-04-02 16:01:24
+## &lt;  MAKE &gt; AZ_plot.png
+## [    OK ] AZ_prep
+## [    OK ] AZ_plot.png
+## Finished build at 2019-04-02 16:01:24
+## Build completed in 0.00 minutes</code></pre>
+<p>One way to force the rebuild of a single target is to use <code>scdel</code>, like this:</p>
+<pre class="r"><code>scdel('AZ_plot.png', 'task_plan_1.yml')
+## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)</code></pre>
+<p>Now when we <code>scmake</code> that target again, <code>AZ_plot.png</code> gets rebuilt:</p>
+<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml')
+## Starting build at 2019-04-02 16:01:24
+## &lt;  MAKE &gt; AZ_plot.png
+## [    OK ] AZ_prep
+## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
+## visualizing AZ_plot.png - Phoenix
+## Finished build at 2019-04-02 16:01:24
+## Build completed in 0.00 minutes</code></pre>
+<p>Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the <code>force=TRUE</code> argument to <code>scmake</code>:</p>
+<pre class="r"><code>scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
+## (   DEL ) AZ_plot.png       |  file.remove(&quot;AZ_plot.png&quot;)
+## Starting build at 2019-04-02 16:01:25
+## &lt;  MAKE &gt; AZ_plot.png
+## [    OK ] AZ_prep
+## [ BUILD ] AZ_plot.png       |  visualize(plot_name = &quot;AZ_plot.png&quot;, sta...
+## visualizing AZ_plot.png - Phoenix
+## Finished build at 2019-04-02 16:01:25
+## Build completed in 0.00 minutes</code></pre>
+</div>
+<div id="forcing-rebuild-for-all-task-steps" class="section level4">
+<h4>Forcing rebuild for all task-steps</h4>
+<p>Similar to the one-target example, above, if we run the same <code>loop_tasks</code> command twice, nothing will get rebuilt the second time. Instead, all items will say <code>OK</code>:</p>
+<pre class="r"><code>loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+## 
+## ### Final check for completeness of all targets
+## Starting build at 2019-04-02 16:01:25
+## &lt;  MAKE &gt; task_plan_1
+## [    OK ] WI_prep
+## [    OK ] AZ_prep
+## [    OK ] PA_prep
+## [    OK ] WI_plot.png
+## [    OK ] WI.pdf
+## [    OK ] states/log/WI.ind
+## [    OK ] AZ_plot.png
+## [    OK ] AZ.pdf
+## [    OK ] states/log/AZ.ind
+## [    OK ] PA_plot.png
+## [    OK ] PA.pdf
+## [    OK ] states/log/PA.ind
+## [    OK ] task_plan_1
+## Finished build at 2019-04-02 16:01:25
 ## Build completed in 0.00 minutes</code></pre>
 <p>One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use <code>force=TRUE</code> argument to <code>loop_tasks</code>. This will automatically use <code>scdel</code> with all <code>target_names</code> in <code>task_plan_1.yml</code>. This is sometimes required when your pipeline doesn’t capture all of the dependencies. For instance, your first step might be to pull data from WQP. Data is continuously updated online at the WQP, but there might not be anything in your pipeline that tells the data to re-download. In this case, you might need to use <code>force=TRUE</code> to re-pull the data. Now when we run the entire loop, everything gets rebuilt:</p>
 <pre class="r"><code>loop_tasks(
@@ -534,7 +551,7 @@ targets:
 ## ### Starting loop attempt 1 of 30 with 3 of 3 tasks remaining:
 ## 
 ## ### Final check for completeness of all targets
-## Starting build at 2019-04-02 15:22:55
+## Starting build at 2019-04-02 16:01:26
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -549,7 +566,27 @@ targets:
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-04-02 15:22:55
+## Finished build at 2019-04-02 16:01:26
+## Build completed in 0.00 minutes</code></pre>
+<p>As discussed previously, sometimes <code>loop_tasks</code> is very slow and you can use <code>scmake</code> to execute all targets of a task makefile instead. Similar to <code>loop_tasks</code>, <code>force=TRUE</code> can be used in this context. The <code>scmake</code> version of the previous code chunk is:</p>
+<pre class="r"><code>scmake('task_plan_1', 'task_plan_1.yml', force = TRUE)
+## (   DEL ) task_plan_1       |  rm(&quot;task_plan_1&quot;)
+## Starting build at 2019-04-02 16:01:27
+## &lt;  MAKE &gt; task_plan_1
+## [    OK ] WI_prep
+## [    OK ] AZ_prep
+## [    OK ] PA_prep
+## [    OK ] WI_plot.png
+## [    OK ] WI.pdf
+## [    OK ] states/log/WI.ind
+## [    OK ] AZ_plot.png
+## [    OK ] AZ.pdf
+## [    OK ] states/log/AZ.ind
+## [    OK ] PA_plot.png
+## [    OK ] PA.pdf
+## [    OK ] states/log/PA.ind
+## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
+## Finished build at 2019-04-02 16:01:27
 ## Build completed in 0.00 minutes</code></pre>
 </div>
 </div>
@@ -627,7 +664,7 @@ targets:
 ## reporting on WI.pdf
 ## 
 ## ### Final check for completeness of all targets
-## Starting build at 2019-04-02 15:22:58
+## Starting build at 2019-04-02 16:01:30
 ## &lt;  MAKE &gt; task_plan_1
 ## [    OK ] WI_prep
 ## [    OK ] AZ_prep
@@ -642,7 +679,7 @@ targets:
 ## [    OK ] PA.pdf
 ## [    OK ] states/log/PA.ind
 ## [ BUILD ] task_plan_1       |  task_plan_1 &lt;- sc_indicate(&quot;states/log/t...
-## Finished build at 2019-04-02 15:22:58
+## Finished build at 2019-04-02 16:01:30
 ## Build completed in 0.00 minutes</code></pre>
 </div>
 <div id="indicator-files-options" class="section level3">
