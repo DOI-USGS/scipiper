@@ -1,0 +1,354 @@
+## Task Plans {.tabset .tabset-fade .tabset-pills}
+
+Alison Appling May 23, 2018;  
+Lindsay Platt February 20, 2019
+
+---
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Task plans}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
+
+library(scipiper)
+library(dplyr)
+
+knitr::opts_knit$set(root.dir = tempdir())
+```
+
+### What are task plans?
+
+Suppose you want to create the same figure for each state in the United States. To create these figures in an R script, we would likely write a `for` loop or use `lapply`, iterating over the states. However, these types of patterns can be brittle and result in significant inefficiencies if one iteration fails and disrupts the entire process. This is why we use the `scipiper` pipeline - to defend our data processing against brittle behavior. In `scipiper`, we could add the targets and associated commands in our makefile once for Alabama and then copy/paste/edit for the remaining states. That would be time consuming, and extremely prone to human error. This is where task plans, and the associated functions, `create_task_step`, `create_task_plan`, `create_task_makefile`, and `loop_tasks` come in handy. Instead of adding these repeating targets to define these steps for each state by hand, we can use a few clever functions to auto-generate a separate makefile!
+
+* A **task** is each element that is being repeated. In the example above, each state is a task. 
+* A **task step** is a function that will be used to create a target for each task; there can be multiple task steps for each task. In the example described above, the function that creates a single plot for one state would be a task step. Use the `create_task_step` function to setup each of your steps.
+* A **task plan** is an expanded R list defining all the steps for each task. Use the `create_task_plan` function to ingest the task step functions and the tasks themselves to create the instructions for each target to build.
+* A **task makefile** is auto-generated from a task plan and contains all of the task targets. Use the `create_task_makefile` to turn the task plan into the task makefile.
+
+To incorporate task plans into the rest of your `scipiper` analysis, add a target for **1)** creating the task plan, **2)** creating the task makefile, and **3)** executing the task makefile. The command for your task plan target should be a custom function that contains one or more `create_task_step` functions and the `create_task_plan` function. The command for the task makefile target is `create_task_makefile`. And finally, the command for executing the task makefile can be either `loop_tasks` or `scmake` to make the final target in the auto-generated makefile.
+
+To see how all of these pieces connect, see the images below. To follow examples, click through the next sections. You can also run examples yourself using the directories `inst/extdata/tasks_demo` and `inst/extdata/tasks_demo2`. Your working directory will need to be set to the demo directory in order to execute `scmake()` commands. To see this in action in other projects, you can go to the storm gif frame setup in [vizstorm-GIF](https://github.com/USGS-VIZLAB/vizstorm-GIF/blob/master/6_visualize.yml), the timestep frame setup in [gage-conditions-gif](https://github.com/USGS-VIZLAB/gage-conditions-gif/blob/master/6_visualize.yml), or the inventory task pattern in [nawqa_wqp](https://github.com/USGS-R/nawqa_wqp/blob/master/1_wqpdata.yml). Note that these are in-sync with the task plan workflow as of February 2019, but might be outdated in the future.
+
+
+![](create_task_plan.PNG)
+
+![](create_execute_task_makefile.PNG)
+
+### Basic task file generation
+
+Suppose you want to run the following 3 steps for each of a bunch of different states. Here are some dummy functions representing those steps:
+
+```{r step_funs_shhh, echo=FALSE}
+cat("
+## @knitr step_funs
+
+# step 1: prepare some data given the info in prep_name, arg2, file 'A.txt', and R object 'B'
+prep <- function(prep_name) {
+  message(sprintf('preparing %s', prep_name))
+  return(prep_name)
+}
+
+# step 2: visualize the data
+visualize <- function(plot_name, state_data, state_capital) {
+  message(sprintf('visualizing %s - %s', plot_name, state_capital))
+  file.create(plot_name, showWarnings=FALSE)
+}
+
+# step 3: create the report
+report <- function(report_name) {
+  message(sprintf('reporting on %s', report_name))
+  file.create(report_name, showWarnings=FALSE)
+}
+", file='script.R')
+knitr::read_chunk('script.R')
+```
+
+```{r step_funs}
+```
+
+Here are the states and state capitals for which you want to run the above steps:
+
+```{r tasks}
+task_config <- tibble(
+  id=c('WI','AZ','PA'),
+  capital=c('Madison','Phoenix','Harrisburg')
+)
+```
+
+#### Creating task steps
+
+To use `scipiper` to run these tasks, first generate a set of instructions, or `task_step`s, for how to create the remake recipe for each task-step combination. Here are some ways to generate task steps. Note that many arguments to `create_task_step()` can be custom functions of step_name, task_name, and the output of any preceding arguments; see the defaults in `?create_task_step` for list of the arguments each function can see and use.
+
+```{r task_steps}
+# step1 creates recipes like this:
+# WI_prep:
+#   command: prep(I('WI'))
+step1 <- create_task_step(step_name = 'prep')
+
+# step2 creates recipes like this:
+# WI_plot.png:
+#   command: visualize(
+#       plot_name = target_name, 
+#       state_data = WI_prep,
+#       state_capital = I('Madison'))
+step2 <- create_task_step(
+  step_name = 'plot',
+  target_name = function(task_name, ...) {
+    sprintf('%s_plot.png', task_name)
+  },
+  command = function(target_name, task_name, ...) {
+    capital <- task_config[task_config$id == task_name, 'capital']
+    psprintf(
+      "visualize(",
+      "plot_name = target_name,",
+      "state_data = %s_prep,"=task_name,
+      "state_capital = I('%s'))"=capital
+      )
+  })
+
+# step3 creates recipes like this:
+# WI.pdf:
+#   command: report(target_name)
+#   depends:
+#    - WI_plot.png
+step3 <- create_task_step(
+  step_name = 'report',
+  target_name = function(task_name, ...) {
+    sprintf('%s.pdf', task_name)
+  },
+  depends = function(task_name, ...) {
+    sprintf('%s_plot.png', task_name)
+  },
+  command = function(task_name, step_name, ...) {
+    sprintf("report(target_name)", task_name)
+  })
+```
+
+You've probably noticed the `...` in the arguments list of each function you pass to `create_task_step`. You don't get to decide what's available in the `...`s, but you do get do decide whether you use that information. Above the only named arguments we use are `task_name` and sometimes `step_name`, but other named arguments are passed in to these functions when the task step is turned into a task plan (next section). These other arguments allow you to look to other information for this task-step, or to info about previous steps within the task.
+
+* If you're writing a `target_name`, you have access to the evaluated `step_name` for this task-step. Therefore, your function definition can be `function(...)` or `function(step_name, ...)` depending on whether you plan to use the step_name information or not. It'll get passed in regardless of whether you include that argument in the definition.
+* If you're writing a `depends` function, you have access to the evaluated `target_name` and `step_name`. Therefore, your function definition can be either of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`
+* If you're writing a `command` function, you have access to the evaluated `target_name`, `step_name`, and `depends`. Therefore, your function definition can be any of these: `function(target_name, ...)`, `function(target_name, step_name, ...)`, or `function(target_name, step_name, depends, ...)`
+* You can also get the evaluated values of `step_name`, `target_name`, `depends`, or `command` for any of the preceding steps for this task; all of these are available elements of the `steps` argument, which is a list named `steps`. Therefore, your function definition can be any of these: `function(steps, ...)`, `function(target_name, steps, ...)`, `function(target_name, step_name, steps, ...)`, or `function(target_name, step_name, depends, steps, ...)`. This is most useful if you're defining the 2nd, 3rd, etc. step, because then there's information to look back at. For example, if step 2 uses the target from step 1 as input, and if step 1 is named "prepare", then your definition for step 2 might look something like this:
+
+```
+step2 <- create_task_step(
+  step_name = 'plot',
+  target_name = function(target_name, ...) {
+    sprintf("out/%s.png", target_name)
+  },
+  command = function(steps, ...) {
+    sprintf('visualize(\'%s\', target_name)', steps[['prepare']]$target_name)
+  }
+)
+```
+
+As illustrated above, referencing the previous step's output can be handy for multi-step tasks where each step depends on output from the previous step.
+
+
+#### Creating a task plan
+
+You can now create a task_plan that wraps the tasks and steps together. In the following call to `create_task_plan`, a couple of things happen. The main thing is that the steps you identified are organized into an R object that `scipiper` can use efficiently later. The other thing is that when the default argument `add_complete=TRUE` is accepted (e.g., by not specifying `add_complete` at all), a final step gets tacked onto the list. The final step generates an .ind file for each task once all other steps for that task have been completed (or, if `final_steps` is specified, once those specified steps have been completed).
+
+The main benefit of this `complete` step and the corresponding .ind file is speed: iteration over the complete task plan can be more efficient because the presence of an .ind file for a task can be used as a first-cut indication that the task doesn't need to be built, such that iteration effort can be more efficiently spent on other tasks. The usual way that `remake` determines which tasks need to be rebuilt can be quite slow for large task lists or large output files, so speed here is a good thing.
+
+One drawback of the `add_complete` system and corresponding .ind files is that the speed shortcut only works if the presence of these .ind files is a fairly accurate description of which tasks are up to date. If you build a complete task plan once, change an input, and intend to rebuild, then it's strongly recommended that you delete the .ind files before calling `loop_tasks` again. If you don't, nothing will break, but your build will be slower and will not include automatic retries.
+
+```{r plan}
+task_plan_1 <- create_task_plan(
+  task_config$id,
+  list(step1, step2, step3),
+  final_steps='report',
+  ind_dir='states/log')
+```
+
+You'll need the `task_plan` R object for two things: to create a remake .yml makefile and to run `loop_tasks`.
+
+
+#### Creating a task makefile
+
+Here's how to create a task makefile from a task plan:
+
+```{r makefile, results='markup'}
+create_task_makefile(
+  task_plan=task_plan_1,
+  makefile='task_plan_1.yml',
+  include=c(),
+  packages=c('ggplot2'),
+  sources=c('script.R'),
+  file_extensions=c('ind'),
+  ind_complete=TRUE)
+```
+
+Here are the contents of task_plan_1.yml:
+
+```{r read_makefile, results='markup', comment='', echo=FALSE}
+cat(readr::read_lines('task_plan_1.yml'), sep='\n')
+```
+
+Note that at the end of each state's task list is a final task, e.g., `states/log/WI.ind`, that we didn't directly specify in the task_plan. These recipes for the `complete` step were generated in `create_task_plan` as described above. These .ind files representing the completeness of each task are also used as the dependencies of the final target, `task_plan_1`, which describes all targets that must be complete to consider the whole task batch complete.
+
+
+#### Executing a task plan/makefile
+
+You can use `loop_tasks` with the `task_plan` and the `task_makefile` to run all the steps in all the tasks:
+
+```{r delete1, echo=FALSE}
+unlink('.remake')
+unlink('build')
+```
+
+```{r loop1a}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+The benefits of using `loop_tasks` to run all the remake targets in task_plan_1.yml are:
+
+1. baked-in retries during each execution of `loop_tasks`
+2. quicker restarts if `loop_tasks` gets interrupted partway through (e.g., if your computer runs out of battery or crashes)
+3. the ability to easily run subsets of tasks and/or steps while you're developing the analysis (see next section)
+
+To use the baked-in retries effectively, simply ensure that the functions called in your task-steps throw errors (typically with `stop()`) when things go wrong. No need to build retries into the functions themselves because `loop_tasks` will take care of that for you. And if your function isn't the sort that would benefit from retries - e.g., HTTP requests need retries, but a deterministic algorithm should just give up if it breaks - you can set `num_tries=1` in `loop_tasks`. 
+
+Although `loop_tasks` adds useful features for retries, it can be extremely slow for large task makefiles because `get_remake_status(targets, task_makefile)` is called on all possible targets. While improving the speed of `loop_tasks` would be ideal, we don't anticipate that will happen soon. So instead of `loop_tasks`, you can use `scmake` for your whole task plan. Reworking the `loop_tasks` command in the code chunk above, you can do the following:
+
+```{r scmake_instead}
+scmake('task_plan_1', 'task_plan_1.yml')
+```
+
+### Forcing rebuilds
+
+#### Forcing rebuild for one task step
+
+If we try to `scmake` any of the targets in the task makefile without changing any of the inputs, `remake` correctly recognizes that they're up to date already, and the target is not rebuilt. For example, because we ran `loop_tasks` above, `AZ_plot.png` is already `OK` when we try to build it again:
+
+```{r try_rebuild_one}
+scmake('AZ_plot.png', 'task_plan_1.yml')
+```
+
+One way to force the rebuild of a single target is to use `scdel`, like this:
+
+```{r delete_one}
+scdel('AZ_plot.png', 'task_plan_1.yml')
+```
+
+Now when we `scmake` that target again, `AZ_plot.png` gets rebuilt:
+
+```{r rebuild_one}
+scmake('AZ_plot.png', 'task_plan_1.yml')
+```
+
+Alternatively, and even faster to type than the 2-line solution above, we can force a rebuild with the `force=TRUE` argument to `scmake`:
+
+```{r force_one}
+scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
+```
+
+#### Forcing rebuild for all task-steps
+
+Similar to the one-target example, above, if we run the same `loop_tasks` command twice, nothing will get rebuilt the second time. Instead, all items will say `OK`:
+
+```{r try_rebuild_all}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+One way to force a complete rebuild (not generally a good use of time, but sometimes necessary) is to use `force=TRUE` argument to `loop_tasks`. This will automatically use `scdel` with all `target_names` in `task_plan_1.yml`. This is sometimes required when your pipeline doesn't capture all of the dependencies. For instance, your first step might be to pull data from WQP. Data is continuously updated online at the WQP, but there might not be anything in your pipeline that tells the data to re-download. In this case, you might need to use `force=TRUE` to re-pull the data. Now when we run the entire loop, everything gets rebuilt:
+
+```{r rebuild_all}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  force = TRUE)
+```
+
+As discussed previously, sometimes `loop_tasks` is very slow and you can use `scmake` to execute all targets of a task makefile instead. Similar to `loop_tasks`, `force=TRUE` can be used in this context. The `scmake` version of the previous code chunk is:
+
+```{r rebuild_all_scmake}
+scmake('task_plan_1', 'task_plan_1.yml', force = TRUE)
+```
+
+### Developing a successful loop
+
+Not analyses will go smoothly the first time you try. You can use `loop_tasks` to run just a few task-steps at a time at first, debugging before you launch a full batch.
+
+Before we can demonstrate, we'll need to delete all output files and remake status information again:
+
+```{r delete_all2}
+scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
+```
+
+You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
+
+```{r loop_task_step_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  task_names='PA',
+  step_names='prep')
+```
+Note that an error is thrown at the end to prevent the indicator file from being created. This is useful because it means we can keep running `loop_tasks` on subsets of the batch until everything is done.
+
+Alternatively, you can run a step (and any dependencies to that step) for all tasks. Here let's run only the plotting steps (and therefore also the prepping steps) for all states:
+
+```{r loop_steps_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  step_names='plot')
+```
+
+Or you can run a complete task, or handful of tasks, without touching the others. Here we run PA and AZ only:
+
+```{r loop_tasks_only}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml',
+  task_names=c('PA','AZ'))
+```
+
+Now if we run the full loop without constraints, the only things left to build are the WI report, the final indicator for each task (built silently) and the final indicator file for the whole batch (target `task_plan_1`).
+
+```{r loop_remainder}
+loop_tasks(
+  task_plan=task_plan_1,
+  task_makefile='task_plan_1.yml')
+```
+
+### Indicator files options
+
+If you have a really lightweight project and want to skip the indicator files, you can do so. To skip the `complete` step and accompanying .ind files, set `add_complete=FALSE`. If you also intend not to create a final indicator file for the entire task batch, you can also skip setting `ind_dir`.
+
+```{r plan2}
+task_plan_2 <- create_task_plan(
+  task_config$id,
+  list(step1, step2, step3),
+  final_steps='report',
+  add_complete=FALSE)
+```
+
+To avoid creating an indicator file when the entire batch is complete, set `ind_complete=FALSE` in `create_task_makefile`:
+
+```{r makefile2, results='markup'}
+create_task_makefile(
+  task_plan=task_plan_2,
+  makefile='task_plan_2.yml',
+  include=c(),
+  packages=c('ggplot2'),
+  sources=c('script.R'),
+  file_extensions=c('ind'),
+  ind_complete=FALSE)
+```
+
+Now here are the contents of task_plan_2.yml, which will not create any `.ind` files:
+
+```{r read_makefile2, results='markup', comment='', echo=FALSE}
+cat(readr::read_lines('task_plan_2.yml'), sep='\n')
+```

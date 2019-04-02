@@ -1,5 +1,6 @@
 Meta
 doc
+!inst/doc
 .Rproj.user
 .Rhistory
 .RData
@@ -10,6 +11,5 @@ vignettes/build
 vignettes/states
 vignettes/*.pdf
 vignettes/*.yml
-vignettes/*.png
 vignettes/*.R
 vignettes/*.html
