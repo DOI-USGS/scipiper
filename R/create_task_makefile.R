@@ -201,11 +201,13 @@ create_task_makefile <- function(
   # render the template
   yml <- whisker::whisker.render(template, data=params)
   yml <- gsub('[\n]{3,}', '\\\n\\\n', yml) # reduce 3+ line breaks to just 2
+  #yml <- trim(yml) # chop off any trailing white space or line endings (write_lines will add back a final line ending for us)
+  yml <- paste0(substring(yml, 1, nchar(yml)-1), gsub('\\n', '', substring(yml, nchar(yml)))) # chop off the final character if it's a newline
   
   if (is.null(makefile)){
     makefile <- yml
   } else {
-    cat(yml, file=makefile)
+    readr::write_lines(yml, path=makefile)
     if(has_finalize_funs) {
       how_to_run <- paste0(
         "Run all tasks and finalizers with:\n",
