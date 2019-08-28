@@ -20,6 +20,12 @@ copied over to the remake RDS-based status database before querying for
 target cleanliness?}
 }
 \description{
+Describes the hash, build time, and dependencies as of the most recent build
+of each target. If the dependencies have changed since that last build, those
+new dependencies are not described here. See why_dirty() to compare the old
+and new dependencies.
+}
+\details{
 Runs faster when RDSify_first = FALSE, but the default is TRUE so that you
 can usually pretend that there's no extra step between a git pull and
 updating the remake database.

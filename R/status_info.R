@@ -65,6 +65,11 @@ list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
 
 #' Produce a table describing the remake build status relative to 1+ targets
 #'
+#' Describes the hash, build time, and dependencies as of the most recent build
+#' of each target. If the dependencies have changed since that last build, those
+#' new dependencies are not described here. See why_dirty() to compare the old
+#' and new dependencies.
+#'
 #' Runs faster when RDSify_first = FALSE, but the default is TRUE so that you
 #' can usually pretend that there's no extra step between a git pull and
 #' updating the remake database.
@@ -116,7 +121,11 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
   
   # extract dependency info for each target
   dependencies <- lapply(currentness$target, function(target_name) {
-    get_dependency_status(target_name, remake_object, as_of='last_build', format='wide')
+    # I can't decide whether this should be as_of 'now' or 'last_build', or if
+    # it even makes sense to report this stuff in a table that also reports
+    # is_current (which compares 'now' to 'last_build'). I'm trying last_build
+    # for now.
+    status_old <- get_dependency_status(target_name, remake_object, as_of='last_build', format='wide')
   }) %>%
     bind_rows()
   
@@ -163,24 +172,27 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     status_list_default
   } else if(target$type == 'fake') {
     status_list_default
+  } else if('target_file_implicit' %in% attr(target, 'class')) {
+    # target_file_implicits don't have a target rule (code) to check, so
+    # just check depends. and return time as the time of last file update,
+    # because Sys.time() just doesn't make sense
+    status_list_implicit <- remake:::dependency_status(target, store, missing_ok=TRUE, check='depends')
+    status_list_implicit$time <- file.mtime(target$name)
+    status_list_implicit
   } else {
     switch(
       as_of,
       'last_build' = tryCatch({
         store$db$get(target_name)
       }, error=function(e) {
-        warning(sprintf('store$db$get failed for "%s"', target_name))
+        # warning(sprintf('store$db$get failed for "%s"', target_name))
         status_list_default
       }),
       'now' = tryCatch({
         remake:::dependency_status(target, store, missing_ok=TRUE, check='all')
       }, error=function(e) {
-        tryCatch({
-          remake:::dependency_status(target, store, missing_ok=TRUE, check='depends')
-        }, error=function(e) {
-          warning(sprintf('remake:::dependency_status failed for "%s"', target_name))
-          status_list_default
-        })
+        warning(sprintf('remake:::dependency_status failed for "%s"', target_name))
+        status_list_default
       })
     )
   }
@@ -190,15 +202,43 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
   # override depends to include dependencies of fake targets, and to include
   # fake targets as dependencies (remake does neither; only file and object
   # dependencies of file or object targets are reported)
-  status_list$depends <- setNames(
-    purrr::map2_chr(target$depends_name, target$depends_type, function(name, format) {
-      if(format %in% c('file', 'object')) {
-        store$get_hash(name, format, missing_ok=TRUE)
-      } else { # fake
-        NA
+  if(is.null(target)) {
+    missing_depends <- tibble(type='', name='')[c(),]
+  } else if(target$type == 'fake') {
+    missing_depends <- tibble(type = target$depends_type, name = target$depends_name)
+  } else {
+    missing_depends <- tibble(type = target$depends_type, name = target$depends_name) %>%
+      dplyr::filter(type == 'fake')
+  }
+  if(nrow(missing_depends) > 0) {
+    # we don't actually know which targets were dependencies during the
+    # last_build, so we've had to assume that they're the same as those that are
+    # dependencies now. we'll also take this into account in why_dirty().
+    if(target$type == 'fake') {
+      warning(sprintf("guessing names and returning hash=NA for depends of fake target '%s' during last build", target$name))  
+    } else {
+      if(as_of == 'last_build') {
+        warning(sprintf("guessing names and returning hash=NA for fake depends of target '%s' during last build", target$name))  
+      } else {
+        # fake dependencies have no hash available through remake, hence the warning about hash=NA even when as_of=='now'
+        warning(sprintf("returning hash=NA for fake dependencies of target '%s'", target$name)) 
       }
-    }),
-    target$depends_name)
+    }
+    status_list$depends <- c(
+      status_list$depends, # append the new dependencies to the current ones
+      setNames(
+        purrr::map2_chr(target$depends_name, target$depends_type, function(name, format) {
+          if(format %in% c('file', 'object')) {
+            switch(
+              as_of,
+              'last_build' = NA,
+              'now' = store$get_hash(name, format, missing_ok=TRUE))
+          } else { # fake
+            NA
+          }
+        }),
+        target$depends_name))
+  }
   
   # long format
   status_long <- bind_rows(
@@ -277,7 +317,8 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
 #'   be determined
 #' @param RDSify_first logical. Should the info in build/status/*.yml files be
 #'   copied over to the remake RDS-based status database before querying for
-#'   target cleanliness?
+#'   target cleanliness? Defaults to FALSE because if you're asking why, you've
+#'   probably already queried to determine that the target is dirty
 #' @export
 why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file'), RDSify_first=FALSE) {
   
@@ -285,33 +326,27 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   status <- get_remake_status(target_names=target_name, remake_file=remake_file, RDSify_first=RDSify_first)
   
   # check that it's actually dirty
-  is_dirty <- target_name %in% which_dirty(target_name, RDSify_first=FALSE)
-  if(!is_dirty) {
+  is_current <- status %>%
+    dplyr::filter(target == target_name) %>%
+    pull(is_current)
+  if(is_current) {
     stop(sprintf("target '%s' is not dirty", target_name))
   }
   
   # collect information about the current remake database. do load sources to get the dependencies right
-  #remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
-  remake_object <- remake:::remake(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   store <- remake_object$store
-  
-  # flatten dependency
   
   # get any pre-existing dependency information
   old_status <- get_dependency_status(target_name, remake_object, as_of='last_build', format='long')
   new_status <- get_dependency_status(target_name, remake_object, as_of='now', format='long')
   
-  # get the new/current dependency information
-  target <- remake_object$targets[[target_name]]
-  remeta_new <- remake:::dependency_status(target, store, check="all") %>%
-    tidy_dependency_status()
-  
   # compare
-  remeta_compare <- full_join(remeta_old, remeta_new, by=c('type', 'name'), suffix=c('.old', '.new')) %>%
-    mutate(dirty = xor(is.na(hash.old), is.na(hash.new)) || (!all(is.na(c(hash.old, hash.new))) && (hash.old != hash.new)))
+  remeta_compare <- full_join(old_status, new_status, by=c('type', 'name'), suffix=c('.old', '.new')) %>%
+    mutate(dirty = xor(is.na(hash.old), is.na(hash.new)) | (!is.na(hash.old) & !is.na(hash.new) & (hash.old != hash.new)))
   
   # interpret
-  dirty_rows <- filter(remeta_compare, dirty)
+  dirty_rows <- dplyr::filter(remeta_compare, dirty)
   # note that remake doesn't compare depends for group=fake targets, but we'll make a note of these anyway
   
   # return

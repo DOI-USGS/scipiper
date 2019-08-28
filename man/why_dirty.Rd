@@ -13,7 +13,8 @@ be determined}
 
 \item{RDSify_first}{logical. Should the info in build/status/*.yml files be
 copied over to the remake RDS-based status database before querying for
-target cleanliness?}
+target cleanliness? Defaults to FALSE because if you're asking why, you've
+probably already queried to determine that the target is dirty}
 
 \item{target_names}{character vector of targets for which to determine build
 status, including status for dependencies of the named targets. If NULL
