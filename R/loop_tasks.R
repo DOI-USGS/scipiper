@@ -101,8 +101,7 @@ loop_tasks <- function(
   which_incomplete <- function(targets, task_makefile) {
     is_current <- get_remake_status(targets, task_makefile) %>%
       dplyr::right_join(data_frame(target=targets), by='target') %>%
-      pull(is_current) %>%
-      as.logical()
+      pull(is_current)
     incomplete_targets <- which(!(file.exists(targets) | is_current))
   }
   

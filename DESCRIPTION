@@ -15,6 +15,7 @@ Imports:
   readr,
   remake,
   storr,
+  tibble,
   tidyr,
   whisker,
   progress,
