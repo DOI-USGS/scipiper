@@ -1,8 +1,12 @@
 # Do not edit - automatically generated
 # from the task_makefile.mustache template
 # by {{rendering_function}}
+{{#has_scipiper_version}}
+# using scipiper package version {{scipiper_version}}
+{{/has_scipiper_version}}
 
-target_default: {{#job}}{{target_name}}{{/job}}
+
+target_default: {{target_default}}
 
 {{#has_include}}
 include:
@@ -33,6 +37,12 @@ file_extensions:
 {{/has_file_extensions}}
 
 targets:
+  {{target_default}}:
+    depends:
+{{#job}}    
+      - {{target_name}}
+{{/job}}
+
 {{#tasks}}
   # --- {{task_name}} --- #
   
@@ -49,13 +59,12 @@ targets:
 {{/steps}}
 {{/tasks}}
 
+{{#has_finalize_funs}}
   # --- Overall job --- #
 
 {{#job}}
   {{target_name}}:
     command: {{command}}
-    depends: 
-{{#depends}}
-      - {{.}}
-{{/depends}}
+    
 {{/job}}
+{{/has_finalize_funs}}
