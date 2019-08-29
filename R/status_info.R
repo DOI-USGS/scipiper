@@ -372,6 +372,11 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   
+  # target_name ought to be the name of a real target
+  if(!exists(target_name, remake_object$targets)) {
+    stop(sprintf("target_name '%s' not found in the remake files", target_name))
+  }
+  
   # get any pre-existing dependency information
   old_status <- get_dependency_status(target_name, remake_object, as_of='last_build', format='long')
   new_status <- get_dependency_status(target_name, remake_object, as_of='now', format='long')
