@@ -20,6 +20,22 @@ probably already queried to determine that the target is dirty}
 status, including status for dependencies of the named targets. If NULL
 will return status for the default target and its dependencies.}
 }
+\value{
+Interpretive messages are printed to the console. The return value is
+a tibble. The first row is information about the target in question.
+hash_old is the hash of that row's target (see 'name') as of the last
+documented build. hash_new is the hash of the current file or object, which
+might have changed if the file (or object) has been edited. hash_old and
+hash_new are '??' if they refer to a fake target or unrecorded previous
+build, 'none' if the file or object does not (or did not) exist, and a
+hexcode hash otherwise. hash_mismatch is NA if there are '??' values in the
+hashes (because we can't determine whether the hashes have changed).
+'dirty' is reported by remake and reports whether the object has altered
+inputs (files, objects, fixed arguments, and/or functions).
+'dirty_by_descent' is as reported by remake and reports whether the
+object's dependencies themselves have altered inputs. 'current' is the
+output of remake::is_current().
+}
 \description{
 Compares the dependency status of a target (1) as it currently appears in the
 repo and (2) as documented in the remake database. Returns information about

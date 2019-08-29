@@ -2,7 +2,7 @@
 % Please edit documentation in R/status_info.R
 \name{which_dirty}
 \alias{which_dirty}
-\title{List the targets for which is_current is FALSE (as a character vector)}
+\title{List the targets for which current is FALSE (as a character vector)}
 \usage{
 which_dirty(target_names = NULL,
   remake_file = getOption("scipiper.remake_file"), RDSify_first = TRUE)

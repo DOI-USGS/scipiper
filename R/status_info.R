@@ -116,14 +116,14 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
     as.data.frame() %>%
     tibble::rownames_to_column(var='target') %>% as_tibble() %>% # convert to tibble with rownames as 'target' column
     dplyr::mutate( # mutate maintains a 0-row tibble if it started that way
-      is_current = ('remake' %:::% 'remake_is_current')(remake_object, target)) %>%
-    dplyr::select(target, is_current, dirty, dirty_by_descent)
+      current = ('remake' %:::% 'remake_is_current')(remake_object, target)) %>%
+    dplyr::select(target, current, dirty, dirty_by_descent)
   
   # extract dependency info for each target
   dependencies <- lapply(currentness$target, function(target_name) {
     # I can't decide whether this should be as_of 'now' or 'last_build', or if
     # it even makes sense to report this stuff in a table that also reports
-    # is_current (which compares 'now' to 'last_build'). I'm trying last_build
+    # current (which compares 'now' to 'last_build'). I'm trying last_build
     # for now.
     status_old <- get_dependency_status(target_name, remake_object, as_of='last_build', format='wide')
   }) %>%
@@ -137,7 +137,9 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
 
 #' Retrieve status of dependencies from the remake store
 #'
-#' Returns placeholders if the object doesn't yet exist.
+#' Returns placeholders if the object doesn't yet exist. hash=NA when the target
+#' hasn't yet been built, or '??' when the target is fake, or a hexcode string
+#' otherwise.
 #'
 #' @param target_name length-1 name of a target
 #' @param remake_object as produced by remake:::remake
@@ -171,7 +173,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
   status_list <- if(is.null(target)) {
     status_list_default
   } else if(target$type == 'fake') {
-    status_list_default
+    replace(status_list_default, 'hash', '??')
   } else if('target_file_implicit' %in% attr(target, 'class')) {
     # target_file_implicits don't have a target rule (code) to check, so
     # just check depends. and return time as the time of last file update,
@@ -183,17 +185,11 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     switch(
       as_of,
       'last_build' = tryCatch({
-        store$db$get(target_name)
+        store$db$get(target_name) # hash is NA for unbuilt targets
       }, error=function(e) {
-        # warning(sprintf('store$db$get failed for "%s"', target_name))
-        status_list_default
+        status_list_default # target hasn't been built
       }),
-      'now' = tryCatch({
-        remake:::dependency_status(target, store, missing_ok=TRUE, check='all')
-      }, error=function(e) {
-        warning(sprintf('remake:::dependency_status failed for "%s"', target_name))
-        status_list_default
-      })
+      'now' = remake:::dependency_status(target, store, missing_ok=TRUE, check='all') # hash is NA for unbuilt targets
     )
   }
   
@@ -214,27 +210,27 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     # we don't actually know which targets were dependencies during the
     # last_build, so we've had to assume that they're the same as those that are
     # dependencies now. we'll also take this into account in why_dirty().
-    if(target$type == 'fake') {
-      warning(sprintf("guessing names and returning hash=NA for depends of fake target '%s' during last build", target$name))  
+    if(target$type == 'fake' && as_of == 'last_build') {
+      #warning(sprintf("guessing names and returning hash='??' for depends of fake target '%s' during last build", target$name))  
     } else {
       if(as_of == 'last_build') {
-        warning(sprintf("guessing names and returning hash=NA for fake depends of target '%s' during last build", target$name))  
-      } else {
-        # fake dependencies have no hash available through remake, hence the warning about hash=NA even when as_of=='now'
-        warning(sprintf("returning hash=NA for fake dependencies of target '%s'", target$name)) 
+        #warning(sprintf("guessing names and returning hash='??' for fake depends of target '%s' during last build", target$name))  
+      } else if(any(missing_depends$type == 'fake')) {
+        # fake dependencies have no hash available through remake, hence the warning about hash=?? even when as_of=='now'
+        #warning(sprintf("returning hash='??' for fake depends of target '%s'", target$name)) 
       }
     }
-    status_list$depends <- c(
+    status_list$depends <- c( # this element is a named vector of hashes
       status_list$depends, # append the new dependencies to the current ones
       setNames(
-        purrr::map2_chr(target$depends_name, target$depends_type, function(name, format) {
+        purrr::map2_chr(missing_depends$name, missing_depends$type, function(name, format) {
           if(format %in% c('file', 'object')) {
             switch(
               as_of,
-              'last_build' = NA,
-              'now' = store$get_hash(name, format, missing_ok=TRUE))
+              'last_build' = '??',
+              'now' = store$get_hash(name, format, missing_ok=TRUE)) # returns NA if missing
           } else { # fake
-            NA
+            '??'
           }
         }),
         target$depends_name))
@@ -252,7 +248,8 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     if(length(status_list$code$functions) > 0) {
       tibble(type='functions', name=names(status_list$code$functions), hash=unlist(unname(status_list$code$functions)))
     }
-  )
+  )  %>%
+    mutate(hash = ifelse(is.na(hash), 'none', hash)) # NAs are really inconvenient to deal with below, and 'none' is a little clearer anyway
   if(format == 'long') return(status_long)
   
   # wide format    
@@ -270,7 +267,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
   stop('a status report should have been returned by now')
 }
 
-#' List the targets for which is_current is FALSE (as a character vector)
+#' List the targets for which current is FALSE (as a character vector)
 #' 
 #' Runs faster when RDSify_first = FALSE.
 #'
@@ -297,10 +294,10 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
   # get the full status information for all relevant targets
   status <- get_remake_status(target_names=target_names, remake_file=remake_file, RDSify_first=RDSify_first)
   
-  # pick out the non-current targets. use is_current rather than dirty because I
+  # pick out the non-current targets. use current rather than dirty because I
   # think something can be dirty by descent without being dirty...maybe...
   status %>%
-    dplyr::filter(!is_current) %>%
+    dplyr::filter(!current) %>%
     pull(target)
 }
 
@@ -319,36 +316,108 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
 #'   copied over to the remake RDS-based status database before querying for
 #'   target cleanliness? Defaults to FALSE because if you're asking why, you've
 #'   probably already queried to determine that the target is dirty
+#' @return Interpretive messages are printed to the console. The return value is
+#'   a tibble. The first row is information about the target in question.
+#'   hash_old is the hash of that row's target (see 'name') as of the last
+#'   documented build. hash_new is the hash of the current file or object, which
+#'   might have changed if the file (or object) has been edited. hash_old and
+#'   hash_new are '??' if they refer to a fake target or unrecorded previous
+#'   build, 'none' if the file or object does not (or did not) exist, and a
+#'   hexcode hash otherwise. hash_mismatch is NA if there are '??' values in the
+#'   hashes (because we can't determine whether the hashes have changed).
+#'   'dirty' is reported by remake and reports whether the object has altered
+#'   inputs (files, objects, fixed arguments, and/or functions).
+#'   'dirty_by_descent' is as reported by remake and reports whether the
+#'   object's dependencies themselves have altered inputs. 'current' is the
+#'   output of remake::is_current().
 #' @export
 why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file'), RDSify_first=FALSE) {
   
-  # get the full status information for all relevant targets
-  status <- get_remake_status(target_names=target_name, remake_file=remake_file, RDSify_first=RDSify_first)
-  
-  # check that it's actually dirty
-  is_current <- status %>%
-    dplyr::filter(target == target_name) %>%
-    pull(is_current)
-  if(is_current) {
-    stop(sprintf("target '%s' is not dirty", target_name))
-  }
-  
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
-  store <- remake_object$store
   
   # get any pre-existing dependency information
   old_status <- get_dependency_status(target_name, remake_object, as_of='last_build', format='long')
   new_status <- get_dependency_status(target_name, remake_object, as_of='now', format='long')
   
-  # compare
-  remeta_compare <- full_join(old_status, new_status, by=c('type', 'name'), suffix=c('.old', '.new')) %>%
-    mutate(dirty = xor(is.na(hash.old), is.na(hash.new)) | (!is.na(hash.old) & !is.na(hash.new) & (hash.old != hash.new)))
+  # check for dependencies that haven't been rebuilt but need to be (dirty_by_descent)
+  new_depends <- dplyr::filter(new_status, type=='depends') %>% pull(name)
+  graph <- ('remake' %:::% 'remake_dependency_graph')(remake_object)
+  currentness <- ('remake' %:::% 'remake_status')(remake_object, target_name, graph) %>% # matrix
+    as.data.frame() %>%
+    tibble::rownames_to_column(var='target') %>% as_tibble() %>% # convert to tibble with rownames as 'target' column
+    dplyr::mutate( # mutate maintains a 0-row tibble if it started that way
+      current = ('remake' %:::% 'remake_is_current')(remake_object, target)) %>%
+    dplyr::select(target, dirty, dirty_by_descent, current)
+  
+  # check that it's actually dirty
+  current <- dplyr::filter(currentness, target == target_name) %>% pull(current)
+  if(current) {
+    stop(sprintf("target '%s' is not dirty", target_name))
+  }
+  
+  # compare. Truth table for hash_mismatch:
+  #    no ?? aa bb
+  # no F  NA T  T
+  # ?? NA NA NA NA
+  # aa T  NA F  T
+  # bb T  NA T  F
+  status_compare <- full_join(old_status, new_status, by=c('type','name'), suffix=c('_old', '_new')) %>%
+    mutate(hash_mismatch = ifelse(
+      hash_old == 'none' & hash_new == 'none',
+      FALSE, # never built, therefore hashes haven't changed
+      ifelse( # now we know there are no 'none's
+        hash_old == '??' | hash_new == '??',
+        NA, # we just can't know because we're missing information
+        hash_old != hash_new # the main case: built or not before and definitely built now, looks different
+      )          
+    )) %>%
+    left_join(currentness, by=c('name'='target')) %>%
+    mutate( # fill in dirtiness for fixed and functions, which can never themselves by dirty
+      dirty_by_descent = ifelse(is.na(dirty_by_descent), FALSE, dirty_by_descent),
+      dirty = ifelse(is.na(dirty), FALSE, dirty),
+      current = ifelse(is.na(current), TRUE, current))
   
   # interpret
-  dirty_rows <- dplyr::filter(remeta_compare, dirty)
-  # note that remake doesn't compare depends for group=fake targets, but we'll make a note of these anyway
+  dirty_rows <- dplyr::filter(status_compare, (hash_mismatch | is.na(hash_mismatch) | dirty | dirty_by_descent) & type != 'target') %>%
+    mutate(definitely_dirty = !is.na(hash_mismatch) | dirty | dirty_by_descent)
+  if(nrow(dirty_rows) == 0) {
+    warning(sprintf("Uh oh, can't explain why '%s' is dirty. Please file a bug report.", target_name))
+  }
+  target_type <- remake_object$targets[[target_name]]$type
+  if(target_type == 'fake') {
+    def_dirty <- pull(dplyr::filter(dirty_rows, definitely_dirty), name)
+    pos_dirty <- pull(dplyr::filter(dirty_rows, !definitely_dirty), name)
+    preamble <- sprintf("The fake target '%s' has", target_name)
+    if(length(def_dirty) > 0) message(paste(c(paste(preamble, "these dirty dependencies:"), def_dirty), collapse='\n  * '))
+    if(length(pos_dirty) > 0) message(paste(c(sprintf("%s these possibly dirty dependencies:", if(length(def_dirty) > 0) 'and' else preamble), pos_dirty), collapse='\n  * '))
+  } else if(is.na(dplyr::filter(status_compare, type == 'target') %>% pull(hash_new))) {
+    message(sprintf("The target '%s' does not exist", target_name))
+  } else {
+    explanations <- sapply(1:nrow(dirty_rows), function(i) {
+      row <- dirty_rows[i,]
+      explanation <- if(isTRUE(row$hash_mismatch)) {
+        switch(
+          row$type,
+          'depends' = sprintf("the dependency '%s' has changed", row$name),
+          'fixed' = sprintf("the fixed arguments (character, logical, or numeric) to the target's command have changed", row$name),
+          'functions' = sprintf("the function '%s' used by the target has changed", row$name)
+        )
+      } else if(is.na(row$hash_mismatch)) {
+        sprintf("the dependency '%s' might have changed", row$name)
+      } else if(row$dirty_by_descent) {
+        sprintf("the dependency '%s' depends on dirty targets", row$name)
+      } else if(row$dirty) {
+        sprintf("the dependency '%s' depends on files, objects, fixed arguments, or functions that have changed")
+      }
+      if(remake_object$targets[[row$name]]$type == 'fake') {
+        paste(explanation, "(but note that remake ignores fake targets when assessing currentness)")
+      }
+      explanation
+    })
+    message(paste(c(sprintf("Since the last build of the target '%s':", target_name), explanations), collapse='\n  * '))
+  }
   
   # return
-  return(remeta_compare)
+  return(status_compare)
 }

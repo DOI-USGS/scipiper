@@ -20,5 +20,7 @@ nested tibbles for depends and code ('wide'), or a multi-row tibble with
 columns for name, dependency type, and dependency hash ('long')?}
 }
 \description{
-Returns placeholders if the object doesn't yet exist.
+Returns placeholders if the object doesn't yet exist. hash=NA when the target
+hasn't yet been built, or '??' when the target is fake, or a hexcode string
+otherwise.
 }
