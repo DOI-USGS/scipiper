@@ -8,6 +8,10 @@ why_dirty(target_name, remake_file = getOption("scipiper.remake_file"),
   RDSify_first = FALSE)
 }
 \arguments{
+\item{target_name}{character name of the target for which to determine build
+status, including status for dependencies of the named target. Exactly one
+is required.}
+
 \item{remake_file}{filename of the remake YAML file from which status should
 be determined}
 
@@ -15,10 +19,6 @@ be determined}
 copied over to the remake RDS-based status database before querying for
 target cleanliness? Defaults to FALSE because if you're asking why, you've
 probably already queried to determine that the target is dirty}
-
-\item{target_names}{character vector of targets for which to determine build
-status, including status for dependencies of the named targets. If NULL
-will return status for the default target and its dependencies.}
 }
 \value{
 Interpretive messages are printed to the console. The return value is

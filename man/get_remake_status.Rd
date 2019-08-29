@@ -16,6 +16,12 @@ will return status for the default target and its dependencies.}
 \item{remake_file}{filename of the remake YAML file from which status should
 be determined}
 
+\item{format}{if "nested", returnes a nested tibble with tibble list columns
+for 'depends' and 'functions'. if "flat", returns character columns for
+'depends' and 'functions' that are ugly, flattened versions of the tibbles.
+"flat" can be useful for comparing status before and after an operation
+using dplyr joins (e.g., within \code{scmake()}).}
+
 \item{RDSify_first}{logical. Should the info in build/status/*.yml files be
 copied over to the remake RDS-based status database before querying for
 target cleanliness?}

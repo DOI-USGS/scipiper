@@ -79,6 +79,11 @@ list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
 #'   will return status for the default target and its dependencies.
 #' @param remake_file filename of the remake YAML file from which status should
 #'   be determined
+#' @param format if "nested", returnes a nested tibble with tibble list columns
+#'   for 'depends' and 'functions'. if "flat", returns character columns for
+#'   'depends' and 'functions' that are ugly, flattened versions of the tibbles.
+#'   "flat" can be useful for comparing status before and after an operation
+#'   using dplyr joins (e.g., within `scmake()`).
 #' @param RDSify_first logical. Should the info in build/status/*.yml files be
 #'   copied over to the remake RDS-based status database before querying for
 #'   target cleanliness?
@@ -114,6 +119,7 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
   # believe it...but it's the nearest thing to a current status report that I've
   # found so far
   graph <- ('remake' %:::% 'remake_dependency_graph')(remake_object)
+  target <- current <- dirty <- dirty_by_descent <- '.dplyrvar'
   currentness <- ('remake' %:::% 'remake_status')(remake_object, target_names, graph) %>% # matrix
     as.data.frame() %>%
     tibble::rownames_to_column(var='target') %>% as_tibble() %>% # convert to tibble with rownames as 'target' column
@@ -134,6 +140,7 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
   # combine into a single tibble
   status <- full_join(currentness, dependencies, by='target')
   
+  name <- hash <- info <- depends <- functions <- '.dplyrvar'
   # return
   if(format == 'nested') {
     return(status)
@@ -162,6 +169,7 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
 #' @param format return in remake's list format ('raw'), a one-row tibble with
 #'   nested tibbles for depends and code ('wide'), or a multi-row tibble with
 #'   columns for name, dependency type, and dependency hash ('long')?
+#' @importFrom purrr map2_chr
 get_dependency_status <- function(target_name, remake_object, as_of=c('last_build', 'now'), format=c('raw', 'wide', 'long')) {
   # process arguments
   target <- remake_object$targets[[target_name]]
@@ -192,7 +200,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     # target_file_implicits don't have a target rule (code) to check, so
     # just check depends. and return time as the time of last file update,
     # because Sys.time() just doesn't make sense
-    status_list_implicit <- remake:::dependency_status(target, store, missing_ok=TRUE, check='depends')
+    status_list_implicit <- ('remake' %:::% 'dependency_status')(target, store, missing_ok=TRUE, check='depends')
     status_list_implicit$time <- file.mtime(target$name)
     status_list_implicit
   } else {
@@ -203,7 +211,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
       }, error=function(e) {
         status_list_default # target hasn't been built
       }),
-      'now' = remake:::dependency_status(target, store, missing_ok=TRUE, check='all') # hash is NA for unbuilt targets
+      'now' = ('remake' %:::% 'dependency_status')(target, store, missing_ok=TRUE, check='all') # hash is NA for unbuilt targets
     )
   }
   
@@ -217,6 +225,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
   } else if(target$type == 'fake') {
     missing_depends <- tibble(type = target$depends_type, name = target$depends_name)
   } else {
+    type <- '.dplyrvar'
     missing_depends <- tibble(type = target$depends_type, name = target$depends_name) %>%
       dplyr::filter(type == 'fake')
   }
@@ -249,6 +258,9 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
         }),
         missing_depends$name))
   }
+  
+  # avoid "no visible binding for global variable ..." in R CMD check
+  hash <- name <- fixed <- '.dplyrvar'
   
   # long format
   status_long <- bind_rows(
@@ -314,6 +326,7 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
   
   # pick out the non-current targets. use current rather than dirty because I
   # think something can be dirty by descent without being dirty...maybe...
+  current <- target <- '.dplyrvar'
   status %>%
     dplyr::filter(!current) %>%
     pull(target)
@@ -325,9 +338,9 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
 #' repo and (2) as documented in the remake database. Returns information about
 #' the mismatches that are causing remake to consider this target dirty.
 #'
-#' @param target_names character vector of targets for which to determine build
-#'   status, including status for dependencies of the named targets. If NULL
-#'   will return status for the default target and its dependencies.
+#' @param target_name character name of the target for which to determine build
+#'   status, including status for dependencies of the named target. Exactly one
+#'   is required.
 #' @param remake_file filename of the remake YAML file from which status should
 #'   be determined
 #' @param RDSify_first logical. Should the info in build/status/*.yml files be
@@ -350,6 +363,11 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
 #'   output of remake::is_current().
 #' @export
 why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file'), RDSify_first=FALSE) {
+  # quick argument check
+  stopifnot(length(target_name) == 1 & is.character(target_name))
+  
+  # avoid "no visible binding for global variable XX" in R CMD  check
+  type <- name <- target <- dirty <- dirty_by_descent <- hash_old <- hash_new <- hash_mismatch <- definitely_dirty <- '.dplyrvar'
   
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)

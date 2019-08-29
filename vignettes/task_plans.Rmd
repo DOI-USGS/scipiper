@@ -56,7 +56,7 @@ knitr::read_chunk('script.R')
 
 Here are the states and state capitals for which you want to run the above steps:
 ```{r tasks}
-task_config <- data_frame(
+task_config <- tibble(
   id=c('WI','AZ','PA'),
   capital=c('Madison','Phoenix','Harrisburg')
 )

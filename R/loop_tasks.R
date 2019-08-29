@@ -100,7 +100,7 @@ loop_tasks <- function(
   # is part of why files are recommended over objects.
   which_incomplete <- function(targets, task_makefile) {
     current <- get_remake_status(targets, task_makefile) %>%
-      dplyr::right_join(data_frame(target=targets), by='target') %>%
+      dplyr::right_join(tibble(target=targets), by='target') %>%
       pull(current)
     incomplete_targets <- which(!(file.exists(targets) | current))
   }

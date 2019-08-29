@@ -358,7 +358,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
       path_df <- bind_rows(path_df, elem_row)
     } else {
       path_exists <- FALSE
-      path_df <- bind_rows(path_df, data_frame(id=NA))
+      path_df <- bind_rows(path_df, tibble(id=NA))
       break
     }
   }
