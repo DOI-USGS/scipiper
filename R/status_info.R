@@ -92,7 +92,9 @@ list_group_targets <- function(remake_file=getOption('scipiper.remake_file')){
 #' # or to get status for all targets in a different remake YAML:
 #' get_remake_status(list_all_targets('other_remake.yml'), 'other_remake.yml')
 #' }
-get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper.remake_file'), RDSify_first=TRUE) {
+get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper.remake_file'), format=c('nested', 'flat'), RDSify_first=TRUE) {
+  format <- match.arg(format)
+  
   # sync the remake status database with the scipiper status database if requested
   if(isTRUE(RDSify_first)) {
     RDSify_build_status(new_only=FALSE, remake_file=remake_file)
@@ -132,7 +134,19 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
   # combine into a single tibble
   status <- full_join(currentness, dependencies, by='target')
   
-  return(status)
+  # return
+  if(format == 'nested') {
+    return(status)
+  } else {
+    flatten_nested <- function(nested_df) {
+      nested_df %>% mutate(info = paste(name, hash, sep=':')) %>% pull(info) %>% paste(collapse=':::')
+    }
+    status_flat <- status %>%
+      mutate(
+        depends = sapply(depends, flatten_nested),
+        functions = sapply(functions, flatten_nested))
+    return(status_flat)
+  }
 }
 
 #' Retrieve status of dependencies from the remake store
@@ -165,8 +179,8 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     version=store$version,
     name=target_name,
     type=null_to_na(target$type),
-    hash=NA,
-    time=NA,
+    hash=as.character(NA),
+    time=as.POSIXct(NA),
     depends=list(),
     fixed=NULL,
     code=list())
@@ -198,7 +212,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
   # override depends to include dependencies of fake targets, and to include
   # fake targets as dependencies (remake does neither; only file and object
   # dependencies of file or object targets are reported)
-  if(is.null(target)) {
+  if(is.null(target) || length(target$depends_name) == 0) {
     missing_depends <- tibble(type='', name='')[c(),]
   } else if(target$type == 'fake') {
     missing_depends <- tibble(type = target$depends_type, name = target$depends_name)
@@ -233,7 +247,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
             '??'
           }
         }),
-        target$depends_name))
+        missing_depends$name))
   }
   
   # long format
@@ -249,7 +263,8 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
       tibble(type='functions', name=names(status_list$code$functions), hash=unlist(unname(status_list$code$functions)))
     }
   )  %>%
-    mutate(hash = ifelse(is.na(hash), 'none', hash)) # NAs are really inconvenient to deal with below, and 'none' is a little clearer anyway
+    mutate(
+      hash = ifelse(is.na(hash), 'none', hash)) # NAs are really inconvenient to deal with below, and 'none' is a little clearer anyway
   if(format == 'long') return(status_long)
   
   # wide format    
@@ -260,8 +275,11 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     time = status_list$time,
     depends = status_long %>% dplyr::filter(type=='depends') %>% select(name, hash) %>% list(),
     fixed = null_to_na(status_list$fixed),
-    functions = status_long %>% dplyr::filter(type=='functions') %>% select(name, hash) %>% list())
-  
+    functions = status_long %>% dplyr::filter(type=='functions') %>% select(name, hash) %>% list()
+  ) %>%
+    mutate(
+      fixed = as.character(fixed),
+      hash = ifelse(is.na(hash), 'none', hash))
   if(format == 'wide') return(status_wide)
   
   stop('a status report should have been returned by now')
@@ -388,7 +406,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   if(target_type == 'fake') {
     def_dirty <- pull(dplyr::filter(dirty_rows, definitely_dirty), name)
     pos_dirty <- pull(dplyr::filter(dirty_rows, !definitely_dirty), name)
-    preamble <- sprintf("The fake target '%s' has", target_name)
+    preamble <- sprintf("Fake targets are never 'current'. Also, the fake target '%s' has", target_name)
     if(length(def_dirty) > 0) message(paste(c(paste(preamble, "these dirty dependencies:"), def_dirty), collapse='\n  * '))
     if(length(pos_dirty) > 0) message(paste(c(sprintf("%s these possibly dirty dependencies:", if(length(def_dirty) > 0) 'and' else preamble), pos_dirty), collapse='\n  * '))
   } else if(is.na(dplyr::filter(status_compare, type == 'target') %>% pull(hash_new))) {

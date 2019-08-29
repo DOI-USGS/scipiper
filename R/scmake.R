@@ -31,12 +31,12 @@ scmake <- function(
   RDSify_build_status(remake_file=remake_file)
   
   # record status before running make
-  status_pre <- get_remake_status(target_names, remake_file=remake_file)
+  status_pre <- get_remake_status(target_names, remake_file=remake_file, format='flat', RDSify_first=FALSE)
   
   # run remake::make
   update_build_files <- function(target_names, remake_file, status_pre) {
     # record status after running make
-    status_post <- get_remake_status(target_names, remake_file=remake_file)
+    status_post <- get_remake_status(target_names, remake_file=remake_file, format='flat', RDSify_first=FALSE)
     
     # for every target that (1) changed status and (2) is a status indicator file,
     # make a text (YAML) copy of the build status file from the remake db storr;

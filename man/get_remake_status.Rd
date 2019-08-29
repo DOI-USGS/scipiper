@@ -5,7 +5,8 @@
 \title{Produce a table describing the remake build status relative to 1+ targets}
 \usage{
 get_remake_status(target_names = NULL,
-  remake_file = getOption("scipiper.remake_file"), RDSify_first = TRUE)
+  remake_file = getOption("scipiper.remake_file"), format = c("nested",
+  "flat"), RDSify_first = TRUE)
 }
 \arguments{
 \item{target_names}{character vector of targets for which to determine build
