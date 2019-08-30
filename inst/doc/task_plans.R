@@ -111,10 +111,9 @@ create_task_makefile(
   task_plan=task_plan_1,
   makefile='task_plan_1.yml',
   include=c(),
-  packages=c('ggplot2'),
+  packages=c('ggplot2','scipiper'),
   sources=c('script.R'),
-  file_extensions=c('ind'),
-  ind_complete=TRUE)
+  file_extensions=c('ind'))
 
 ## ----read_makefile, results='markup', comment='', echo=FALSE-------------
 cat(readr::read_lines('task_plan_1.yml'), sep='\n')
@@ -199,7 +198,7 @@ create_task_makefile(
   packages=c('ggplot2'),
   sources=c('script.R'),
   file_extensions=c('ind'),
-  ind_complete=FALSE)
+  finalize_fun = NULL)
 
 ## ----read_makefile2, results='markup', comment='', echo=FALSE------------
 cat(readr::read_lines('task_plan_2.yml'), sep='\n')
