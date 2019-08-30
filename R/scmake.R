@@ -104,17 +104,20 @@ scdel <- function(
   verbose = TRUE,
   ind_ext = getOption('scipiper.ind_ext')) {
   
+  # read the remake graph to get information about targets. do load sources to get the dependencies right
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+  
   # make sure target_names is concrete
   if(is.null(target_names)) {
-    # collect information about the current remake database. do load sources to get the dependencies right
-    remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
     target_names <- remake_object$default_target
   }
   
   # run remake::delete, which takes care of the file itself and the RDS status
   # file, leaving us with just the YAML file to deal with below. Lock in
   # dependencies=FALSE
-  remake::delete(target_names=target_names, dependencies = FALSE,
+  targets <- remake_object$targets[target_names]
+  deletable <- sapply(targets, function(tg) tg$type %in% c('file', 'object'))
+  remake::delete(target_names=target_names[deletable], dependencies = FALSE,
                  verbose = verbose, remake_file=remake_file)
   
   # get info about the remake project
