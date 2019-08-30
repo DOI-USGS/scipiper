@@ -60,6 +60,5 @@ demo_task_makefile <- function(makefile, task_plan) {
   create_task_makefile(
     task_plan,
     makefile,
-    include='remake.yml',
-    ind_complete=TRUE)
+    include='remake.yml')
 }

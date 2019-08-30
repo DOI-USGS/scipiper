@@ -10,10 +10,6 @@
 #'
 #' @param task_plan a task plan as produced by `create_task_plan()`
 #' @param makefile character name of the remake file to create
-#' @param ind_dir directory path specifing the location where an overall job
-#'   indicator file should be written once all tasks and steps are complete.
-#'   This file will always be named after the makefile, but with the indicator
-#'   file extension (ind_ext) instead of '.yml' as a suffix
 #' @param include character vector of any remake .yml files to include within
 #'   this one. If any files must be quoted in the remake file, quote them with
 #'   inner single quotes, e.g. `c("unquoted", "'quoted file name.tsv'")`
@@ -25,15 +21,19 @@
 #'   defaults at `remake::file_extensions()`. Inclusion of `'ind'` is
 #'   recommended because this indicator file extension is commonly used by
 #'   scipiper.
-#' @param ind_complete logical. Should there be a summary target that creates an
-#'   indicator file whose contents are the filename and hash of all of the final
-#'   steps of all tasks?
-#' @param ind_ext the indicator file extension to use in creating the job
-#'   indicator file
 #' @param template_file character name of the mustache template to render into
 #'   `makefile`. The default is recommended
-#' @return the file name of the makefile that was created (can be displayed with
-#'   `cat(readLines(makefile), sep="\n")`).
+#' @param final_targets a file path or object name (or vector of either) specifying final target(s) 
+#'   to be created by `finalize_funs`
+#' @param finalize_funs a string function name (or vector of function names, of equal 
+#'   length to `final_targets`). Using NULL for `finalize_funs` will turn the 
+#'   final steps from the task plan into depends for the default/all target.
+#' @param as_promises hides the actual `final_targets` file/object from remake, and uses a 
+#'   dummy target name instead, with suffix "_promise". This allows us to avoid cyclic 
+#'   dependencies. Naming convention for `_promise` variables is to drop any dir structure 
+#'   from the `final_targets`
+#' @return the file name of the makefile that was created, 
+#'   or the string output (if makefile = NULL)
 #' @export
 #' @examples
 #' task_config <- data.frame(
@@ -62,13 +62,15 @@
 #'   task_plan, makefile=file.path(tempdir(), 'states.yml'),
 #'   file_extensions=c('ind'), packages='mda.streams')
 #' cat(readLines(task_makefile), sep='\n')
+#' @importFrom methods getPackageName
+#' @importFrom utils packageVersion
 create_task_makefile <- function(
   task_plan, makefile,
-  include=c(), packages=c(), sources=c(), file_extensions=c('ind'),
-  ind_complete=NA,
-  ind_dir=attr(task_plan, 'ind_dir'),
-  ind_ext=getOption("scipiper.ind_ext"),
-  template_file=system.file('extdata/task_makefile.mustache', package='scipiper')) {
+  include=c(), packages='scipiper', sources=c(), file_extensions=c('ind'),
+  template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
+  final_targets, 
+  finalize_funs = 'combine_to_ind', 
+  as_promises = TRUE) {
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -76,49 +78,40 @@ create_task_makefile <- function(
   # conflicting with other targets) and allows the calling remake file to use
   # ind_file as a target (even though this target is the one responsible for
   # actually writing to ind_file)
-  job_target <- tools::file_path_sans_ext(basename(makefile))
+  
+  # default is to use the makefile naming to assign job name
+  # when makefile isn't used (string output), we use the final_targets to create default job name
+  if (is.null(makefile)){
+    if (missing(final_targets) || length(final_targets) != 1){
+      job_name <- "all_tasks"
+    } else {
+      job_name <- paste0(tools::file_path_sans_ext(basename(final_targets)), '_all')
+    }
+  } else {
+    job_name <- tools::file_path_sans_ext(basename(makefile))
+  }
+
+  if(missing(final_targets)){
+    ind_ext <- getOption("scipiper.ind_ext") # put this here because if you want to control the extension, specify the final_targets
+    ind_dir <- attr(task_plan, 'ind_dir') # if you want to control the dir over default, specify the final_targets
+    if (is.null(ind_dir)){
+      final_targets <- as_ind_file(job_name, ind_ext)
+    } else {
+      final_targets <- file.path(ind_dir, as_ind_file(job_name, ind_ext))  
+    }
+  }
+  
+  if (!is.null(finalize_funs) & length(final_targets) != length(finalize_funs)){
+    stop('when specifying function names for `finalize_funs`, an equal number of `final_targets` need to be specified')
+  }
+  
   job_steps <- attr(task_plan, 'final_steps')
-  job_deps <- unlist(lapply(task_plan, function(task) {
+  
+  targets_to_combine <- unlist(lapply(task_plan, function(task) {
     lapply(task$steps[job_steps], function(step) {
       step$target_name
     })
   }), use.names=FALSE)
-  job_output <- if(isTRUE(ind_complete) || is.na(ind_complete)) {
-    if(is.null(ind_dir)) stop('ind_dir must not be NULL when ind_complete=TRUE')
-    file.path(ind_dir, as_ind_file(job_target, ind_ext))
-  } else {
-    sprintf('%s_%s', job_target, ind_ext)
-  }
-  job <- list(
-    target_name = job_target,
-    # even though target_name is an object (not file), job_command should write
-    # to ind_file - again so the calling remake file can use
-    # ind_file as its target
-    command = {
-      if(is.na(ind_complete)) {
-        message('ind_complete=NA is deprecated; use TRUE or FALSE')
-        sprintf("sc_indicate(I('%s'))", job_output) # the old way: use a timestamp
-      } else {
-        if(isTRUE(ind_complete)) {
-          sprintf("sc_indicate(I('%s'), hash_depends=I(TRUE), depends_target=I('%s'), depends_makefile=I('%s'))",
-                  job_output, job_target, makefile)
-        } else {
-          sprintf("hash_dependencies(target_name=target_name, remake_file=I('%s'))", makefile)
-        }
-          
-      }
-    },
-    # as dependencies of this overall/default job, extract the target_name from
-    # every task and all those steps indexed by job_steps. an alternative (or
-    # complement) would be to create a dummy target for each task (probably with
-    # indicator file, at least until
-    # https://github.com/richfitz/remake/issues/92 is resolved) and then have
-    # this overall target depend on those dummy targets.
-    depends = job_deps
-  )
-  message(sprintf(
-    "run all tasks with\n%s:\n  command: make(I('%s'), remake_file='%s')",
-    job_output, job_target, makefile))
   
   # prepare the task list for rendering
   tasks <- unname(task_plan) # remove list element names where they'd interfere with whisker.render
@@ -129,6 +122,50 @@ create_task_makefile <- function(
       # add a logical for has_depends
       tasks[[task]]$steps[[step]]$has_depends <- length(tasks[[task]]$steps[[step]]$depends) > 0
     }
+  }
+  
+  pos_extensions <- unique(c(remake::file_extensions(), file_extensions))
+  
+  formatted_final_targets <- sapply(X = targets_to_combine, function(target){
+    if (remake:::target_is_file(target, file_extensions = pos_extensions)){
+      paste0("'", target, "'")
+    } else {
+      target
+    }
+  })
+  
+  if (is.null(finalize_funs)){
+    # when there is no finalize fun, the "jobs" are the final step targs and they have no new commands
+    job <- lapply(seq_len(length(formatted_final_targets)), function(i){
+      list(
+        target_name = unname(formatted_final_targets[i])
+      )
+      })
+    has_finalize_funs <- FALSE
+  } else {
+    has_finalize_funs <- TRUE
+    job <- lapply(seq_len(length(finalize_funs)), function(i){
+      list(
+        target_name = ifelse(as_promises, paste0(basename(final_targets[i]), "_promise"), final_targets[i]), 
+        command = {
+          to_combine <- paste(formatted_final_targets, collapse=',\n      ')
+          target_is_file <- remake:::target_is_file(final_targets[i], file_extensions = pos_extensions)
+          # hide the object/file changes as input when using `promises`
+          if (target_is_file){
+            ifelse(as_promises, {
+              sprintf("%s(I('%s'),\n      %s)", finalize_funs[i], final_targets[i], to_combine)
+            }, {
+              sprintf("%s(target_name,\n      %s)", finalize_funs[i], to_combine)
+            })
+          } else {
+            if (finalize_funs[i] == 'combine_to_ind')
+              stop('cannot use an object target for combine_to_ind(), must specify a file target',
+                   '\nyou used ', final_targets[i])
+            combine_str <- "%s(\n      %s)"
+            sprintf(combine_str, finalize_funs[i], to_combine) 
+          }
+        })
+    })
   }
   
   # Gather info about how this function is being called
@@ -143,9 +180,11 @@ create_task_makefile <- function(
   # prepare the final list of variables to be rendered in the template
   params <- list(
     job = job,
-    target_default = job_target,
+    target_default = job_name,
     include = include,
     has_include = length(include) > 0,
+    has_scipiper_version = TRUE, 
+    scipiper_version = utils::packageVersion(methods::getPackageName()),
     packages = packages,
     has_packages = length(packages) > 0,
     sources = sources,
@@ -153,17 +192,41 @@ create_task_makefile <- function(
     file_extensions = file_extensions,
     has_file_extensions = length(file_extensions) > 0,
     tasks = tasks,
+    has_finalize_funs = has_finalize_funs,
     rendering_function = call_info
   )
-  
   # read the template
   template <- readLines(template_file)
   
   # render the template
   yml <- whisker::whisker.render(template, data=params)
   yml <- gsub('[\n]{3,}', '\\\n\\\n', yml) # reduce 3+ line breaks to just 2
+  #yml <- trim(yml) # chop off any trailing white space or line endings (write_lines will add back a final line ending for us)
+  yml <- paste0(substring(yml, 1, nchar(yml)-1), gsub('\\n', '', substring(yml, nchar(yml)))) # chop off the final character if it's a newline
   
+  if (is.null(makefile)){
+    makefile <- yml
+  } else {
+    readr::write_lines(yml, path=makefile)
+    if(has_finalize_funs) {
+      how_to_run <- paste0(
+        "Run all tasks and finalizers with:\n",
+        paste(sapply(seq_along(job), function(job_id) {
+          finalizer <- job[[job_id]]
+          parent_target_name <- if(as_promises) final_targets[[job_id]] else sprintf("your_target_name_%d", job_id)
+          sprintf(
+            "%s:\n  command: scmake(I('%s'), remake_file='%s')",
+            parent_target_name, finalizer$target_name, normalizePath(makefile, winslash='/'))
+        }), collapse='\n')
+      )
+    } else {
+      how_to_run <- sprintf(
+        "Run all tasks with\n%s:\n  command: scmake(remake_file='%s')\n",
+        final_targets, makefile)
+    }
+    message(how_to_run)
+  }
   # write the makefile and return the file path
-  cat(yml, file=makefile)
+  
   return(makefile)
 }
