@@ -422,19 +422,25 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   # interpret
   dirty_rows <- dplyr::filter(status_compare, (hash_mismatch | is.na(hash_mismatch) | dirty | dirty_by_descent) & type != 'target') %>%
     mutate(definitely_dirty = !is.na(hash_mismatch) | dirty | dirty_by_descent)
-  if(nrow(dirty_rows) == 0) {
-    warning(sprintf("Uh oh, can't explain why '%s' is dirty. Please file a bug report.", target_name))
-  }
+  
   target_type <- remake_object$targets[[target_name]]$type
-  if(target_type == 'fake') {
+  if((dplyr::filter(status_compare, type == 'target') %>% pull(hash_new)) == 'none') {
+    message(sprintf("The target '%s' does not exist", target_name))
+  } else if(target_type == 'fake') {
+    preamble <- "Fake targets are never 'current'."
     def_dirty <- pull(dplyr::filter(dirty_rows, definitely_dirty), name)
     pos_dirty <- pull(dplyr::filter(dirty_rows, !definitely_dirty), name)
-    preamble <- sprintf("Fake targets are never 'current'. Also, the fake target '%s' has", target_name)
-    if(length(def_dirty) > 0) message(paste(c(paste(preamble, "these dirty dependencies:"), def_dirty), collapse='\n  * '))
-    if(length(pos_dirty) > 0) message(paste(c(sprintf("%s these possibly dirty dependencies:", if(length(def_dirty) > 0) 'and' else preamble), pos_dirty), collapse='\n  * '))
-  } else if(is.na(dplyr::filter(status_compare, type == 'target') %>% pull(hash_new))) {
-    message(sprintf("The target '%s' does not exist", target_name))
+    if(length(c(def_dirty, pos_dirty)) > 0) {
+      preamble <- paste(preamble, sprintf("Also, the fake target '%s' has", target_name))
+      if(length(def_dirty) > 0) message(paste(c(paste(preamble, "these dirty dependencies:"), def_dirty), collapse='\n  * '))
+      if(length(pos_dirty) > 0) message(paste(c(sprintf("%s these possibly dirty dependencies:", if(length(def_dirty) > 0) 'and' else preamble), pos_dirty), collapse='\n  * '))
+    } else {
+      message(preamble)
+    }
   } else {
+    if(nrow(dirty_rows) == 0) {
+      warning(sprintf("Uh oh, can't explain why '%s' is dirty. Please file a bug report.", target_name))
+    }
     explanations <- sapply(1:nrow(dirty_rows), function(i) {
       row <- dirty_rows[i,]
       explanation <- if(isTRUE(row$hash_mismatch)) {
@@ -449,7 +455,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
       } else if(row$dirty_by_descent) {
         sprintf("the dependency '%s' depends on dirty targets", row$name)
       } else if(row$dirty) {
-        sprintf("the dependency '%s' depends on files, objects, fixed arguments, or functions that have changed")
+        sprintf("the dependency '%s' depends on files, objects, fixed arguments, or functions that have changed", row$name)
       }
       if(remake_object$targets[[row$name]]$type == 'fake') {
         paste(explanation, "(but note that remake ignores fake targets when assessing currentness)")
