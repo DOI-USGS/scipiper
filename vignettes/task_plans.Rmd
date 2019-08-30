@@ -281,8 +281,7 @@ Not analyses will go smoothly the first time you try. You can use `loop_tasks` t
 Before we can demonstrate, we'll need to delete all output files and remake status information again:
 
 ```{r delete_all2}
-non_group_targets <- tail(list_all_targets('task_plan_1.yml'), -1L) # the first target is the group target `task_plan_1`
-scdel(target_names=non_group_targets, remake_file='task_plan_1.yml')
+scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 ```
 
 You can specify an intersection of tasks and steps that you want to run. For example, let's only run the prep step for PA first:
