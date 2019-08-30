@@ -18,6 +18,7 @@ test_that("can run loop_tasks to completion even when tasks fail sometimes", {
   dirinfo <- setup_tasks_demo()
 
   # with verbose=TRUE, should see errors but also completion
+  suppressWarnings(RNGversion("3.5.0")) # R versions >3.5.0 changes set.seed behavior
   set.seed(10)
   options('scipiper.test_verbose'=TRUE)
   output <- capture_messages(scmake('models.ind'))
@@ -42,6 +43,7 @@ test_that("parallel loop_tasks completes while handling errors", {
   dirinfo <- setup_tasks_demo()
   # with verbose=TRUE, should see errors but also completion
   # error messages don't seem to be passed in from parallel processes?
+  suppressWarnings(RNGversion("3.5.0")) # R versions >3.5.0 changes set.seed behavior
   set.seed(100)
   options('scipiper.test_verbose'=TRUE)
   output <- capture_messages(scmake('models_parallel.ind'))
@@ -63,6 +65,7 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
   # with verbose=FALSE, should see just one progress bar per loop attempt (shows
   # up in output as a consecutive series of written-over progress bars with just
   # one that's not written over by a \r)
+  suppressWarnings(RNGversion("3.5.0")) # R versions >3.5.0 changes set.seed behavior
   set.seed(100)
   options('scipiper.test_verbose'=NULL)
   output <- capture_messages(scmake('models.ind'))
@@ -79,6 +82,7 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
 
 test_that("loop_tasks skips files initially", {
   dirinfo <- setup_tasks_demo()
+  suppressWarnings(RNGversion("3.5.0")) # R versions >3.5.0 changes set.seed behavior
   set.seed(100)
   # if we already have CA.ind, the inital looping phase shouldn't try to build
   # CA, but if it's out of date, the final looping phase should

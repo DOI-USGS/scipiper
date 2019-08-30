@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Alison Appling" />
+
+
+<title>Common Pitfalls and Solutions</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Common Pitfalls and Solutions</h1>
+<h4 class="author"><em>Alison Appling</em></h4>
+<h4 class="date"><em>February 4, 2019</em></h4>
+
+
+
+<head>
+<style>
+sym {color: red;}
+sol {color: blue;}
+</style>
+</head>
+<p>The following bullets describe problems or frustrations that <code>scipiper</code> users might encounter, along with some ideas for how to interpret and fix those issues. Each “pitfall” is presented in this format: <em><sym>Problem or symptom.</sym> Explanation. <sol>Solution.</sol></em></p>
+<div id="general-use-of-scipiperremake" class="section level2">
+<h2>General use of scipiper/remake</h2>
+<ul>
+<li><p><sym>Unnecessary re-runs of functions.</sym> <code>scipiper</code> and <code>remake</code> don’t update their databases when you run a function outside of scipiper, even if the function creates the desired outputs. This may be frustrating if you’ve just run a long-running function outside of <code>scipiper</code> and are now attempting to use <code>scipiper</code> to build targets that depend on the function’s output, because <code>scipiper</code> will insist on running that function again. <sol>Anytime you might want the output of a function to be considered complete, build the <code>scipiper</code> target rather than calling the function directly.</sol></p></li>
+<li><p><sym>Common debugging methods don’t work.</sym> If you build a <code>scipiper</code> target that runs function <code>A()</code> to create target <code>a</code>, setting RStudio checkpoints or <code>debug(A)</code> won’t let you debug function <code>A</code> when you call <code>scmake('a')</code>. <sol>Temporarily insert a call to <code>browser()</code> within the function instead.</sol></p></li>
+<li><p><sym>The GitHub repo is too big.</sym> You might be committing data files or large task remake files to the repo. Data files should generally be excluded from the repo; instead of backing up data using the repo, these files should be backed up in the shared cache, should be quick to generate locally, or should (worst case) be backed up manually. You can .gitignore data files by specifying common data extensions in .gitignore and/or by storing data files in <code>*/tmp/*</code> folders and .gitignoring those folders. You may also choose to make exceptions, committing some data or configuration files that are very small and/or text-based, especially when their git diffs would be informative (e.g., when a file describes user settings or summarizes the shared status of a project build). <sol>In general, you should .gitignore most data files, the .remake/ folder, and (optionally) any task remake files.</sol></p></li>
+</ul>
+</div>
+<div id="use-of-shared-cache" class="section level2">
+<h2>Use of shared cache</h2>
+<ul>
+<li><p><sym>Teammates aren’t getting updates about available intermediate data files.</sym> When sharing intermediate data files with a team using a shared cache, the status information about those files is contained in (1) an <code>.ind</code> file promising the existence of the data file in the cache, and (2) a <code>build/status/*.yml</code> file telling <code>remake</code> how to decide whether the <code>.ind</code> file is up to date. <sol>Always <code>git commit</code> the <code>.ind</code> and <code>build/status/*.yml</code> files corresponding to all shared data files.</sol></p></li>
+<li><p><sym>Teammates can’t see updated objects.</sym> R objects can’t be shared. <sol>To share objects, save them as files (e.g., <code>.rds</code>, <code>.feather</code>, or <code>.tsv</code>) and use the standard shared cache syntax.</sol></p></li>
+<li><p><sym>Seemingly unnecessary builds of objects or files that a teammate already built.</sym> Those files may lack corresponding <code>.ind</code> files (and objects always lack <code>.ind</code> files), which are the key to avoiding rebuilds. With a shared cache approach, every data file or object not represented by an <code>.ind</code> file must be built locally by everybody who needs to build any target downstream of that file or object. <sol>For every file that takes a long time or special software to build: (1) use file rather than object targets, (2) define a corresponding <code>.ind</code> file and make downstream targets depend on the <code>.ind</code> file rather than the data file, (3) push the file to the shared cache, and (4) commit the <code>.ind</code> file to the repository.</sol></p></li>
+<li><p><sym>There are more <code>.ind</code> files than I want to manage.</sym> Not every data file (or object) needs to be in the shared cache, and anything not in the shared cache is a candidate for also not having an <code>.ind</code> file. If (a) you’re comfortable requiring everybody to build a file or object locally, or (b) there are no declared downstream dependencies of the file/object, then you can skip creating an <code>.ind</code> file for it. For example, you might have a task remake file whose execution (e.g., with <code>loop_tasks()</code>) depends on <code>X</code> and <code>Y</code> and produces a single output file <code>Z</code>. As long as the main remake file says that <code>loop_tasks()</code> creates <code>Z.ind</code> (not <code>Z</code>), you can have just one person run the entire task remake file, and your team can share the output, without using any <code>.ind</code> files within those tasks. <sol>Don’t create <code>.ind</code> files for targets that don’t need them. Just remember that anything without an <code>.ind</code> file must be rebuilt by anyone else trying to access that target.</sol></p></li>
+</ul>
+</div>
+<div id="shared-cache-during-development" class="section level2">
+<h2>Shared cache during development</h2>
+<ul>
+<li><sym>I am working on code that changes data in the shared cache but I’m not ready to commit those changes, and teammates are being forced to rebuild.</sym> As you are developing code for targets that alter the shared cache, you will often want to test code for those targets without (yet) sharing the new changes with teammates. When you’ve changed the shared cache but haven’t yet committed the <code>.ind</code>. or <code>build/status/*.yml</code> files, other teammates who are concurrently building targets that depend on your target will be forced to rebuild the target because their <code>.ind</code> and <code>build/status/*.yml</code> files show that they are outdated.<sol>While developing for a shared-cache target, use <code>options(scipiper.dry_put = TRUE)</code> to prevent files built from being pushed to the shared cache. Remember to revert to <code>options(scipiper.dry_put = FALSE)</code> and force a rebuild when you are ready to push your changes to the code, <code>.ind</code>, and <code>build/status/*.yml</code> files.</sol></li>
+</ul>
+</div>
+<div id="team-with-multiple-operating-systems-and-shared-caches" class="section level2">
+<h2>Team with multiple operating systems and shared caches</h2>
+<ul>
+<li><p><sym>Unnecessary rebuilds of text files with shared cache.</sym> Text data files (e.g., .csv or .txt) may contain different line endings (EOLs) depending on which package and OS were used to write them. This is a problem for text-based files that are <code>scipiper</code> targets, because what appears to be up to date on the originating OS will appear to be out of date on another OS, triggering unnecessary rebuilds. <sol>Avoid base file writing (e.g., <code>base::writeLines</code>, <code>utils::write.csv</code>). Instead use <code>readr</code> for all file writing.</sol></p></li>
+<li><p><sym>Unnecessary rebuilds of <code>.rds</code> files containing <code>sf</code> objects with shared cache.</sym> It appears that some <code>sf</code> objects are stored differently by each OS; again, because the hash in the <code>build/status/*.yml</code> file will then differ from the hash on the teammate’s computer, this could trigger unnecessary rebuilds. Note that in some cases this might be the result of using two slightly different versions of <code>sf</code> rather than two different OSes. <sol>Either be wary and try <code>sf</code> objects for intermediate data storage anyway (it might work), or save these objects in another format.</sol></p></li>
+<li><p><sym>Unnecessary rebuilds of targets that depend on input text files.</sym> A hand-edited text file such as a YAML configuration file may be given different white space or line endings by different OSes (or even just different R projects), leading to unnecessary rebuilds if one user makes and commits a trivial change to that file. <sol>When starting a project, configure a shared <code>*.Rproj</code> file to use <em>Insert spaces for tab: Tab width = 2</em>; <em>Strip trailing horizontal whitespace when saving = TRUE</em>; and <em>Line ending conversion: Posix (LF)</em>. If a shared <code>*.Rproj</code> file is not an option, create a .gitattributes file declaring <em>* text eol=lf</em> instead.</sol></p></li>
+<li><p><sym>Different results depending on the operating system.</sym> Sometimes only one or two operating systems produce the results we want - for example, Macs often make nicer .png files than Windows PCs, and some packages or software are only available on one platform. <sol>Use a shared cache and coordinate so that someone with the appropriate operating system runs these targets for the team, pushing the results (and <code>.ind</code> and <code>build/status/*.yml</code> files) to the shared cache.</p></li>
+<li><p>Note: <sol>Many OS-related challenges could also be solved by using Docker for development.</sol></p></li>
+</ul>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

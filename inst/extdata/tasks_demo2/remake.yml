@@ -1,0 +1,44 @@
+target_default: log/tasks_states.ind
+
+sources:
+  - plan_functions.R
+
+targets:
+
+  states:
+    command: c(I(c(
+      'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado')))#,
+      'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois',
+      'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland',
+      'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana',
+      'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
+      'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
+      'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
+      'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming')))
+  all_data:  
+    command: cbind(I(data.frame(state = state.name, stringsAsFactors = FALSE)), I(state.x77))
+  
+  
+  state_task_plan:
+    command: create_state_task_plan(states = states)
+    depends:
+      - all_data
+  
+  
+  tasks_states.yml:
+    command: create_task_makefile(
+      makefile = target_name,
+      task_plan = state_task_plan,
+      include = I('remake.yml'),
+      sources = I(c('visualize_functions.R', 'process_functions.R')),
+      packages = I(c('dplyr', 'scipiper')),
+      file_extensions = I(c('ind')),
+      ind_dir = I('log'),
+      ind_complete = TRUE)
+  
+  
+  log/tasks_states.ind:
+    command: loop_tasks(
+      task_plan = state_task_plan,
+      task_makefile = 'tasks_states.yml')
+  
