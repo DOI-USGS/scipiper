@@ -457,7 +457,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
       } else if(row$dirty) {
         sprintf("the dependency '%s' depends on files, objects, fixed arguments, or functions that have changed", row$name)
       }
-      if(remake_object$targets[[row$name]]$type == 'fake') {
+      if(exists(row$name, remake_object$targets) && remake_object$targets[[row$name]]$type == 'fake') {
         paste(explanation, "(but note that remake ignores fake targets when assessing currentness)")
       }
       explanation
