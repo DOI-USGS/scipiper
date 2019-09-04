@@ -327,7 +327,7 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
   # pick out the non-current targets. It's possible for a file to be current,
   # !dirty, and yet dirty_by_descent, in which case remake will rebuild it, so
   # define non-current as a combination of all three logicals
-  current <- dirty <- dirty_by_descent <- target <- '.dplyrvar'
+  not_dirty <- current <- dirty <- dirty_by_descent <- target <- '.dplyrvar'
   status %>%
     mutate(not_dirty = current & !dirty & !dirty_by_descent) %>%
     dplyr::filter(!not_dirty) %>%
@@ -369,7 +369,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   stopifnot(length(target_name) == 1 & is.character(target_name))
   
   # avoid "no visible binding for global variable XX" in R CMD  check
-  type <- name <- target <- dirty <- dirty_by_descent <- hash_old <- hash_new <- hash_mismatch <- definitely_dirty <- '.dplyrvar'
+  type <- name <- current <- target <- dirty <- dirty_by_descent <- hash_old <- hash_new <- hash_mismatch <- definitely_dirty <- '.dplyrvar'
   
   # collect information about the current remake database. do load sources to get the dependencies right
   remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
