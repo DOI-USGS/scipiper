@@ -99,11 +99,10 @@ loop_tasks <- function(
   # than a file, we'll need to check it with get_remake_status every time, which
   # is part of why files are recommended over objects.
   which_incomplete <- function(targets, task_makefile) {
-    is_current <- get_remake_status(targets, task_makefile) %>%
-      dplyr::right_join(data_frame(target=targets), by='target') %>%
-      pull(is_current) %>%
-      as.logical()
-    incomplete_targets <- which(!(file.exists(targets) | is_current))
+    current <- get_remake_status(targets, task_makefile) %>%
+      dplyr::right_join(tibble(target=targets), by='target') %>%
+      pull(current)
+    incomplete_targets <- which(!(file.exists(targets) | current))
   }
   
   incomplete_targets <- which_incomplete(targets, task_makefile)

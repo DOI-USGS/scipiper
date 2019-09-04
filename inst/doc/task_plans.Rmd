@@ -178,10 +178,9 @@ create_task_makefile(
   task_plan=task_plan_1,
   makefile='task_plan_1.yml',
   include=c(),
-  packages=c('ggplot2'),
+  packages=c('ggplot2','scipiper'),
   sources=c('script.R'),
-  file_extensions=c('ind'),
-  ind_complete=TRUE)
+  file_extensions=c('ind'))
 ```
 
 Here are the contents of task_plan_1.yml:
@@ -334,7 +333,7 @@ task_plan_2 <- create_task_plan(
   add_complete=FALSE)
 ```
 
-To avoid creating an indicator file when the entire batch is complete, set `ind_complete=FALSE` in `create_task_makefile`:
+To avoid combining the outputs of a task plan when the entire batch is complete, set `finalize_fun = NULL` in `create_task_makefile`:
 
 ```{r makefile2, results='markup'}
 create_task_makefile(
@@ -344,7 +343,7 @@ create_task_makefile(
   packages=c('ggplot2'),
   sources=c('script.R'),
   file_extensions=c('ind'),
-  ind_complete=FALSE)
+  finalize_fun = NULL)
 ```
 
 Now here are the contents of task_plan_2.yml, which will not create any `.ind` files:

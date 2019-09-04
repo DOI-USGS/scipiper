@@ -127,7 +127,7 @@ create_task_makefile <- function(
   pos_extensions <- unique(c(remake::file_extensions(), file_extensions))
   
   formatted_final_targets <- sapply(X = targets_to_combine, function(target){
-    if (remake:::target_is_file(target, file_extensions = pos_extensions)){
+    if (('remake' %:::% 'target_is_file')(target, file_extensions = pos_extensions)){
       paste0("'", target, "'")
     } else {
       target
@@ -149,12 +149,12 @@ create_task_makefile <- function(
         target_name = ifelse(as_promises, paste0(basename(final_targets[i]), "_promise"), final_targets[i]), 
         command = {
           to_combine <- paste(formatted_final_targets, collapse=',\n      ')
-          target_is_file <- remake:::target_is_file(final_targets[i], file_extensions = pos_extensions)
+          target_is_file <- ('remake' %:::% 'target_is_file')(final_targets[i], file_extensions = pos_extensions)
           # hide the object/file changes as input when using `promises`
           if (target_is_file){
             ifelse(as_promises, {
               sprintf("%s(I('%s'),\n      %s)", finalize_funs[i], final_targets[i], to_combine)
-            }, {
+            }, { 
               sprintf("%s(target_name,\n      %s)", finalize_funs[i], to_combine)
             })
           } else {

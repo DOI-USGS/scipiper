@@ -1,6 +1,8 @@
 ^Meta$
-^doc$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-.travis.yml
+^.travis.yml$
+^.git$
+^.gitignore$
+^doc$
 ^docs$
