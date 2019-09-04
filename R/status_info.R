@@ -324,11 +324,13 @@ which_dirty <- function(target_names=NULL, remake_file=getOption('scipiper.remak
   # get the full status information for all relevant targets
   status <- get_remake_status(target_names=target_names, remake_file=remake_file, RDSify_first=RDSify_first)
   
-  # pick out the non-current targets. use current rather than dirty because I
-  # think something can be dirty by descent without being dirty...maybe...
-  current <- target <- '.dplyrvar'
+  # pick out the non-current targets. It's possible for a file to be current,
+  # !dirty, and yet dirty_by_descent, in which case remake will rebuild it, so
+  # define non-current as a combination of all three logicals
+  current <- dirty <- dirty_by_descent <- target <- '.dplyrvar'
   status %>%
-    dplyr::filter(!current) %>%
+    mutate(not_dirty = current & !dirty & !dirty_by_descent) %>%
+    dplyr::filter(!not_dirty) %>%
     pull(target)
 }
 
@@ -391,9 +393,10 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
       current = ('remake' %:::% 'remake_is_current')(remake_object, target)) %>%
     dplyr::select(target, dirty, dirty_by_descent, current)
   
-  # check that it's actually dirty
-  current <- dplyr::filter(currentness, target == target_name) %>% pull(current)
-  if(current) {
+  # check that it's actually dirty. It's possible for a file to be current,
+  # !dirty, and yet dirty_by_descent, in which case remake will rebuild it, so
+  # define dirty as the combination of all three logicals
+  if(!target_name %in% which_dirty(target_name)) {
     stop(sprintf("target '%s' is not dirty", target_name))
   }
   
