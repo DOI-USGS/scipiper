@@ -272,7 +272,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
       tibble(type='fixed', name=NA, hash=status_list$fixed)
     },
     if(length(status_list$code$functions) > 0) {
-      tibble(type='functions', name=names(status_list$code$functions), hash=unlist(unname(status_list$code$functions)))
+      tibble(type='function', name=names(status_list$code$functions), hash=unlist(unname(status_list$code$functions)))
     }
   )  %>%
     mutate(
@@ -287,7 +287,7 @@ get_dependency_status <- function(target_name, remake_object, as_of=c('last_buil
     time = status_list$time,
     depends = status_long %>% dplyr::filter(type=='depends') %>% select(name, hash) %>% list(),
     fixed = null_to_na(status_list$fixed),
-    functions = status_long %>% dplyr::filter(type=='functions') %>% select(name, hash) %>% list()
+    functions = status_long %>% dplyr::filter(type=='function') %>% select(name, hash) %>% list()
   ) %>%
     mutate(
       fixed = as.character(fixed),
@@ -448,7 +448,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
           row$type,
           'depends' = sprintf("the dependency '%s' has changed", row$name),
           'fixed' = sprintf("the fixed arguments (character, logical, or numeric) to the target's command have changed", row$name),
-          'functions' = sprintf("the function '%s' used by the target has changed", row$name)
+          'function' = sprintf("the function '%s' used by the target has changed", row$name)
         )
       } else if(is.na(row$hash_mismatch)) {
         sprintf("the dependency '%s' might have changed", row$name)
