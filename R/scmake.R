@@ -67,6 +67,116 @@ scmake <- function(
   invisible(out)
 }
 
+#' Declare to remake and scipiper that a target is current
+#'
+#' `scbless` (aka `sc_declare_current`) tells remake and scipiper to update
+#' their databases to reflect that the current target is up to date with respect
+#' to the current dependencies
+#'
+#' @aliases sc_declare_current
+#' @param target_names names of the targets to record as already current
+#' @param remake_file the file path+name of the remake file to use in building
+#'   the targets. As in remake::make, except that for scmake this param comes
+#'   before ... and second in line, so it can be easily specified without naming
+#'   the argument
+#' @param ind_ext the indicator file extension identifying those files for which
+#'   build/status information will be shared via git-committable files in the
+#'   build/status folder. You should git commit the resulting build/status
+#'   files.
+#' @importFrom tibble is_tibble
+#' @export
+scbless <- function(
+  target_names, remake_file = getOption('scipiper.remake_file'), ind_ext = getOption("scipiper.ind_ext")) {
+  
+  hash <- name <- type <- label <- dirty_by_descent <- '.dplyrvar'
+  
+  # read the remake graph to get information about targets. do load sources to get the dependencies right
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
+  store <- remake_object$store
+  
+  # check that the targets to bless are known and non-current targets (stop if
+  # they're unknown, but just warn and skip if they're current)
+  if(missing(target_names)) stop('target_names must be specified')
+  non_targets <- target_names[!target_names %in% names(remake_object$targets)]
+  if(length(non_targets) > 0) {
+    stop(sprintf("unrecognized target names: %s", paste(non_targets, collapse=', ')))
+  }
+  non_dirty <- setdiff(target_names, which_dirty(target_names, remake_file=remake_file, RDSify_first=FALSE))
+  if(length(non_dirty) > 0) {
+    warning(sprintf("these non-dirty targets will be skipped: %s", paste(non_dirty, collapse=', ')))
+    target_names <- setdiff(target_names, non_dirty)
+  }
+  
+  # pull target information, including whether the file/object exists already
+  target_info <- lapply(setNames(nm=target_names), function(target_name) {
+    target <- remake_object$targets[[target_name]]
+    
+    # confirm the availability of the object or file
+    target$exists <- switch(
+      target$type,
+      'object' = store$objects$exists(target$name),
+      'file' = file.exists(target$name), # equivalent to store$files$exists but simpler
+      'fake' = NA)
+    
+    target$dep_stat <- tryCatch({
+      # remake returns a list if successful
+      ('remake' %:::% 'dependency_status')(target, store, check="all")
+    }, error=function(e) {
+      # run our own dependency status function to diagnose why remake's didn't work
+      get_dependency_status(target$name, remake_object, as_of='now', format='long')
+    })
+    target$dep_stat_success <- !tibble::is_tibble(target$dep_stat)
+    
+    return(target)
+  })
+  
+  # throw warning for fake targets, error for non-existent objects or files,
+  # error for files whose dependency status couldn't be determined
+  fake <- names(which(sapply(target_info, `[[`, 'type') == 'fake'))
+  if(length(fake) > 0) {
+    warning(sprintf("these fake targets will be skipped: %s", paste(fake, collapse=', ')))
+    target_names <- setdiff(target_names, fake)
+    target_info <- target_info[target_names]
+  }
+  non_existent <- names(which(!sapply(target_info, `[[`, 'exists')))
+  if(length(non_existent) > 0) {
+    stop(sprintf("these targets lack built objects or files, so cannot be blessed: %s", paste(non_existent, collapse=', ')))
+  }
+  no_dep_status <- names(which(!sapply(target_info, `[[`, 'dep_stat_success')))
+  if(length(no_dep_status) > 0) {
+    for(target in target_info[no_dep_status]) {
+      no_hash <- dplyr::filter(target$dep_stat, hash=='none') %>% mutate(label=ifelse(is.na(name), type, name)) %>% pull(label)
+      warning(sprintf("these dependencies of target '%s' could not be hashed: %s", target$name, no_hash))
+    }
+    stop(sprintf("couldn't determine new dependency status for these targets: %s", paste(no_dep_status, collapse=', ')))
+  }
+  
+  # change remake's dependency records for the specified targets
+  for(target in target_info) {
+    store$db$set(target$name, target$dep_stat)
+  }
+  
+  # change scipiper's dependency records for any specified indicator-file targets
+  ind_files <- target_names[is_ind_file(target_names, ind_ext=ind_ext)]
+  YAMLify_build_status(ind_files, remake_file=remake_file)
+  
+  # check and warn for targets that are now current and !dirty but are still dirty_by_descent
+  if(length(target_names) > 0) {
+    status <- get_remake_status(target_names, remake_file=remake_file)
+    still_dirty <- dplyr::filter(status, dirty_by_descent) %>% pull(target)
+    if(length(still_dirty) > 0) {
+      warning(sprintf("these targets have been declared current but are still dirty by descent: %s", paste(still_dirty, collapse=', ')))
+    }
+  }
+  
+  # return the names of targets we actually blessed
+  invisible(target_names)
+}
+
+#' @describeIn scbless
+#' @export
+sc_declare_current <- scbless
+
 #' Wrapper for remake::delete that permits cache sharing
 #'
 #' [remake::delete()] claims that for files you can generally just delete the

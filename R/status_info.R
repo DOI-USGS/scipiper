@@ -396,7 +396,7 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   # check that it's actually dirty. It's possible for a file to be current,
   # !dirty, and yet dirty_by_descent, in which case remake will rebuild it, so
   # define dirty as the combination of all three logicals
-  if(!target_name %in% which_dirty(target_name)) {
+  if(!target_name %in% which_dirty(target_name, remake_file=remake_file, RDSify_first=FALSE)) {
     stop(sprintf("target '%s' is not dirty", target_name))
   }
   
@@ -454,7 +454,11 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
           'function' = sprintf("the function '%s' used by the target has changed", row$name)
         )
       } else if(is.na(row$hash_mismatch)) {
-        sprintf("the dependency '%s' might have changed", row$name)
+        if(row$type == 'fixed') {
+          "the fixed arguments might have changed"
+        } else {
+          sprintf("the dependency '%s' might have changed", row$name)
+        }
       } else if(row$dirty_by_descent) {
         sprintf("the dependency '%s' depends on dirty targets", row$name)
       } else if(row$dirty) {
