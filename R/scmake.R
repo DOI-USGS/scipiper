@@ -94,20 +94,15 @@ scbless <- function(
   remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=TRUE)
   store <- remake_object$store
   
-  # check that the targets to bless are known and non-current targets (stop if
-  # they're unknown, but just warn and skip if they're current)
+  # check that the targets to bless are known (stop if not)
   if(missing(target_names)) stop('target_names must be specified')
   non_targets <- target_names[!target_names %in% names(remake_object$targets)]
   if(length(non_targets) > 0) {
     stop(sprintf("unrecognized target names: %s", paste(non_targets, collapse=', ')))
   }
-  non_dirty <- setdiff(target_names, which_dirty(target_names, remake_file=remake_file, RDSify_first=FALSE))
-  if(length(non_dirty) > 0) {
-    warning(sprintf("these non-dirty targets will be skipped: %s", paste(non_dirty, collapse=', ')))
-    target_names <- setdiff(target_names, non_dirty)
-  }
   
   # pull target information, including whether the file/object exists already
+  clearly_dirty <- intersect(target_names, which_dirty(target_names, remake_file=remake_file, RDSify_first=FALSE))
   target_info <- lapply(setNames(nm=target_names), function(target_name) {
     target <- remake_object$targets[[target_name]]
     
@@ -127,8 +122,30 @@ scbless <- function(
     })
     target$dep_stat_success <- !tibble::is_tibble(target$dep_stat)
     
+    # determine dirtiness. check the hash because the user might have manually
+    # modified a file and then want to declare it current. we know it's not
+    # current if we weren't able to get dependency status from remake, because
+    # that means it wasn't built
+    target$dirty <- target_name %in% clearly_dirty
+    if(!target$dirty && target$exists && target$type == 'file' && target$dep_stat_success) {
+      target$hash_new <- target$dep_stat$hash
+      target$hash_old <- get_dependency_status(target$name, remake_object, as_of='last_build', format='wide')$hash
+      if(target$hash_new != target$hash_old) {
+        target$dirty <- TRUE
+      }
+    }
+    
     return(target)
   })
+  
+  # check that the targets to bless are non-current targets (just warn and skip
+  # if they're current)
+  non_dirty <- names(which(!sapply(target_info, `[[`, 'dirty')))
+  if(length(non_dirty) > 0) {
+    warning(sprintf("these non-dirty targets will be skipped: %s", paste(non_dirty, collapse=', ')))
+    target_names <- setdiff(target_names, non_dirty)
+    target_info <- target_info[target_names]
+  }
   
   # throw warning for fake targets, error for non-existent objects or files,
   # error for files whose dependency status couldn't be determined

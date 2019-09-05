@@ -395,9 +395,20 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   
   # check that it's actually dirty. It's possible for a file to be current,
   # !dirty, and yet dirty_by_descent, in which case remake will rebuild it, so
-  # define dirty as the combination of all three logicals
+  # define dirty as the combination of all three logicals. Also handle the special
+  # case where remake doesn't actually think it's dirty but the file has changed
   if(!target_name %in% which_dirty(target_name, remake_file=remake_file, RDSify_first=FALSE)) {
-    stop(sprintf("target '%s' is not dirty", target_name))
+    old_target <- dplyr::filter(old_status, type=='target')
+    new_target <- dplyr::filter(new_status, type=='target')
+    if(!is.na(old_target$hash) && !is.na(new_target$hash) && (old_target$hash != new_target$hash)) {
+      message(sprintf("target '%s' is not dirty in remake's eyes, but its hashes are different so returning those.", target_name))
+      info_df <- full_join(old_target, new_target, by=c('type','name'), suffix=c('_old','_new')) %>%
+        mutate(hash_mismatch = TRUE) %>%
+        left_join(currentness, by=c(name='target'))
+      return(info_df)
+    } else {
+      stop(sprintf("target '%s' is not dirty", target_name))
+    }
   }
   
   # compare. Truth table for hash_mismatch:
@@ -474,4 +485,19 @@ why_dirty <- function(target_name, remake_file=getOption('scipiper.remake_file')
   
   # return
   return(status_compare)
+}
+
+#' Get the file path and name for a scipiper build/status/*.yml files
+#'
+#' Internal helper function with limited functionality for now. Before making
+#' this an exported function, if that's ever needed, we'd need some error
+#' checking to make sure these are indicator files, see whether the .yml files
+#' actually exist, and maybe provide suggestions if they don't.
+#' @param target_names names of targets. should be .ind files
+#' @param remake_file name of the remake_file where target_names can be found
+#'   (recursively if needed)
+locate_build_status_yml <- function(target_names, remake_file=getOption('scipiper.remake_file')) {
+  remake_object <- ('remake' %:::% 'remake')(remake_file=remake_file, verbose=FALSE, load_sources=FALSE)
+  mangled_keys <- get_mangled_key(target_names, remake_object$store$db)
+  sprintf('build/status/%s.yml', mangled_keys)
 }
