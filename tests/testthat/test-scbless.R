@@ -49,6 +49,20 @@ test_that("scbless=sc_declare_current reassures remake and scipiper about unbuil
   expect_message(why_dirty('CA_prep', 'models.yml'), "the function 'process' used by the target has changed")
   expect_equal(scbless('CA_prep', 'models.yml'), 'CA_prep', info='should be blessable')
   
+  # indicator files should get YAMLified
+  expect_equal(dir('build/status'), character(0))
+  scmake('models.ind')
+  models_ind_yml_true <- yaml::read_yaml(scipiper:::locate_build_status_yml('models.ind'))
+  readr::read_lines('models.ind') %>%
+    c('extra_line: hooray!') %>% 
+    readr::write_lines('models.ind')
+  scbless('models.ind')
+  models_ind_yml_blessed <- yaml::read_yaml(scipiper:::locate_build_status_yml('models.ind'))
+  expect_true(models_ind_yml_true$hash != models_ind_yml_blessed$hash)
+  unchanged_fields <- c('version', 'name', 'depends', 'fixed', 'code')
+  expect_equal(models_ind_yml_true[unchanged_fields], models_ind_yml_blessed[unchanged_fields])
+  expect_equal(which_dirty('models.ind'), character(0)) # this is actually true even between editing models.ind and scblessing it, but should definitely be true now too
+  
   cleanup_tasks_demo(dirinfo)
 })
 
