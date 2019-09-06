@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 There are two main goals to keep in mind when deciding what style of target to use:
  
  - **Minimize time spend unnecessarily rebuilding targets** --- i.e., those that have already been built locally or by collaborators
- - **Keeping the pipeline simple** --- caching can save lots of build time, but also adds to the code that has to be maintained, can clutter the repo with build and indicator files, etc.
+ - **Keeping the pipeline simple** --- shared caching can save lots of build time, but also adds to the code that has to be maintained, can clutter the repo with build and indicator files, etc.
  
  These two can sometimes be in tension, but usually it will be clear which is more important for a given case.
  
