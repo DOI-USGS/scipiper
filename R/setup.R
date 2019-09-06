@@ -48,7 +48,7 @@ setup_dirs <- function(..., default='cos', .list=list('1_data'=default, '9_repor
   })
   # convert names and 1-letter subdirectory codes to full dir and subdir names
   codekey <- c(c='cfg', d='doc', j='job', l='log', o='out', s='src', '0'='')
-  alldirs <- data_frame(dir=names(dircodes), code=unname(dircodes)) %>%
+  alldirs <- tibble(dir=names(dircodes), code=unname(dircodes)) %>%
     mutate(code=ifelse(code=='', '0', code),
            codes=strsplit(code, '')) %>%
     tidyr::unnest() %>%

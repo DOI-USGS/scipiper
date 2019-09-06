@@ -358,7 +358,7 @@ gd_locate_file <- function(file, config_file=getOption("scipiper.gd_config_file"
       path_df <- bind_rows(path_df, elem_row)
     } else if(nrow(elem_row) == 0) {
       path_exists <- FALSE
-      path_df <- bind_rows(path_df, data_frame(id=NA))
+      path_df <- bind_rows(path_df, tibble(id=NA))
       break
     } else if(nrow(elem_row) > 0) {
       stop(sprintf('Found multiple copies of %s in Drive',

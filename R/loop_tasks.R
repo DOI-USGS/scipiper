@@ -56,6 +56,8 @@ loop_tasks <- function(
   stopifnot(n_cores >= 1)
   # provide defaults for task_names (all tasks) and step_names (final_steps)
   target_default <- yaml::yaml.load_file(task_makefile)$target_default
+  
+  default_is_group <- target_default %in% list_group_targets(task_makefile)
   if(is.null(task_names) && is.null(step_names)) {
     job_target <- target_default
   } else {
@@ -77,8 +79,9 @@ loop_tasks <- function(
   # sometimes, a user knows that something needs to get rebuilt and doesn't want to wait
   # through the first round of checks for completeness
   if(isTRUE(force)) {
-    # delete the current job target if not NA
-    if(!is.na(job_target)) {
+    # delete the current job target if not NA or a group target 
+    # (remake can only delete "file" or "object" targets)
+    if(!is.na(job_target) & !default_is_group) {
       scdel(target_names=job_target, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
     }
     # delete the targets that are being looped through
@@ -96,11 +99,10 @@ loop_tasks <- function(
   # than a file, we'll need to check it with get_remake_status every time, which
   # is part of why files are recommended over objects.
   which_incomplete <- function(targets, task_makefile) {
-    is_current <- get_remake_status(targets, task_makefile) %>%
-      dplyr::right_join(data_frame(target=targets), by='target') %>%
-      pull(is_current) %>%
-      as.logical()
-    incomplete_targets <- which(!(file.exists(targets) | is_current))
+    current <- get_remake_status(targets, task_makefile) %>%
+      dplyr::right_join(tibble(target=targets), by='target') %>%
+      pull(current)
+    incomplete_targets <- which(!(file.exists(targets) | current))
   }
   
   incomplete_targets <- which_incomplete(targets, task_makefile)

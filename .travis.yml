@@ -11,12 +11,15 @@ matrix:
       r: devel
       env: R_CODECOV=true
 
+r_build_args: '--no-build-vignettes --no-manual'
+r_check_args: '--no-build-vignettes'
+
 env:
    global:
      - NOT_CRAN="true"
      - _R_CHECK_FORCE_SUGGESTS_=false
      
-warnings_are_errors: true
+warnings_are_errors: false
 
 r_github_packages:
   - jimhester/covr
