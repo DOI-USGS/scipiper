@@ -1,7 +1,7 @@
 ---
 title: "Target type guidelines"
 author: "David Watkins"
-date: "3/25/2019"
+date: "9/9/2019"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Target types}
@@ -13,12 +13,12 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-`scipiper` targets can be indicator files with a [shared cache](shared_cache.html), local data files with or without local indicator files, or simply R objects.  Indicator files are small text files containing a hash of an object, and which represent the object to `scipiper`, so that the object itself does not have be present locally.  A shared cache is a central location on Google Drive or S3 where files can be automatically uploaded.  Combined, these two features allow work to happen by others on other computers, and the products only be downloaded by you if they are necessary, preventing redundant rebuilds and saving you processing time. This vignette provides some guidelines for when to use these different patterns.
+`scipiper` targets can be indicator files with a [shared cache](shared_cache.html), local data files with or without local indicator files, or simply R objects.  Indicator files are small text files containing a hash of an object, and which represent the object to `scipiper`, so that the object itself does not have be present locally.  A shared cache is a central location on Google Drive or S3 where files can be automatically uploaded.  Combined, these two features allow processing steps to happen by collaborators on other computers, and the products to only be downloaded by you if they are necessary, preventing redundant rebuilds and saving you processing time. This vignette provides some guidelines for when to use these different patterns.
 
 ## Objectives
 There are two main goals to keep in mind when deciding what style of target to use:
  
- - **Minimize time spent unnecessarily rebuilding targets** --- i.e., those that have already been built locally or by collaborators
+ - **Minimizing time spent unnecessarily rebuilding targets** --- i.e., those that have already been built locally or by collaborators
  - **Keeping the pipeline simple** --- shared caching can save lots of build time, but also adds to the code that has to be maintained, can clutter the repo with build and indicator files, etc.
  
  These two can sometimes be in tension, but usually it will be clear which is more important for a given case.
@@ -31,7 +31,7 @@ There are two main goals to keep in mind when deciding what style of target to u
 
  - **Collaborators**: Are all collaborators equipped to rebuild every step in the pipeline, if needed?  If a particular step needs to be done by certain people, say a processing-intensive munging step early in the pipeline, than this file will almost certainly need to be in the remote cache.
  
-### Local only: object or file?
+### If local only: object or file?
 
 - **Do you want easy access to the underlying file**?  If you want to have easy access to a target without going through remake, you will likely want to explicitly write the target as a file yourself, so you can control its format and location.  Targets left as R objects are still written to disk behind the scenes, but are comparatively hidden.  Parsed configuration files are an example you don't need to write yourself --- if the file is just being read from disk so it can be used elsewhere, writing it to disk again would be pointless.  On the other hand, a complex intermediate data product that you want to be able to examine frequently yourself might be nice to have in a known location.   
 
@@ -46,11 +46,9 @@ There are four types of targets you can use:
 
 **Local data file with local indicator**: The target will be rebuilt if the indicator file is missing or dependencies have changed.  This can have two purposes: 
   1) __Speeding up scipiper__: For each target, scipiper (really remake behind the scenes) hashes dependencies to see if they have changed.  If a dependency is a very large object, hashing can take a non-trivial amount of time.  Pointing to an indicator file reduces the amount of times the actual data file is hashed.
-  2) __A one-to-many target__: Scipiper requires a target to be a single object.  If you have a command that creates many individual files, you can create a single indicator file that signals that these files have been created.  You may also want to look into [task tables](task_plans.html), if you have many targets that are created by repeatedly running commands with small differences.
+  2) __A one-to-many target__: Scipiper requires a target to be a single object.  If you have a command that creates many individual files, you can create a single indicator file that signals that these files have been created, and contains the locations and hashes of the corresponding files.  You may also want to look into [task tables](task_plans.html), if you have many targets that are created by repeatedly running commands with small differences.
 
-typically used to speed up `scipiper` by reducing redundant hashing of large files, or to represent multiple files, allowing a "one-to-many" target.  
-
-**R object**: The target will be rebuilt if it is missing or dependencies have changed.  It will be written to disk by remake as, but won't be easily accessible from disk compared to explicitly writing a local data file.  Use cases for this will vary, but can be good for small data objects that don't need to be shared, such as configuration snippets, or cases where a target takes a relatively long time to build, but creates a massive file that is more cumbersome to upload/download than rebuild. 
+**R object**: The target will be rebuilt if it is missing or dependencies have changed.  It will be written to disk by remake as a `.rds` file, but won't be easily accessible from disk compared to explicitly writing a local data file.  Use cases for this will vary, but can be good for small data objects that don't need to be shared, such as configuration snippets, or cases where a target takes a relatively long time to build, but creates a massive file that is more cumbersome to upload/download than rebuild. 
 
 **Local data file only**:  The target will be rebuilt if the local data file does not exist or depedencies have changed.  This is only different from an R object target in that you have control over where the object is written, and its file type. 
 
