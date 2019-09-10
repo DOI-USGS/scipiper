@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="David Watkins" />
+
+
+<title>Target type guidelines</title>
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#header {
+text-align: center;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Target type guidelines</h1>
+<h4 class="author">David Watkins</h4>
+<h4 class="date">9/9/2019</h4>
+
+
+
+<p><code>scipiper</code> targets can be indicator files with a <a href="shared_cache.html">shared cache</a>, local data files with or without local indicator files, or simply R objects. Indicator files are small text files containing a hash of an object, and which represent the object to <code>scipiper</code>, so that the object itself does not have be present locally. A shared cache is a central location on Google Drive or S3 where files can be automatically uploaded. Combined, these two features allow processing steps to happen by collaborators on other computers, and the products to only be downloaded by you if they are necessary, preventing redundant rebuilds and saving you processing time. This vignette provides some guidelines for when to use these different patterns.</p>
+<div id="objectives" class="section level2">
+<h2>Objectives</h2>
+<p>There are two main goals to keep in mind when deciding what style of target to use:</p>
+<ul>
+<li><strong>Minimizing time spent unnecessarily rebuilding targets</strong> — i.e., those that have already been built locally or by collaborators</li>
+<li><strong>Keeping the pipeline simple</strong> — shared caching can save lots of build time, but also adds to the code that has to be maintained, can clutter the repo with build and indicator files, etc.</li>
+</ul>
+<p>These two can sometimes be in tension, but usually it will be clear which is more important for a given case.</p>
+</div>
+<div id="key-factors-to-consider" class="section level2">
+<h2>Key factors to consider</h2>
+<div id="shared-cache-or-not" class="section level3">
+<h3>Shared cache or not?</h3>
+<ul>
+<li><p><strong>Time to create an object</strong> vs <strong>transfer time</strong>: This is the biggest thing to consider — is it faster to upload a file to the shared cache and have others download it, or just have others rebuild it themselves? This will somewhat depend on your internet connection. Don’t forget about upload time as well. Uploading is generally slower than downloading, especially for remote workers with residential internet connections that throttle uploads.</p></li>
+<li><p><strong>Collaborators</strong>: Are all collaborators equipped to rebuild every step in the pipeline, if needed? If a particular step needs to be done by certain people, say a processing-intensive munging step early in the pipeline, than this file will almost certainly need to be in the remote cache.</p></li>
+</ul>
+</div>
+<div id="if-local-only-object-or-file" class="section level3">
+<h3>If local only: object or file?</h3>
+<ul>
+<li><strong>Do you want easy access to the underlying file</strong>? If you want to have easy access to a target without going through remake, you will likely want to explicitly write the target as a file yourself, so you can control its format and location. Targets left as R objects are still written to disk behind the scenes, but are comparatively hidden. Parsed configuration files are an example you don’t need to write yourself — if the file is just being read from disk so it can be used elsewhere, writing it to disk again would be pointless. On the other hand, a complex intermediate data product that you want to be able to examine frequently yourself might be nice to have in a known location.</li>
+</ul>
+</div>
+</div>
+<div id="target-choices" class="section level2">
+<h2>Target choices</h2>
+<p>There are four types of targets you can use:</p>
+<div id="cached-file" class="section level3">
+<h3>Cached file</h3>
+<p><strong>Shared cache data/indicator file</strong>: The target will be only be rebuilt if its dependencies have changed, and the indicator file has not been updated to trigger a download from the remote cache. For longer-running operations that are worthwhile to cache remotely. See the <a href="shared_cache.html">shared caching vignette</a> for different implementation options.</p>
+</div>
+<div id="local-only-options" class="section level3">
+<h3>Local-only options</h3>
+<p><strong>Local data file with local indicator</strong>: The target will be rebuilt if the indicator file is missing or dependencies have changed. This can have two purposes: 1) <strong>Speeding up scipiper</strong>: For each target, scipiper (really remake behind the scenes) hashes dependencies to see if they have changed. If a dependency is a very large object, hashing can take a non-trivial amount of time. Pointing to an indicator file reduces the amount of times the actual data file is hashed. 2) <strong>A one-to-many target</strong>: Scipiper requires a target to be a single object. If you have a command that creates many individual files, you can create a single indicator file that signals that these files have been created, and contains the locations and hashes of the corresponding files. You may also want to look into <a href="task_plans.html">task tables</a>, if you have many targets that are created by repeatedly running commands with small differences.</p>
+<p><strong>R object</strong>: The target will be rebuilt if it is missing or dependencies have changed. It will be written to disk by remake as a <code>.rds</code> file, but won’t be easily accessible from disk compared to explicitly writing a local data file. Use cases for this will vary, but can be good for small data objects that don’t need to be shared, such as configuration snippets, or cases where a target takes a relatively long time to build, but creates a massive file that is more cumbersome to upload/download than rebuild.</p>
+<p><strong>Local data file only</strong>: The target will be rebuilt if the local data file does not exist or depedencies have changed. This is only different from an R object target in that you have control over where the object is written, and its file type.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
