@@ -4,9 +4,11 @@
 \alias{s3_confirm_posted}
 \title{Check whether a file is on S3, and if so, write an indicator file}
 \usage{
-s3_confirm_posted(ind_file,
+s3_confirm_posted(
+  ind_file,
   config_file = getOption("scipiper.s3_config_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{ind_file}{character name of the indicator file to write locally once

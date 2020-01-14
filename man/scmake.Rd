@@ -4,10 +4,15 @@
 \alias{scmake}
 \title{Wrapper for remake::make that permits cache sharing}
 \usage{
-scmake(target_names = NULL,
-  remake_file = getOption("scipiper.remake_file"), ..., force = FALSE,
-  verbose = TRUE, allow_missing_packages = FALSE,
-  ind_ext = getOption("scipiper.ind_ext"))
+scmake(
+  target_names = NULL,
+  remake_file = getOption("scipiper.remake_file"),
+  ...,
+  force = FALSE,
+  verbose = TRUE,
+  allow_missing_packages = FALSE,
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{target_names}{as in remake::make}

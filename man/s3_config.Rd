@@ -4,8 +4,11 @@
 \alias{s3_config}
 \title{Create or overwrite an S3 configuration file}
 \usage{
-s3_config(bucket, profile = "default",
-  config_file = getOption("scipiper.s3_config_file"))
+s3_config(
+  bucket,
+  profile = "default",
+  config_file = getOption("scipiper.s3_config_file")
+)
 }
 \arguments{
 \item{bucket}{character name of an S3 bucket}

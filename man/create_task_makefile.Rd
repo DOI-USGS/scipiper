@@ -4,11 +4,18 @@
 \alias{create_task_makefile}
 \title{Create a .yml makefile for a multi-task job}
 \usage{
-create_task_makefile(task_plan, makefile, include = c(),
-  packages = "scipiper", sources = c(), file_extensions = c("ind"),
-  template_file = system.file("extdata/task_makefile.mustache", package =
-  "scipiper"), final_targets, finalize_funs = "combine_to_ind",
-  as_promises = TRUE)
+create_task_makefile(
+  task_plan,
+  makefile,
+  include = c(),
+  packages = "scipiper",
+  sources = c(),
+  file_extensions = c("ind"),
+  template_file = system.file("extdata/task_makefile.mustache", package = "scipiper"),
+  final_targets,
+  finalize_funs = "combine_to_ind",
+  as_promises = TRUE
+)
 }
 \arguments{
 \item{task_plan}{a task plan as produced by \code{create_task_plan()}}
@@ -42,7 +49,7 @@ final steps from the task plan into depends for the default/all target.}
 
 \item{as_promises}{hides the actual \code{final_targets} file/object from remake, and uses a
 dummy target name instead, with suffix "_promise". This allows us to avoid cyclic
-dependencies. Naming convention for \code{_promise} variables is to drop any dir structure
+dependencies. Naming convention for \verb{_promise} variables is to drop any dir structure
 from the \code{final_targets}}
 }
 \value{
@@ -75,7 +82,7 @@ step2 <- create_task_step(
   step_name = 'plot',
   command = function(target_name, task_name, ...) {
     capital <- task_config[task_config$id == task_name, 'capital']
-    sprintf('visualize(\\'\%s\\', \\'\%s\\')', task_name, capital)
+    sprintf('visualize(\'\%s\', \'\%s\')', task_name, capital)
   }
 )
 step3 <- create_task_step('report')
@@ -84,5 +91,5 @@ task_plan <- create_task_plan(c('AZ','CA','CO'), list(step1, step2, step3),
 task_makefile <- create_task_makefile(
   task_plan, makefile=file.path(tempdir(), 'states.yml'),
   file_extensions=c('ind'), packages='mda.streams')
-cat(readLines(task_makefile), sep='\\n')
+cat(readLines(task_makefile), sep='\n')
 }

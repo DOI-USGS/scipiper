@@ -4,8 +4,11 @@
 \alias{sc_retrieve}
 \title{Retrieve the data file declared by an indicator}
 \usage{
-sc_retrieve(ind_file, remake_file = getOption("scipiper.remake_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+sc_retrieve(
+  ind_file,
+  remake_file = getOption("scipiper.remake_file"),
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{ind_file}{the file path of the indicator for which the corresponding

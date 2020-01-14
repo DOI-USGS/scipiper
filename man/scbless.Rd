@@ -5,8 +5,17 @@
 \alias{sc_declare_current}
 \title{Declare to remake and scipiper that a target is current}
 \usage{
-scbless(target_names, remake_file = getOption("scipiper.remake_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+scbless(
+  target_names,
+  remake_file = getOption("scipiper.remake_file"),
+  ind_ext = getOption("scipiper.ind_ext")
+)
+
+sc_declare_current(
+  target_names,
+  remake_file = getOption("scipiper.remake_file"),
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{target_names}{names of the targets to record as already current}

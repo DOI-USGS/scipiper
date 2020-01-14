@@ -4,9 +4,14 @@
 \alias{create_task_plan}
 \title{Define a set of tasks and steps within a single job}
 \usage{
-create_task_plan(task_names, task_steps, final_steps = sapply(task_steps,
-  `[[`, "step_name"), ind_dir = NULL, add_complete = TRUE,
-  ind_ext = getOption("scipiper.ind_ext"))
+create_task_plan(
+  task_names,
+  task_steps,
+  final_steps = sapply(task_steps, `[[`, "step_name"),
+  ind_dir = NULL,
+  add_complete = TRUE,
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{task_names}{character vector of IDs for sets of work coordinates, with
@@ -23,7 +28,7 @@ step definition should be created by \code{create_task_step()}}
 \item{final_steps}{vector of step indices (either step_names or integers)
 identifying those task_steps that must be completed to consider the entire
 task complete. If one step depends on all previous steps (as indicated by
-its remake \code{depends:} and \code{command:} fields) then only that one step need
+its remake \verb{depends:} and \verb{command:} fields) then only that one step need
 be included in \code{final_steps}.}
 
 \item{ind_dir}{directory path, only used within steps if
@@ -66,7 +71,7 @@ step2 <- create_task_step(
   step_name = 'plot',
   command = function(target_name, task_name, ...) {
     capital <- task_config[task_config$id == task_name, 'capital']
-    sprintf('visualize(\\'\%s\\', \\'\%s\\')', task_name, capital)
+    sprintf('visualize(\'\%s\', \'\%s\')', task_name, capital)
   }
 )
 step3 <- create_task_step('report')
