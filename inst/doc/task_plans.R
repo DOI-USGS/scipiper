@@ -1,4 +1,4 @@
-## ----setup, include=FALSE------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, cache=FALSE, collapse=TRUE)
 
 library(scipiper)
@@ -6,7 +6,7 @@ library(dplyr)
 
 knitr::opts_knit$set(root.dir = tempdir())
 
-## ----step_funs_shhh, echo=FALSE------------------------------------------
+## ----step_funs_shhh, echo=FALSE-----------------------------------------------
 cat("
 ## @knitr step_funs
 
@@ -30,7 +30,7 @@ report <- function(report_name) {
 ", file='script.R')
 knitr::read_chunk('script.R')
 
-## ----step_funs-----------------------------------------------------------
+## ----step_funs----------------------------------------------------------------
 # step 1: prepare some data given the info in prep_name, arg2, file 'A.txt', and R object 'B'
 prep <- function(prep_name) {
   message(sprintf('preparing %s', prep_name))
@@ -49,13 +49,13 @@ report <- function(report_name) {
   file.create(report_name, showWarnings=FALSE)
 }
 
-## ----tasks---------------------------------------------------------------
+## ----tasks--------------------------------------------------------------------
 task_config <- tibble(
   id=c('WI','AZ','PA'),
   capital=c('Madison','Phoenix','Harrisburg')
 )
 
-## ----task_steps----------------------------------------------------------
+## ----task_steps---------------------------------------------------------------
 # step1 creates recipes like this:
 # WI_prep:
 #   command: prep(I('WI'))
@@ -99,14 +99,14 @@ step3 <- create_task_step(
     sprintf("report(target_name)", task_name)
   })
 
-## ----plan----------------------------------------------------------------
+## ----plan---------------------------------------------------------------------
 task_plan_1 <- create_task_plan(
   task_config$id,
   list(step1, step2, step3),
   final_steps='report',
   ind_dir='states/log')
 
-## ----makefile, results='markup'------------------------------------------
+## ----makefile, results='markup'-----------------------------------------------
 create_task_makefile(
   task_plan=task_plan_1,
   makefile='task_plan_1.yml',
@@ -115,82 +115,82 @@ create_task_makefile(
   sources=c('script.R'),
   file_extensions=c('ind'))
 
-## ----read_makefile, results='markup', comment='', echo=FALSE-------------
+## ----read_makefile, results='markup', comment='', echo=FALSE------------------
 cat(readr::read_lines('task_plan_1.yml'), sep='\n')
 
-## ----delete1, echo=FALSE-------------------------------------------------
+## ----delete1, echo=FALSE------------------------------------------------------
 unlink('.remake')
 unlink('build')
 
-## ----loop1a--------------------------------------------------------------
+## ----loop1a-------------------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')
 
-## ----scmake_instead------------------------------------------------------
+## ----scmake_instead-----------------------------------------------------------
 scmake('task_plan_1', 'task_plan_1.yml')
 
-## ----try_rebuild_one-----------------------------------------------------
+## ----try_rebuild_one----------------------------------------------------------
 scmake('AZ_plot.png', 'task_plan_1.yml')
 
-## ----delete_one----------------------------------------------------------
+## ----delete_one---------------------------------------------------------------
 scdel('AZ_plot.png', 'task_plan_1.yml')
 
-## ----rebuild_one---------------------------------------------------------
+## ----rebuild_one--------------------------------------------------------------
 scmake('AZ_plot.png', 'task_plan_1.yml')
 
-## ----force_one-----------------------------------------------------------
+## ----force_one----------------------------------------------------------------
 scmake('AZ_plot.png', 'task_plan_1.yml', force=TRUE)
 
-## ----try_rebuild_all-----------------------------------------------------
+## ----try_rebuild_all----------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')
 
-## ----rebuild_all---------------------------------------------------------
+## ----rebuild_all--------------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   force = TRUE)
 
-## ----rebuild_all_scmake--------------------------------------------------
+## ----rebuild_all_scmake-------------------------------------------------------
 scmake('task_plan_1', 'task_plan_1.yml', force = TRUE)
 
-## ----delete_all2---------------------------------------------------------
+## ----delete_all2--------------------------------------------------------------
 scdel(target_names=list_all_targets('task_plan_1.yml'), remake_file='task_plan_1.yml')
 
-## ----loop_task_step_only-------------------------------------------------
+## ----loop_task_step_only------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   task_names='PA',
   step_names='prep')
 
-## ----loop_steps_only-----------------------------------------------------
+## ----loop_steps_only----------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   step_names='plot')
 
-## ----loop_tasks_only-----------------------------------------------------
+## ----loop_tasks_only----------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml',
   task_names=c('PA','AZ'))
 
-## ----loop_remainder------------------------------------------------------
+## ----loop_remainder-----------------------------------------------------------
 loop_tasks(
   task_plan=task_plan_1,
   task_makefile='task_plan_1.yml')
 
-## ----plan2---------------------------------------------------------------
+## ----plan2--------------------------------------------------------------------
 task_plan_2 <- create_task_plan(
   task_config$id,
   list(step1, step2, step3),
   final_steps='report',
   add_complete=FALSE)
 
-## ----makefile2, results='markup'-----------------------------------------
+## ----makefile2, results='markup'----------------------------------------------
 create_task_makefile(
   task_plan=task_plan_2,
   makefile='task_plan_2.yml',
@@ -200,6 +200,6 @@ create_task_makefile(
   file_extensions=c('ind'),
   finalize_fun = NULL)
 
-## ----read_makefile2, results='markup', comment='', echo=FALSE------------
+## ----read_makefile2, results='markup', comment='', echo=FALSE-----------------
 cat(readr::read_lines('task_plan_2.yml'), sep='\n')
 
