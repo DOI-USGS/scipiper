@@ -4,9 +4,11 @@
 \alias{gd_confirm_posted}
 \title{Check whether a file is on Google Drive, and if so, write an indicator file}
 \usage{
-gd_confirm_posted(ind_file,
+gd_confirm_posted(
+  ind_file,
   config_file = getOption("scipiper.gd_config_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{ind_file}{character name of the indicator file to write locally once

@@ -4,8 +4,12 @@
 \alias{retry_patiently}
 \title{Evaluate an expression with retries, waiting between tries}
 \usage{
-retry_patiently(expr, max_wait_times = c(0, 3^c(0:4)),
-  min_wait_frac = 0.5, verbose = FALSE)
+retry_patiently(
+  expr,
+  max_wait_times = c(0, 3^c(0:4)),
+  min_wait_frac = 0.5,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{expr}{expression to evaluate}
@@ -16,7 +20,7 @@ tries.}
 
 \item{min_wait_frac}{numeric between 0 and 1. If < 1, the actual wait time
 before try \code{i} will be a uniform random value selected from the range
-\code{(min_wait_frac*max_wait_times[i], max_wait_times[i])}. Modeled loosely on
+\verb{(min_wait_frac*max_wait_times[i], max_wait_times[i])}. Modeled loosely on
 https://github.com/r-lib/httr/blob/master/R/retry.R.}
 
 \item{verbose}{logical. Should informational messages be printed?}

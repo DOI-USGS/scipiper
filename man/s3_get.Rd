@@ -4,9 +4,12 @@
 \alias{s3_get}
 \title{Download a file from S3}
 \usage{
-s3_get(ind_file, verbose = FALSE,
+s3_get(
+  ind_file,
+  verbose = FALSE,
   config_file = getOption("scipiper.s3_config_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{ind_file}{character name of the indicator file for which data should be

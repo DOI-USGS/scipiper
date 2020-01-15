@@ -190,7 +190,7 @@ scbless <- function(
   invisible(target_names)
 }
 
-#' @describeIn scbless
+#' @rdname scbless
 #' @export
 sc_declare_current <- scbless
 

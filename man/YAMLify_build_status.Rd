@@ -4,8 +4,10 @@
 \alias{YAMLify_build_status}
 \title{Copy info from .remake/objects to build/status}
 \usage{
-YAMLify_build_status(target_names,
-  remake_file = getOption("scipiper.remake_file"))
+YAMLify_build_status(
+  target_names,
+  remake_file = getOption("scipiper.remake_file")
+)
 }
 \arguments{
 \item{target_names}{as in remake::make, vector of specific targets}

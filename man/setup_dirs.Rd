@@ -4,8 +4,11 @@
 \alias{setup_dirs}
 \title{Create standard project directories}
 \usage{
-setup_dirs(..., default = "cos", .list = list(`1_data` = default,
-  `9_report` = default, lib = ""))
+setup_dirs(
+  ...,
+  default = "cos",
+  .list = list(`1_data` = default, `9_report` = default, lib = "")
+)
 }
 \arguments{
 \item{...}{named characters where name=directory_name and

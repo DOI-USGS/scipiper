@@ -4,8 +4,10 @@
 \alias{locate_build_status_yml}
 \title{Get the file path and name for a scipiper build/status/*.yml files}
 \usage{
-locate_build_status_yml(target_names,
-  remake_file = getOption("scipiper.remake_file"))
+locate_build_status_yml(
+  target_names,
+  remake_file = getOption("scipiper.remake_file")
+)
 }
 \arguments{
 \item{target_names}{names of targets. should be .ind files}
