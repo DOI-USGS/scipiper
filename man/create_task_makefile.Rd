@@ -14,7 +14,8 @@ create_task_makefile(
   template_file = system.file("extdata/task_makefile.mustache", package = "scipiper"),
   final_targets,
   finalize_funs = "combine_to_ind",
-  as_promises = TRUE
+  as_promises = TRUE,
+  tickquote_combinee_objects = TRUE
 )
 }
 \arguments{
@@ -51,6 +52,8 @@ final steps from the task plan into depends for the default/all target.}
 dummy target name instead, with suffix "_promise". This allows us to avoid cyclic
 dependencies. Naming convention for \verb{_promise} variables is to drop any dir structure
 from the \code{final_targets}}
+
+\item{tickquote_combinee_objects}{TRUE by default}
 }
 \value{
 the file name of the makefile that was created,

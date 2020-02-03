@@ -32,6 +32,7 @@
 #'   dummy target name instead, with suffix "_promise". This allows us to avoid cyclic 
 #'   dependencies. Naming convention for `_promise` variables is to drop any dir structure 
 #'   from the `final_targets`
+#' @param tickquote_combinee_objects TRUE by default
 #' @return the file name of the makefile that was created, 
 #'   or the string output (if makefile = NULL)
 #' @export
@@ -69,8 +70,13 @@ create_task_makefile <- function(
   include=c(), packages='scipiper', sources=c(), file_extensions=c('ind'),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
   final_targets, 
-  finalize_funs = 'combine_to_ind', 
-  as_promises = TRUE) {
+  finalize_funs = 'combine_to_ind',
+  as_promises = TRUE, 
+  tickquote_combinee_objects = TRUE) {
+  
+  if(!missing(tickquote_combinee_objects)) {
+    message('v0.0.17: tickquote_combinee_objects is deprecated and will effectively be always TRUE in future versions')
+  }
   
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
@@ -130,7 +136,7 @@ create_task_makefile <- function(
     if (('remake' %:::% 'target_is_file')(target, file_extensions = pos_extensions)){
       paste0("'", target, "'")
     } else {
-      target
+      if(tickquote_combinee_objects) paste0("`", target, "`") else target
     }
   })
   
