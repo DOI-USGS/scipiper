@@ -170,7 +170,11 @@ get_remake_status <- function(target_names=NULL, remake_file=getOption('scipiper
 #'   nested tibbles for depends and code ('wide'), or a multi-row tibble with
 #'   columns for name, dependency type, and dependency hash ('long')?
 #' @importFrom purrr map2_chr
-get_dependency_status <- function(target_name, remake_object, as_of=c('last_build', 'now'), format=c('raw', 'wide', 'long')) {
+get_dependency_status <- function(
+  target_name,
+  remake_object = ('remake' %:::% 'remake')(remake_file=getOption('scipiper.remake_file'), verbose=FALSE, load_sources=TRUE),
+  as_of=c('last_build', 'now'), format=c('raw', 'wide', 'long')) {
+  
   # process arguments
   target <- remake_object$targets[[target_name]]
   store <- remake_object$store
