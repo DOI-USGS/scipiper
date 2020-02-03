@@ -6,7 +6,8 @@
 \usage{
 get_dependency_status(
   target_name,
-  remake_object,
+  remake_object = ("remake" \%:::\% "remake")(remake_file =
+    getOption("scipiper.remake_file"), verbose = FALSE, load_sources = TRUE),
   as_of = c("last_build", "now"),
   format = c("raw", "wide", "long")
 )
