@@ -1,6 +1,6 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.17
+Version: 0.0.18
 Date: 2020-02-03
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"),
@@ -26,7 +26,7 @@ Suggests:
   aws.signature,
   doParallel,
   foreach,
-  googledrive,
+  googledrive (> 1.0.0),
   knitr,
   parallel,
   rmarkdown,
