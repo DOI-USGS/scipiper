@@ -72,8 +72,10 @@ loop_tasks <- function(
   # identify the task-step targets to be run, ordered by tasks and then steps
   # within tasks
   targets <- unlist(lapply(unname(task_plan[task_names]), function(task) {
-    sapply(unname(task$steps[step_names]), `[[`, 'target_name')
+    sapply(task$steps[step_names], `[[`, 'target_name') %>% setNames(., sprintf('%s-%s', task$task_name, names(.)))
   }))
+  target_names <- names(targets)
+  targets <- unname(targets)
   num_targets_overall <- length(targets)
   
   # sometimes, a user knows that something needs to get rebuilt and doesn't want to wait
@@ -164,7 +166,7 @@ loop_tasks <- function(
           # get the names of the target and the task
           target_num_overall <- incomplete_targets[i]
           target <- targets[target_num_overall]
-          task_name <- task_names[target_num_overall]
+          task_name <- target_names[target_num_overall]
           
           # update the progress bar
           if (verbose){
