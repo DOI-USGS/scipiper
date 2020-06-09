@@ -1,7 +1,7 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.19
-Date: 2020-06-02
+Version: 0.0.20
+Date: 2020-06-08
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"),
              person("Jordan", "Read", email = "jread@usgs.gov", role = "ctb"))
