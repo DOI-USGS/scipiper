@@ -90,21 +90,18 @@ loop_tasks <- function(
     scdel(target_names=targets, remake_file=task_makefile, verbose=verbose, ind_ext=ind_ext)
   }
   
-  # a heuristic check for completeness: returns a vector of indices into target
-  # that are known to be incomplete. any target that remake knows to be complete
-  # will be excluded, and any file targets whose files exist are also treated as
-  # complete for now. this is much quicker than asking remake to rehash every
-  # model file to check for changes before we even get started. if we let some
-  # files get out of date without deleting them, they will be skipped in these
-  # loops, but remake will catch them in the final calls of this function when
-  # we run remake on the entire job/all targets. if a target is an object rather
-  # than a file, we'll need to check it with get_remake_status every time, which
-  # is part of why files are recommended over objects.
+  # Returns a vector of indices into target that are incomplete. We used to use
+  # a heuristic here of not even assessing remake status of file targets that
+  # already existed. That heuristic was nice because hashing (assessing status)
+  # can take a long time for large files such as model output objects...but it
+  # came at the cost of fault tolerance for file targets that do need to be
+  # rebuilt, so now I'm reversing direction and hashing everything every time.
   which_incomplete <- function(targets, task_makefile) {
     current <- get_remake_status(targets, task_makefile) %>%
       dplyr::right_join(tibble(target=targets), by='target') %>%
-      pull(current)
-    incomplete_targets <- which(!(file.exists(targets) | current))
+      mutate(truly_current = current & (!dirty) & (!dirty_by_descent) & ifelse(type == 'file', file.exists(target), TRUE)) %>%
+      pull(truly_current)
+    incomplete_targets <- which(!current)
   }
   
   incomplete_targets <- which_incomplete(targets, task_makefile)
