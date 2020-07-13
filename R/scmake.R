@@ -351,6 +351,33 @@ combine_to_ind <- function(ind_file, ...){
   sc_indicate(ind_file = ind_file, data_file = c(...))
 } 
 
+#' Create an object that contains hashes of other files
+#'
+#' @param ... files to combine into a single indicator file
+#' 
+#' @details light wrapper on `sc_indicate`
+#' @export
+#' @examples 
+#' tfiles <- tempfile(pattern=as.character(1:3))
+#' file.create(tfiles)
+#' combine_to_tibble(tfiles[1])
+#' combine_to_tibble(tfiles[1:2])
+#' combine_to_tibble(tfiles[1:3])
+combine_to_tibble <- function(...){
+  if(length(...) < 1) {
+    tibble::tibble(filename='', hash='')[c(),]
+  } else {
+    inds <- sc_indicate(ind_file = '', data_file = c(...))
+    if(length(inds) == 1) {
+      tibble(filename=c(...), hash=inds$hash)
+    } else {
+      inds %>%
+        unlist() %>%
+        tibble::enframe(name='filename', value='hash')
+    }
+  }
+} 
+
 #' Retrieve the data file declared by an indicator
 #'
 #' Identifies the data file's name by removing the indicator extension, then
