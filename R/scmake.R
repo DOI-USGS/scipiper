@@ -359,21 +359,19 @@ combine_to_ind <- function(ind_file, ...){
 #' @export
 #' @examples 
 #' tfiles <- tempfile(pattern=as.character(1:3))
-#' file.create(tfiles)
-#' combine_to_tibble(tfiles[1])
-#' combine_to_tibble(tfiles[1:2])
-#' combine_to_tibble(tfiles[1:3])
+#' for(i in 1:3) readr::write_lines(i, path=tfiles[i])
+#' combine_to_tibble(tfiles)
 combine_to_tibble <- function(...){
-  if(length(...) < 1) {
-    tibble::tibble(filename='', hash='')[c(),]
+  if(length(c(...)) < 1) {
+    tibble::tibble(name='', hash='')[c(),]
   } else {
     inds <- sc_indicate(ind_file = '', data_file = c(...))
     if(length(inds) == 1) {
-      tibble(filename=c(...), hash=inds$hash)
+      tibble(name=c(...), hash=inds$hash)
     } else {
       inds %>%
         unlist() %>%
-        tibble::enframe(name='filename', value='hash')
+        tibble::enframe(name='name', value='hash')
     }
   }
 } 
