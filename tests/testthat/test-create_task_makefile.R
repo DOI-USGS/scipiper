@@ -20,11 +20,13 @@ step2 <- create_task_step(
   }
 )
 step3 <- create_task_step('report')
-task_plan <- create_task_plan(c('AZ','CA','CO'), list(step1, step2, step3),
-                              final_steps='report', ind_dir='states/log')
+task_plan <- create_task_plan(
+  c('AZ','CA','CO'), 
+  list(step1, step2, step3),
+  final_steps='report',
+  ind_dir='states/log')
 
 test_that("can create task_plan", {
-
   expect_true(all(names(task_plan) == c('AZ','CA','CO')))
 })
 
@@ -38,6 +40,16 @@ test_that("can create task_makefile as string with defaults", {
   expect_equal(head(names(remake_list$targets), 1), "all_tasks")
   expect_equal(tail(remake_list$targets, 1)[[1]]$command, 
                "combine_to_ind(I('states/log/all_tasks.ind'), 'states/log/AZ.ind', 'states/log/CA.ind', 'states/log/CO.ind')")
+})
+
+test_that("makefile reports on the function that called create_task_makefile", {
+  makefile_maker <- function(task_plan) {
+    create_task_makefile(
+      task_plan, makefile=NULL,
+      file_extensions=c('ind'), packages=c('scipiper','mda.streams'))
+  }
+  task_makefile <- makefile_maker(task_plan)
+  expect_equal(strsplit(task_makefile, split='\n')[[1]][3], '# by create_task_makefile() via makefile_maker()')
 })
 
 test_that("errors when object target and combine_to_ind used", {
