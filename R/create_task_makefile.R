@@ -189,8 +189,6 @@ create_task_makefile <- function(
     target_default = job_name,
     include = include,
     has_include = length(include) > 0,
-    has_scipiper_version = TRUE, 
-    scipiper_version = utils::packageVersion(methods::getPackageName()),
     packages = packages,
     has_packages = length(packages) > 0,
     sources = sources,
