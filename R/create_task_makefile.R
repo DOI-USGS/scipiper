@@ -73,11 +73,7 @@ create_task_makefile <- function(
   finalize_funs = 'combine_to_ind',
   as_promises = TRUE, 
   tickquote_combinee_objects = TRUE) {
-  
-  if(!missing(tickquote_combinee_objects)) {
-    message('v0.0.17: tickquote_combinee_objects is deprecated and will effectively be always TRUE in future versions')
-  }
-  
+
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
   # default/overall job target. this should be an acceptable target name (not
@@ -189,8 +185,6 @@ create_task_makefile <- function(
     target_default = job_name,
     include = include,
     has_include = length(include) > 0,
-    has_scipiper_version = TRUE, 
-    scipiper_version = utils::packageVersion(methods::getPackageName()),
     packages = packages,
     has_packages = length(packages) > 0,
     sources = sources,

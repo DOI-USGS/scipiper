@@ -67,6 +67,24 @@ scmake <- function(
   invisible(out)
 }
 
+#' Fetch objects from the scipiper data store without rebuilding them
+#' 
+#' Identical to `remake::fetch()` except that `remake_file` is the second argument
+#' @importFrom remake fetch
+#' @export
+fetch <- function(
+  target_name, remake_file=getOption('scipiper.remake_file'),
+  require_current = FALSE, verbose = TRUE, allow_missing_packages = FALSE) {
+
+  # a simple reordering of arguments so that remake_file can be second in the scipiper version
+  remake::fetch(
+    target_name = target_name,
+    require_current = require_current,
+    verbose = verbose,
+    allow_missing_packages = allow_missing_packages,
+    remake_file = remake_file)
+}
+
 #' Declare to remake and scipiper that a target is current
 #'
 #' `scbless` (aka `sc_declare_current`) tells remake and scipiper to update
