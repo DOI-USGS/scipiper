@@ -1,8 +1,8 @@
 target_default: none
 
 # bad idea: makes double builds, or at least double checks
-include:
-  - remake.yml
+#include:
+#  - remake.yml
 
 packages:
   - scipiper
