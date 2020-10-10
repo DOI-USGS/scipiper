@@ -7,7 +7,8 @@
 sc_retrieve(
   ind_file,
   remake_file = getOption("scipiper.getters_file"),
-  ind_ext = getOption("scipiper.ind_ext")
+  ind_ext = getOption("scipiper.ind_ext"),
+  verbose = FALSE
 )
 }
 \arguments{

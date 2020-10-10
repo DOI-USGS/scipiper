@@ -412,9 +412,9 @@ combine_to_tibble <- function(...){
 #'   updated
 #' @return the name of the retrieved data file
 #' @export
-sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.getters_file'), ind_ext=getOption('scipiper.ind_ext')) {
+sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.getters_file'), ind_ext=getOption('scipiper.ind_ext'), verbose=FALSE) {
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
-  scmake(data_file, remake_file=remake_file, ind_ext=ind_ext, verbose=FALSE)
+  scmake(data_file, remake_file=remake_file, ind_ext=ind_ext, verbose=verbose)
   return(data_file)
 }
 
