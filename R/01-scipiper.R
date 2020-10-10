@@ -11,6 +11,7 @@
   op <- options()
   op.scipiper <- list(
     scipiper.remake_file = 'remake.yml',
+    scipiper.getters_file = 'getters.yml',
     scipiper.dry_put = FALSE,
     scipiper.gd_config_file = "lib/cfg/gd_config.yml",
     scipiper.s3_config_file = "lib/cfg/s3_config.yml",

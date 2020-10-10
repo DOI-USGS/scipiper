@@ -1,0 +1,13 @@
+target_default: my_table.csv
+
+include:
+  - remake.yml
+
+packages:
+  - scipiper
+
+file_extensions: 'ind'
+
+targets:
+  my_table.csv:
+    command: gd_get('my_table.csv.ind')
