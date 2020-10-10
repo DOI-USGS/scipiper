@@ -16,9 +16,6 @@ targets:
   out/my_table.csv.ind:
     command: build_share_table(target_name, x=I(1:5), y=I(c('a','b','c','d','e')))
   
-  out/my_table.csv:
-    command: gd_get('out/my_table.csv.ind')
-  
   nrow_table:
     command: count_table_rows('out/my_table.csv.ind')
 
