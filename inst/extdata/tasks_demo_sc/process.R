@@ -6,7 +6,8 @@ build_share_table <- function(x, y, out_ind) {
 }
 
 count_table_rows <- function(tbl_ind) {
-  tbl <- sc_retrieve(tbl_ind, verbose=TRUE) %>%
+  # tbl <- sc_retrieve(tbl_ind, verbose=TRUE) %>%
+  tbl <- sc_retrieve(tbl_ind, 'remake.yml') %>%
     readr::read_csv(col_types=cols())
   return(nrow(tbl))
 }
