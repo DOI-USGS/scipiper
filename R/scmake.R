@@ -413,6 +413,9 @@ combine_to_tibble <- function(...){
 #' @return the name of the retrieved data file
 #' @export
 sc_retrieve <- function(ind_file, remake_file=getOption('scipiper.getters_file'), ind_ext=getOption('scipiper.ind_ext'), verbose=FALSE) {
+  if(missing(remake_file) && !file.exists(remake_file)) {
+    warning(sprintf("sc_retrieve now looks for recipes in '%s' (the 'scipiper.getters_file' option) by default, but that file does not exist", getOption('scipiper.getters_file')))
+  }
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   scmake(data_file, remake_file=remake_file, ind_ext=ind_ext, verbose=verbose)
   return(data_file)
