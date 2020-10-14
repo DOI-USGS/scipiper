@@ -13,7 +13,7 @@ packages:
 sources:
   - tasks_demo.R
 
-file_extensions: "ind" # in addition to remake::file_extensions()
+file_extensions: 'ind' # in addition to remake::file_extensions()
 
 target_default: models.ind
 

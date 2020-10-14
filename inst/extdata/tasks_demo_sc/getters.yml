@@ -1,0 +1,25 @@
+target_default: none
+
+# bad idea: makes double builds, or at least double checks
+#include:
+#  - remake.yml
+
+packages:
+  - scipiper
+  
+sources:
+  - process.R
+
+file_extensions: ind
+
+targets:
+  none:
+    depends:
+
+  # To avoid a remake bug that would cause remake:::remake to read .ind file
+  # dependencies as objects rather than files (even when you have file_extensions: ind),
+  # the ind files should be nested within a directory. We can't just gd_get a file with path
+  # 'my_table.csv.ind', for example.
+
+  out/my_table.csv:
+    command: gd_get('out/my_table.csv.ind')
