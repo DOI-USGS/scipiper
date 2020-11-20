@@ -207,7 +207,7 @@ create_task_makefile <- function(
   if (is.null(makefile)){
     makefile <- yml
   } else {
-    readr::write_lines(yml, path=makefile)
+    readr::write_lines(yml, file=makefile)
     if(has_finalize_funs) {
       how_to_run <- paste0(
         "Run all tasks and finalizers with:\n",

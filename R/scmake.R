@@ -377,7 +377,7 @@ combine_to_ind <- function(ind_file, ...){
 #' @export
 #' @examples 
 #' tfiles <- tempfile(pattern=as.character(1:3))
-#' for(i in 1:3) readr::write_lines(i, path=tfiles[i])
+#' for(i in 1:3) readr::write_lines(i, file=tfiles[i])
 #' combine_to_tibble(tfiles)
 combine_to_tibble <- function(...){
   if(length(c(...)) < 1) {
