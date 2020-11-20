@@ -17,6 +17,6 @@ light wrapper on \code{sc_indicate}
 }
 \examples{
 tfiles <- tempfile(pattern=as.character(1:3))
-for(i in 1:3) readr::write_lines(i, path=tfiles[i])
+for(i in 1:3) readr::write_lines(i, file=tfiles[i])
 combine_to_tibble(tfiles)
 }
