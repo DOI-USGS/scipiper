@@ -4,9 +4,12 @@
 \alias{scdel}
 \title{Wrapper for remake::delete that permits cache sharing}
 \usage{
-scdel(target_names = NULL,
-  remake_file = getOption("scipiper.remake_file"), verbose = TRUE,
-  ind_ext = getOption("scipiper.ind_ext"))
+scdel(
+  target_names = NULL,
+  remake_file = getOption("scipiper.remake_file"),
+  verbose = TRUE,
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{target_names}{vector of targets to delete, or NULL to delete the

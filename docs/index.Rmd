@@ -1,0 +1,14 @@
+---
+title: "scipiper vignettes"
+output: html_document
+---
+
+## scipiper vignettes
+
+[pitfalls](pitfalls.html)
+
+[shared_cache](shared_cache.html)
+
+[target_types](target_types.html)
+
+[task_plans](task_plans.html)

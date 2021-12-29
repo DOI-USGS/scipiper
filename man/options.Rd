@@ -3,7 +3,6 @@
 \docType{package}
 \name{options}
 \alias{options}
-\alias{options-package}
 \title{Scipiper session options}
 \description{
 Several session-level options are stored in R's \code{.Options} object.

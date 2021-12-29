@@ -4,8 +4,11 @@
 \alias{why_dirty}
 \title{Explain why a target is dirty}
 \usage{
-why_dirty(target_name, remake_file = getOption("scipiper.remake_file"),
-  RDSify_first = FALSE)
+why_dirty(
+  target_name,
+  remake_file = getOption("scipiper.remake_file"),
+  RDSify_first = FALSE
+)
 }
 \arguments{
 \item{target_name}{character name of the target for which to determine build

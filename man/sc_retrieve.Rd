@@ -4,15 +4,23 @@
 \alias{sc_retrieve}
 \title{Retrieve the data file declared by an indicator}
 \usage{
-sc_retrieve(ind_file, remake_file = getOption("scipiper.remake_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+sc_retrieve(
+  ind_file,
+  remake_file = getOption("scipiper.getters_file"),
+  ind_ext = getOption("scipiper.ind_ext"),
+  verbose = FALSE
+)
 }
 \arguments{
 \item{ind_file}{the file path of the indicator for which the corresponding
 data_file will be retrieved}
 
 \item{remake_file}{the file path+name of the remake file to use in retrieving
-the data file}
+the data file. On 10/10/20 the default value was changed from
+\code{getOption('scipiper.remake_file')} to
+\code{getOption('scipiper.getters_file')}. It is recommended to place all
+getters in a file named getters.yml or similar, which should not be
+imported by the main remake files.}
 
 \item{ind_ext}{the indicator file extension to expect at the end of ind_file,
 and for which any altered targets should have their build/status files

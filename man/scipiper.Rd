@@ -3,7 +3,6 @@
 \docType{package}
 \name{scipiper}
 \alias{scipiper}
-\alias{scipiper-package}
 \title{Scipiper package: Streamlining scientific data analysis workflows}
 \description{
 Scipiper provides support for:

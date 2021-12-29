@@ -29,7 +29,7 @@ cat(psprintf(
 
 cat(psprintf(
   'cmd(',
-  'a = \%s, b = \\'\%s\\','=c('dog','cat'),
+  'a = \%s, b = \'\%s\','=c('dog','cat'),
   'c = "rat")'
 ))
 ## cmd(
