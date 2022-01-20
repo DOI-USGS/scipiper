@@ -14,3 +14,5 @@ vignettes/*.pdf
 vignettes/*.yml
 vignettes/*.R
 vignettes/*.html
+/doc/
+/Meta/
