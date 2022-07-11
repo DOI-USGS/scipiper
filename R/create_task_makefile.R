@@ -32,6 +32,7 @@
 #'   dummy target name instead, with suffix "_promise". This allows us to avoid cyclic 
 #'   dependencies. Naming convention for `_promise` variables is to drop any dir structure 
 #'   from the `final_targets`
+#' @param tickquote_combinee_objects TRUE by default
 #' @return the file name of the makefile that was created, 
 #'   or the string output (if makefile = NULL)
 #' @export
@@ -69,9 +70,10 @@ create_task_makefile <- function(
   include=c(), packages='scipiper', sources=c(), file_extensions=c('ind'),
   template_file=system.file('extdata/task_makefile.mustache', package='scipiper'),
   final_targets, 
-  finalize_funs = 'combine_to_ind', 
-  as_promises = TRUE) {
-  
+  finalize_funs = 'combine_to_ind',
+  as_promises = TRUE, 
+  tickquote_combinee_objects = TRUE) {
+
   # prepare the overall job task: list every step of every job as a dependency.
   # first mutate the makefile file name into an object name to use as the
   # default/overall job target. this should be an acceptable target name (not
@@ -130,7 +132,7 @@ create_task_makefile <- function(
     if (('remake' %:::% 'target_is_file')(target, file_extensions = pos_extensions)){
       paste0("'", target, "'")
     } else {
-      target
+      if(tickquote_combinee_objects) paste0("`", target, "`") else target
     }
   })
   
@@ -183,8 +185,6 @@ create_task_makefile <- function(
     target_default = job_name,
     include = include,
     has_include = length(include) > 0,
-    has_scipiper_version = TRUE, 
-    scipiper_version = utils::packageVersion(methods::getPackageName()),
     packages = packages,
     has_packages = length(packages) > 0,
     sources = sources,
@@ -207,7 +207,7 @@ create_task_makefile <- function(
   if (is.null(makefile)){
     makefile <- yml
   } else {
-    readr::write_lines(yml, path=makefile)
+    readr::write_lines(yml, file=makefile)
     if(has_finalize_funs) {
       how_to_run <- paste0(
         "Run all tasks and finalizers with:\n",

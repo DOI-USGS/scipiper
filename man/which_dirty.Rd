@@ -4,8 +4,11 @@
 \alias{which_dirty}
 \title{List the targets for which current is FALSE (as a character vector)}
 \usage{
-which_dirty(target_names = NULL,
-  remake_file = getOption("scipiper.remake_file"), RDSify_first = TRUE)
+which_dirty(
+  target_names = NULL,
+  remake_file = getOption("scipiper.remake_file"),
+  RDSify_first = TRUE
+)
 }
 \arguments{
 \item{target_names}{character vector of targets for which to determine build

@@ -4,8 +4,10 @@
 \alias{list_all_targets}
 \title{Get a list of all targets in a remake file}
 \usage{
-list_all_targets(remake_file = getOption("scipiper.remake_file"),
-  recursive = FALSE)
+list_all_targets(
+  remake_file = getOption("scipiper.remake_file"),
+  recursive = FALSE
+)
 }
 \arguments{
 \item{remake_file}{filename of the remake YAML file from which targets should

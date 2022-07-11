@@ -19,6 +19,20 @@ code, we can provide no external support for this package.
 This package is considered a 'support' package. For more information, see:
 [https://owi.usgs.gov/R/packages.html#support](https://owi.usgs.gov/R/packages.html#support)
 
+## Installation
+
+`scipiper` depends on `remake`, so install `remake` and its dependencies first:
+
+```r
+install.packages(c("R6", "yaml", "digest", "crayon", "optparse", "storr", "remotes"))
+remotes::install_github('richfitz/remake')
+```
+
+Next, install `scipiper`
+```r
+remotes::install_github('USGS-R/scipiper')
+```
+
 ## Best Practices
 
 General advice is given in help files and vignettes within this package. Try these:

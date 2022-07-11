@@ -4,8 +4,11 @@
 \alias{setup_files}
 \title{Create standard project directories}
 \usage{
-setup_files(..., .list = list(file.path(grep("/out$", list.dirs("."),
-  value = TRUE), "README.md"), . = c("README.md", "Makefile")))
+setup_files(
+  ...,
+  .list = list(file.path(grep("/out$", list.dirs("."), value = TRUE), "README.md"), . =
+    c("README.md", "Makefile"))
+)
 }
 \arguments{
 \item{...}{named characters where name=directory_name and value=filename\link{s},

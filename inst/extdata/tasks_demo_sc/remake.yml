@@ -1,0 +1,21 @@
+target_default: nrow_table
+
+packages:
+  - dplyr
+  - readr
+  - tibble
+  - scipiper
+
+sources:
+  - process.R
+
+file_extensions: 'ind' # in addition to remake::file_extensions()
+
+targets:
+
+  out/my_table.csv.ind:
+    command: build_share_table(target_name, x=I(1:5), y=I(c('a','b','c','d','e')))
+  
+  nrow_table:
+    command: count_table_rows('out/my_table.csv.ind')
+

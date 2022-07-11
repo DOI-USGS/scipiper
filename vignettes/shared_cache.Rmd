@@ -88,7 +88,7 @@ gather_and_share_stream_data = function(<ind>ind_file</ind>, state, <data>gd_con
 
 select_sites = function(<ind>ind_file</ind>, <ind>input_ind_file</ind>, <data>gd_config</data>){
 
-  <data>temp</data> = readRDS(sc_retrieve(<ind>input_ind_file</ind>))
+  <data>temp</data> = readRDS(sc_retrieve(<ind>input_ind_file</ind>, 'remake.yml')) # default remake_file is getters.yml as of 10/10/20
   
   <data>temp_sites</data> <- <data>temp</data> %>%
     dplyr::filter(

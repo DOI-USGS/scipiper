@@ -4,8 +4,14 @@
 \alias{sc_indicate}
 \title{Create an indicator file}
 \usage{
-sc_indicate(ind_file, ..., data_file, hash_depends = FALSE,
-  depends_target, depends_makefile)
+sc_indicate(
+  ind_file,
+  ...,
+  data_file,
+  hash_depends = FALSE,
+  depends_target,
+  depends_makefile
+)
 }
 \arguments{
 \item{ind_file}{file name of the indicator file to write}

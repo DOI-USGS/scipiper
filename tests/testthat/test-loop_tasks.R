@@ -80,25 +80,6 @@ test_that("with verbose=FALSE, should see just one progress bar per loop attempt
   cleanup_tasks_demo(dirinfo)
 })
 
-test_that("loop_tasks skips files initially", {
-  dirinfo <- setup_tasks_demo()
-  suppressWarnings(RNGversion("3.5.0")) # R versions >3.5.0 changes set.seed behavior
-  set.seed(100)
-  # if we already have CA.ind, the inital looping phase shouldn't try to build
-  # CA, but if it's out of date, the final looping phase should
-  writeLines('out-of-date file', 'CA.ind')
-  options('scipiper.test_verbose'=TRUE)
-  output <- capture_messages(scmake('models.ind'))
-  start_final_phase <- grep('### Final check', output)
-  initial_phase <- output[seq_len(start_final_phase-1)]
-  final_phase <- output[start_final_phase:length(output)]
-  expect_false(all(grepl('processing CA', initial_phase)))
-  expect_true(any(grepl('processing CA', final_phase)))
-  options('scipiper.test_verbose'=NULL)
-  
-  cleanup_tasks_demo(dirinfo)
-})
-
 test_that("loop_tasks can force rebuild", {
   dirinfo <- setup_tasks_demo()
   

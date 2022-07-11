@@ -1,7 +1,7 @@
 Package: scipiper
 Title: Support functions for ushering data through a scientific workflow
-Version: 0.0.16
-Date: 2018-08-10
+Version: 0.0.24
+Date: 2020-10-11
 Authors@R: c(person("Alison", "Appling", email = "aappling@usgs.gov", role = c("aut", "cre")),
              person("David", "Watkins", email = "wwatkins@usgs.gov", role = "ctb"),
              person("Jordan", "Read", email = "jread@usgs.gov", role = "ctb"))
@@ -13,7 +13,7 @@ Imports:
   dplyr,
   methods,
   purrr,
-  readr,
+  readr (>= 1.4.0),
   remake,
   storr,
   tibble,
@@ -26,7 +26,7 @@ Suggests:
   aws.signature,
   doParallel,
   foreach,
-  googledrive,
+  googledrive (> 1.0.0),
   knitr,
   parallel,
   rmarkdown,
@@ -43,5 +43,5 @@ BugReports: https://github.com/USGS-R/scipiper/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 VignetteBuilder: knitr

@@ -4,8 +4,13 @@
 \alias{get_dependency_status}
 \title{Retrieve status of dependencies from the remake store}
 \usage{
-get_dependency_status(target_name, remake_object, as_of = c("last_build",
-  "now"), format = c("raw", "wide", "long"))
+get_dependency_status(
+  target_name,
+  remake_object = ("remake" \%:::\% "remake")(remake_file =
+    getOption("scipiper.remake_file"), verbose = FALSE, load_sources = TRUE),
+  as_of = c("last_build", "now"),
+  format = c("raw", "wide", "long")
+)
 }
 \arguments{
 \item{target_name}{length-1 name of a target}

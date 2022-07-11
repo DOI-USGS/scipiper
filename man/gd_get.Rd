@@ -4,9 +4,14 @@
 \alias{gd_get}
 \title{Download a file from Google Drive if needed}
 \usage{
-gd_get(ind_file, type = NULL, overwrite = TRUE, verbose = FALSE,
+gd_get(
+  ind_file,
+  type = NULL,
+  overwrite = TRUE,
+  verbose = FALSE,
   config_file = getOption("scipiper.gd_config_file"),
-  ind_ext = getOption("scipiper.ind_ext"))
+  ind_ext = getOption("scipiper.ind_ext")
+)
 }
 \arguments{
 \item{ind_file}{character name of the indicator file for which data should be
