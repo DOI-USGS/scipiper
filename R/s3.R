@@ -105,7 +105,8 @@ s3_put <- function(
   
   # determine whether and where the remote file exists
   bucket_contents <- aws.s3::get_bucket_df(bucket = s3_config$bucket,
-                                           prefix = dirname(data_file))
+                                           prefix = dirname(data_file),
+                                           max = Inf)
   exists_on_s3 <- local_file %in% bucket_contents$Key
   
   #upload to S3 - note that S3 is a flat file system, so folders don't need
@@ -203,7 +204,8 @@ s3_confirm_posted <- function(
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
   s3_config <- yaml::yaml.load_file(config_file)
   bucket_contents <- aws.s3::get_bucket_df(bucket = s3_config$bucket,
-                                           prefix = dirname(data_file))
+                                           prefix = dirname(data_file),
+                                           max = Inf)
   remote_info <- filter(bucket_contents, Key == data_file)
   if(nrow(remote_info) == 0) {
     stop(paste0("failed to find S3 file with Key=", data_file))
