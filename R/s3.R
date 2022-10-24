@@ -101,7 +101,7 @@ s3_put <- function(
   # prepare to use S3
   require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   s3_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = s3_config$profile)
+  #aws.signature::use_credentials(profile = s3_config$profile)
   
   # determine whether and where the remote file exists
   bucket_contents <- aws.s3::get_bucket_df(bucket = s3_config$bucket,
@@ -177,7 +177,7 @@ s3_get <- function(ind_file, verbose = FALSE,
   if(verbose) {message("Downloading ", data_file, " from S3")}
   
   s3_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = s3_config$profile)
+  #aws.signature::use_credentials(profile = s3_config$profile)
   aws.s3::save_object(object = data_file, bucket = s3_config$bucket,
                       file = data_file)
 }
