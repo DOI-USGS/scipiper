@@ -6,11 +6,15 @@
 \usage{
 create_task_step(
   step_name,
-  target_name = function(task_name, step_name, ...) {     sprintf("\%s_\%s", task_name,
-    step_name) },
+  target_name = function(task_name, step_name, ...) {
+     sprintf("\%s_\%s", task_name,
+    step_name)
+ },
   depends = character(0),
-  command = function(task_name, step_name, ...) {     sprintf("\%s(I('\%s'))",
-    step_name, task_name) }
+  command = function(task_name, step_name, ...) {
+     sprintf("\%s(I('\%s'))",
+    step_name, task_name)
+ }
 )
 }
 \arguments{

@@ -12,7 +12,8 @@ s3_put(
   verbose = FALSE,
   dry_put = getOption("scipiper.dry_put"),
   config_file = getOption("scipiper.s3_config_file"),
-  ind_ext = getOption("scipiper.ind_ext")
+  ind_ext = getOption("scipiper.ind_ext"),
+  use_local_aws_credentials = TRUE
 )
 }
 \arguments{
@@ -59,6 +60,9 @@ anything to Google Drive; they'll just pretend they've done it.}
 project-specific configuration information for S3}
 
 \item{ind_ext}{the indicator file extension to expect at the end of
+remote_ind}
+
+\item{use_local_aws_credentials}{logical If TRUE, calls to this function will rely on credentials in \verb{~/.aws/credentials}; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
 remote_ind}
 }
 \description{
