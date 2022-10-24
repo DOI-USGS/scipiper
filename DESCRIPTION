@@ -22,6 +22,7 @@ Imports:
   progress,
   yaml
 Suggests:
+  aws.ec2metadata,
   aws.s3,
   aws.signature,
   doParallel,

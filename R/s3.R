@@ -99,7 +99,7 @@ s3_put <- function(
   }
   
   # prepare to use S3
-  require_libs('aws.signature', 'aws.s3')
+  require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   s3_config <- yaml::yaml.load_file(config_file)
   aws.signature::use_credentials(profile = s3_config$profile)
   
@@ -160,7 +160,7 @@ find_local_file <- function(local_source, ind_ext) {
 s3_get <- function(ind_file, verbose = FALSE,
                    config_file=getOption("scipiper.s3_config_file"),
                    ind_ext=getOption("scipiper.ind_ext")) {
-  require_libs('aws.signature', 'aws.s3')
+  require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   # infer the data file name from the ind_file. gd_get always downloads to that
   # location if it downloads at all
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
@@ -195,7 +195,7 @@ s3_confirm_posted <- function(
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
-  require_libs('aws.signature','aws.s3')
+  require_libs('aws.signature','aws.s3', 'aws.ec2metadata')
   
   # tell R CMD check not to worry about symbols used for dplyr non-standard eval
   Key <- '.dplyr.var'
