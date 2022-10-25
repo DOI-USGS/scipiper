@@ -72,7 +72,7 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
 #'   project-specific configuration information for S3
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
-#' @param use_local_aws_credentials logical If TRUE, calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
+#' @param use_local_aws_credentials If TRUE (the default), then calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
 #'   remote_ind
 #' @export
 s3_put <- function(
@@ -81,7 +81,7 @@ s3_put <- function(
   dry_put=getOption("scipiper.dry_put"),
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext"),
-  use_local_aws_credentials = TRUE) {
+  use_local_aws_credentials = getOption("scipiper.use_local_aws_credentials")) {
   
   # check arguments
   mock_get <- match.arg(mock_get)
@@ -161,12 +161,12 @@ find_local_file <- function(local_source, ind_ext) {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
-#' @param use_local_aws_credentials logical If TRUE, calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
+#' @param use_local_aws_credentials If TRUE (the default), then calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
 #' @export
 s3_get <- function(ind_file, verbose = FALSE,
                    config_file=getOption("scipiper.s3_config_file"),
                    ind_ext=getOption("scipiper.ind_ext"),
-                   use_local_aws_credentials = TRUE) {
+                   use_local_aws_credentials = getOption("scipiper.use_local_aws_credentials")) {
   require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   # infer the data file name from the ind_file. gd_get always downloads to that
   # location if it downloads at all

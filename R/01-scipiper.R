@@ -15,7 +15,8 @@
     scipiper.dry_put = FALSE,
     scipiper.gd_config_file = "lib/cfg/gd_config.yml",
     scipiper.s3_config_file = "lib/cfg/s3_config.yml",
-    scipiper.ind_ext = 'ind'
+    scipiper.ind_ext = 'ind',
+    scipiper.use_local_aws_credentials = TRUE
   )
   toset <- !(names(op.scipiper) %in% names(op))
   if(any(toset)) options(op.scipiper[toset])

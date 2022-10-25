@@ -16,3 +16,7 @@ vignettes/*.R
 vignettes/*.html
 /doc/
 /Meta/
+
+# vim swap files
+.*.swp
+.swp
