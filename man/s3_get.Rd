@@ -8,7 +8,8 @@ s3_get(
   ind_file,
   verbose = FALSE,
   config_file = getOption("scipiper.s3_config_file"),
-  ind_ext = getOption("scipiper.ind_ext")
+  ind_ext = getOption("scipiper.ind_ext"),
+  use_local_aws_credentials = getOption("scipiper.use_local_aws_credentials")
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ downloaded. downloads the S3 object whose key equals the data_file basename}
 configuration information}
 
 \item{ind_ext}{the indicator file extension to expect at the end of ind_file}
+
+\item{use_local_aws_credentials}{If TRUE (the default), then calls to this function will rely on credentials in \verb{~/.aws/credentials}; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.}
 }
 \description{
 Download a file from S3 to the local project

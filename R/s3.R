@@ -72,13 +72,16 @@ s3_config <- function(bucket, profile='default', config_file=getOption("scipiper
 #'   project-specific configuration information for S3
 #' @param ind_ext the indicator file extension to expect at the end of
 #'   remote_ind
+#' @param use_local_aws_credentials If TRUE (the default), then calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
+#'   remote_ind
 #' @export
 s3_put <- function(
   remote_ind, local_source=remote_ind,  mock_get=c('copy','move','none'),
   on_exists=c('replace','stop'), verbose = FALSE,
   dry_put=getOption("scipiper.dry_put"),
   config_file=getOption("scipiper.s3_config_file"),
-  ind_ext=getOption("scipiper.ind_ext")) {
+  ind_ext=getOption("scipiper.ind_ext"),
+  use_local_aws_credentials = getOption("scipiper.use_local_aws_credentials")) {
   
   # check arguments
   mock_get <- match.arg(mock_get)
@@ -99,9 +102,11 @@ s3_put <- function(
   }
   
   # prepare to use S3
-  require_libs('aws.signature', 'aws.s3')
+  require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   s3_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = s3_config$profile)
+  if (use_local_aws_credentials) {
+    aws.signature::use_credentials(profile = s3_config$profile)
+  }
   
   # determine whether and where the remote file exists
   bucket_contents <- aws.s3::get_bucket_df(bucket = s3_config$bucket,
@@ -156,11 +161,13 @@ find_local_file <- function(local_source, ind_ext) {
 #' @param config_file character name of the yml file containing project-specific
 #'   configuration information
 #' @param ind_ext the indicator file extension to expect at the end of ind_file
+#' @param use_local_aws_credentials If TRUE (the default), then calls to this function will rely on credentials in `~/.aws/credentials`; if FALSE, credentials will be gotten from EC2 metadata. Using credentials from EC2 metadata is appropriate when running on EC2 or ECS.
 #' @export
 s3_get <- function(ind_file, verbose = FALSE,
                    config_file=getOption("scipiper.s3_config_file"),
-                   ind_ext=getOption("scipiper.ind_ext")) {
-  require_libs('aws.signature', 'aws.s3')
+                   ind_ext=getOption("scipiper.ind_ext"),
+                   use_local_aws_credentials = getOption("scipiper.use_local_aws_credentials")) {
+  require_libs('aws.signature', 'aws.s3', 'aws.ec2metadata')
   # infer the data file name from the ind_file. gd_get always downloads to that
   # location if it downloads at all
   data_file <- as_data_file(ind_file, ind_ext=ind_ext)
@@ -177,7 +184,9 @@ s3_get <- function(ind_file, verbose = FALSE,
   if(verbose) {message("Downloading ", data_file, " from S3")}
   
   s3_config <- yaml::yaml.load_file(config_file)
-  aws.signature::use_credentials(profile = s3_config$profile)
+  if (use_local_aws_credentials) {
+    aws.signature::use_credentials(profile = s3_config$profile)
+  }
   aws.s3::save_object(object = data_file, bucket = s3_config$bucket,
                       file = data_file)
 }
@@ -195,7 +204,7 @@ s3_confirm_posted <- function(
   config_file=getOption("scipiper.s3_config_file"),
   ind_ext=getOption("scipiper.ind_ext")) {
   
-  require_libs('aws.signature','aws.s3')
+  require_libs('aws.signature','aws.s3', 'aws.ec2metadata')
   
   # tell R CMD check not to worry about symbols used for dplyr non-standard eval
   Key <- '.dplyr.var'
