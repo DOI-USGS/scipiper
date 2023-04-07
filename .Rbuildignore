@@ -6,3 +6,4 @@
 ^.gitignore$
 ^doc$
 ^docs$
+^scipiper\.Rproj$
